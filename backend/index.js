@@ -26,7 +26,7 @@ app.use(session({
     saveUninitialized: false,           // Don't create empty sessions for guests
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie lasts for 30 days (in milliseconds)
-        secure: process.env.NODE_ENV === 'production', // Use secure HTTPS cookies when live on Render
+        secure: true,
         httpOnly: true,                   // Protects cookie against malicious frontend scripts
         sameSite: 'lax'                   // Essential for cross-site cookie security
     }
@@ -69,6 +69,28 @@ app.get('/api/auth/callback', async (req, res) => {
         const memberData = guildMemberResponse.data;
         const minecraftUsername = memberData.nick || memberData.user.username; 
         const discordId = memberData.user.id;
+
+        await pgPool.query(
+            `INSERT INTO users (discord_id, username) 
+             VALUES ($1, $2) 
+             ON CONFLICT (discord_id) 
+             DO UPDATE SET username = EXCLUDED.username, updated_at = CURRENT_TIMESTAMP`,
+            [discordId, minecraftUsername]
+        );
+
+        req.session.user = {
+            id: discordId,
+            username: minecraftUsername,
+            role: 'player' // You can customize roles or query from DB later
+        };
+
+        req.session.save((err) => {
+            if (err) {
+                console.error('Session save error:', err);
+                return res.status(500).send('Error saving session.');
+            }
+            console.log(`Saved session for ${minecraftUsername} to Supabase!`);
+        })
 
         // 3. SUCCESS! They are in your Discord server.
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
