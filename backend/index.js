@@ -1,10 +1,10 @@
 const express = require("express")
 const app = express()
+const path = require("path")
+
 app.use("/static", express.static(path.join(__dirname, "static")));
 app.use(express.json());
 app.use(cookieParser())
-
-const path = require("path")
 
 const PORT = process.env.PORT || 5000;
 
