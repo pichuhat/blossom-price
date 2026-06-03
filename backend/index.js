@@ -4,6 +4,8 @@ app.use("/static", express.static(path.join(__dirname, "static")));
 app.use(express.json());
 app.use(cookieParser())
 
+const path = require("path")
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
