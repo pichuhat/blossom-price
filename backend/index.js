@@ -71,6 +71,7 @@ app.get('/api/auth/callback', async (req, res) => {
         const memberData = guildMemberResponse.data;
         const minecraftUsername = memberData.nick || memberData.user.username; 
         const discordId = memberData.user.id;
+        console.log(memberData)
 
         await pgPool.query(
             `INSERT INTO users (discord_id, username) 
