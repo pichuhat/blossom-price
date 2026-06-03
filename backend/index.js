@@ -5,6 +5,33 @@ const path = require("path")
 const axios = require("axios")
 require('dotenv').config()
 
+const session = require("express-session")
+const pgSession = require("connect-pg-simple")(session)
+const { Pool } = require("pg")
+
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // Recommended for Supabase production connections to avoid drops
+  ssl: { rejectUnauthorized: false } 
+});
+
+app.use(session({
+    // Tell express-session to use PostgreSQL instead of server RAM
+    store: new pgSession({
+        pool : pgPool,                // Links to your Supabase connection pool
+        tableName : 'user_sessions'   // The name of the table inside Supabase
+    }),
+    secret: process.env.SESSION_SECRET, // A long, random string inside your local .env
+    resave: false,                      // Saves session only if modified (saves DB performance)
+    saveUninitialized: false,           // Don't create empty sessions for guests
+    cookie: {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie lasts for 30 days (in milliseconds)
+        secure: process.env.NODE_ENV === 'production', // Use secure HTTPS cookies when live on Render
+        httpOnly: true,                   // Protects cookie against malicious frontend scripts
+        sameSite: 'lax'                   // Essential for cross-site cookie security
+    }
+}));
+
 app.use("/static", express.static(path.join(__dirname, "static")));
 
 app.get('/', (req, res) => {
