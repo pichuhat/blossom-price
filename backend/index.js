@@ -28,7 +28,7 @@ app.use(session({
         maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie lasts for 30 days (in milliseconds)
         secure: true,
         httpOnly: true,                   // Protects cookie against malicious frontend scripts
-        sameSite: 'lax'                   // Essential for cross-site cookie security
+        sameSite: 'none'                   // Essential for cross-site cookie security
     }
 }));
 
