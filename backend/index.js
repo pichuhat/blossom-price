@@ -48,6 +48,9 @@ app.get('/api/auth/callback', async (req, res) => {
         
         // For now, print success to screen. Later, you'll issue a cookie here!
         res.send(`Welcome, ${minecraftUsername}! You are successfully authenticated.`);
+} catch(error) {
+    res.send("Uh Oh! " + error)
+}
 })
 
 app.listen(5000, () => {
