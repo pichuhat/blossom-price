@@ -92,11 +92,9 @@ app.get('/api/auth/callback', async (req, res) => {
             console.log(`Saved session for ${minecraftUsername} to Supabase!`);
         })
 
-        // 3. SUCCESS! They are in your Discord server.
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
         
-        // For now, print success to screen. Later, you'll issue a cookie here!
-        res.send(`Welcome, ${minecraftUsername}! You are successfully authenticated.`);
+        res.redirect("https://improved-space-carnival-974vgqrjrwxr2pw7v-8081.app.github.dev/")
 } catch(error) {
     res.send("Uh Oh! " + error)
 }
