@@ -9,6 +9,8 @@ const session = require("express-session")
 const pgSession = require("connect-pg-simple")(session)
 const { Pool } = require("pg")
 
+app.set('trust proxy', 1);
+
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Recommended for Supabase production connections to avoid drops
