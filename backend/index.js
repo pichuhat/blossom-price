@@ -11,7 +11,7 @@ app.get('/', (req, res) => {
     res.send("hello")
 })
 
-app.get('/api/auth/callback', (req, res) => {
+app.get('/api/auth/callback', async (req, res) => {
     const code = req.query.code; // Discord sent this to you
     
     if (!code) {
