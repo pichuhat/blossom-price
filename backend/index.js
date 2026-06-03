@@ -8,6 +8,11 @@ app.get('/', (req, res) => {
     res.send("hello")
 })
 
+app.get('/api/auth/callback', (req, res) => {
+    //man idk
+    res.send("guh idk maybe you logged in")
+})
+
 app.listen(5000, () => {
     console.log(`✅ Minecraft Price API is running on port 5000`);
 });
