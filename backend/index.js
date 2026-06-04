@@ -15,7 +15,7 @@ app.set('trust proxy', 1);
 
 // 2. Configure strict, credential-safe CORS
 app.use(cors({
-    origin: 'https://improved-space-carnival-974vgqrjrwxr2pw7v-8081.app.github.dev', 
+    origin: 'https://bc-pricer.onrender.com', 
     
     credentials: true,
     
@@ -23,7 +23,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
-const frontendHost = "https://improved-space-carnival-974vgqrjrwxr2pw7v-8081.app.github.dev/"
+const frontendHost = "https://bc-pricer.onrender.com"
 
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -96,7 +96,7 @@ app.get('/api/auth/callback', async (req, res) => {
         const discordId = memberData.user.id;
         const roles = memberData.roles
 
-        if (!roles.includes("822640342335356980")) return res.redirect(frontendHost + "frontend/?linkPopup=1")
+        if (!roles.includes("822640342335356980")) return res.redirect(frontendHost + "/?linkPopup=1")
 
         await pgPool.query(
             `INSERT INTO users (discord_id, username) 
@@ -122,10 +122,10 @@ app.get('/api/auth/callback', async (req, res) => {
 
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
         
-        res.redirect(frontendHost + "frontend/")
+        res.redirect(frontendHost)
 } catch(error) {
     if (checkA) {
-        res.redirect(frontendHost + "frontend/?linkPopup=2")
+        res.redirect(frontendHost + "/?linkPopup=2")
     } else {
     res.send("Uh Oh! " + error)
     }
