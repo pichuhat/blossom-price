@@ -45,8 +45,7 @@ export class Navbar extends LitElement {
       margin-left: auto;
     }
 
-    /* Target both your legacy links and new buttons identically */
-    ul li button, ul li a {
+    ul li button {
       display: block;
       background: none;
       border: none;
@@ -68,7 +67,7 @@ export class Navbar extends LitElement {
       text-decoration: none;
     }
 
-    ul li button:hover, ul li a:hover {
+    ul li button:hover {
       background-color: #831889;
     }
   `;
@@ -90,7 +89,7 @@ export class Navbar extends LitElement {
           
           <li>
             ${this.user 
-              ? html`<button @click=${() => this._handleNav('/settings')Custom}>${this.user.user}</button>` 
+              ? html`<button @click=${() => this._handleNav('/settings')}>${this.user.user}</button>` 
               : html`<discord-login-btn></discord-login-btn>`
             }
           </li>
@@ -99,7 +98,7 @@ export class Navbar extends LitElement {
     `;
   }
 
-  // ✅ Fire a navigation request event upward to the parent app-view.js
+  // Fire a custom event to let the parent app-view know a button was clicked
   _handleNav(path) {
     this.dispatchEvent(new CustomEvent('nav-requested', {
       detail: { path: path },
