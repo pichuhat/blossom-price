@@ -9,10 +9,10 @@
     const params = new URLSearchParams(window.location.search);
 
     try {
-        if (params.get('linkPopup') == "1") {
+        if (params.get('linkPopup') == "2") {
             //REPLACE WITH POPUP
             window.alert("Failed to login: please join the BlossomCraft discord server and follow the instructions to link your minecraft account to the server.")
-        } else if (params.get('linkPopup') == "2") {
+        } else if (params.get('linkPopup') == "1") {
             window.alert("Failed to login: your minecraft account isn't linked to the BlossomCraft discord server.")
         }
     } catch(error) {

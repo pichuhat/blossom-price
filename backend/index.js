@@ -110,7 +110,7 @@ app.get('/api/auth/callback', async (req, res) => {
 
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
         
-        res.redirect(frontendHost)
+        res.redirect(frontendHost + "frontend/")
 } catch(error) {
     if (checkA) {
         res.redirect(frontendHost + "frontend/?linkPopup=2")
