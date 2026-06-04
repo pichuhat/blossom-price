@@ -9,7 +9,19 @@ const session = require("express-session")
 const pgSession = require("connect-pg-simple")(session)
 const { Pool } = require("pg")
 
+const cors = require('cors');
+
 app.set('trust proxy', 1);
+
+// 2. Configure strict, credential-safe CORS
+app.use(cors({
+    origin: 'https://improved-space-carnival-974vgqrjrwxr2pw7v-8081.app.github.dev', 
+    
+    credentials: true,
+    
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
+}));
 
 const frontendHost = "https://improved-space-carnival-974vgqrjrwxr2pw7v-8081.app.github.dev/"
 
