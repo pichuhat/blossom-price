@@ -61,11 +61,15 @@ app.get('/api/auth/callback', async (req, res) => {
 
         const accessToken = tokenResponse.data.access_token;
 
+        console.log("reached check step A")
+
         // 2. Ask Discord for the user's specific profile INSIDE your server
         const guildMemberResponse = await axios.get(
             `https://discord.com/api/users/@me/guilds/${process.env.MINECRAFT_GUILD_ID}/member`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
         );
+
+        console.log("reached check step B")
 
         // Extract their verified info
         const memberData = guildMemberResponse.data;
