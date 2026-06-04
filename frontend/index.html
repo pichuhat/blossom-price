@@ -1,9 +1,15 @@
 <html lang="en">
 <head>
     <title>BCpricer</title>
-    <script type="module" src="./src/components/login-button.js"></script>
+    <script type="module" src="./src/app-root.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+    </style>
 </head>
-<discord-login-btn></discord-login-btn>
+<top-navbar logged-in></top-navbar>
 
 <script>
     const params = new URLSearchParams(window.location.search);

@@ -120,6 +120,22 @@ app.get('/api/auth/callback', async (req, res) => {
 }
 })
 
+app.get('/api/ping', (req, res) => {
+    res.status(200).send("guh")
+})
+
+app.get('/api/auth/me', (req, res) => {
+    if (req.session && req.session.user) {
+        res.json({
+            loggedIn: true,
+            user: res.session.user.username,
+            role: res.session.user.role
+        })
+    } else {
+        res.status(401).json({loggedIn: false, message: "Improper or nonexistent authentication"})
+    }
+})
+
 app.listen(5000, () => {
-    console.log(`✅ Minecraft Price API is running on port 5000`);
+    console.log(`BCpricer running at port 5000`);
 });

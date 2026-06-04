@@ -1,6 +1,11 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 
+import "./login-button.js"
+
 export class Navbar extends LitElement {
+    static properties = {
+      user: {type: Object}
+    }
   
   static styles = css`
     .navbar {
@@ -9,8 +14,11 @@ export class Navbar extends LitElement {
       position: -webkit-sticky;
       position: sticky;
       z-index: 1000;
-      padding: 15px;
       top: 0;
+    }
+
+    .discord-btn {
+    text-align: right;
     }
     
     ul {
@@ -18,11 +26,18 @@ export class Navbar extends LitElement {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  background-color: #333333;
+  background-color: #Bc4Bc2;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 
 ul li {
   float: left;
+}
+
+ul li.rightside {
+margin-left: auto;
 }
 
 ul li a {
@@ -33,8 +48,16 @@ ul li a {
   text-decoration: none;
 }
 
+ul li discord-login-btn {
+display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
 ul li a:hover {
-  background-color: #111111;
+  background-color: #831889;
 }
   `;
 
@@ -43,8 +66,9 @@ ul li a:hover {
 
     return html`
       <header class="navbar">
-      <li><a href="allitems.html">All Items</a></li>
+      <ul><li><a href="allitems.html">All Items</a></li>
       <li><a href="search.html">Search</a></li>
+      <li class="rightside">${this.user ? html `<a href="settings.html">${this.user.name}</a>` : html `<discord-login-btn></discord-login-btn>`}</li></ul>
       </header>
     `;
   }
