@@ -84,7 +84,7 @@ app.get('/api/auth/callback', async (req, res) => {
         const discordId = memberData.user.id;
         const roles = memberData.roles
 
-        if (!roles.includes("822640342335356980")) return res.redirect(frontendHost + "?linkPopup=1")
+        if (!roles.includes("822640342335356980")) return res.redirect(frontendHost + "frontend/?linkPopup=1")
 
         await pgPool.query(
             `INSERT INTO users (discord_id, username) 
@@ -113,7 +113,7 @@ app.get('/api/auth/callback', async (req, res) => {
         res.redirect(frontendHost)
 } catch(error) {
     if (checkA) {
-        res.redirect(frontendHost + "?linkPopup=2")
+        res.redirect(frontendHost + "frontend/?linkPopup=2")
     } else {
     res.send("Uh Oh! " + error)
     }
