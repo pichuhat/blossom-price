@@ -25,6 +25,8 @@ export class AppView extends LitElement {
       { 
         path: '/', 
         render: () => {
+          this.selectedServer = undefined;
+          this.requestUpdate();
           return html`<home-view .selectedServer=${this.selectedServer}></home-view>`
         }
       },
@@ -36,6 +38,14 @@ export class AppView extends LitElement {
           this.requestUpdate()
           return html`<home-view .selectedServer=${this.selectedServer}></home-view>`;
         }
+      },
+      {
+        path: '/allitems',
+        render: () => html`<section><h2>All Items</h2><p>All items view coming soon.</p></section>`
+      },
+      {
+        path: '/search',
+        render: () => html`<section><h2>Search</h2><p>Search view coming soon.</p></section>`
       },
       {
         path: '/settings',
@@ -70,6 +80,13 @@ export class AppView extends LitElement {
   
   // 4. Look at the URL right when the page boots up to show the right screen
   this._syncFromPathName();
+  }
+
+  _syncFromPathName() {
+    const path = window.location.pathname;
+    this._syncServerFromURL();
+    this.router.goto(path);
+    this.requestUpdate();
   }
 
   _syncServerFromURL() {
