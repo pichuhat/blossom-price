@@ -53,10 +53,22 @@ export class AppView extends LitElement {
     super.connectedCallback();
     this.checkLoginStatus();
 
-    window.addEventListener('popstate', () => this._syncServerFromURL());
+    this.addEventListener('nav-requested', (event) => {
+    // Extract the destination path sent inside the event payload
+    const destinationPath = event.detail.path;
+    
+    // Smoothly update the text in the browser's URL address bar without refreshing
+    window.history.pushState({}, '', destinationPath);
+    
+    // Explicitly command your @lit-labs/router to parse and render the new view!
+    this.router.goto(destinationPath);
+  });
+
+  // 3. Keep the browser's native back and forward arrows working smoothly
+  window.addEventListener('popstate', () => this._syncFromPathName());
   
-  // Sync immediately on initial page boot
-  this._syncServerFromURL();
+  // 4. Look at the URL right when the page boots up to show the right screen
+  this._syncFromPathName();
   }
 
   _syncServerFromURL() {
