@@ -95,8 +95,6 @@ export class AppView extends LitElement {
     // Update the parent's reactive property! 
     // This will instantly force <top-navbar> to re-render with the new value!
     this.selectedServer = isNaN(serverId) ? undefined : serverId;
-  } else {
-    this.selectedServer = undefined;
   }
 }
 

@@ -49,11 +49,12 @@ export class HomeView extends LitElement {
 
   render() {
     console.log("homeview")
+    const isServerRoute = window.location.pathname.startsWith('/server/');
 
     return html`
     <div class="center">
       <h1>BCpricer</h1>
-      ${this.selectedServer !== undefined ? html`
+      ${isServerRoute ? html`
         <h3>Featured</h3>
         Coming soon
         ` : html`
