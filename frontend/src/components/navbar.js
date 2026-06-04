@@ -3,86 +3,109 @@ import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import "./login-button.js"
 
 export class Navbar extends LitElement {
-    static properties = {
-      user: {type: Object},
-      selectedServer: {type: Number},
-      servers: {type: Array}
-    }
+  static properties = {
+    user: { type: Object },
+    selectedServer: { type: Number },
+    servers: { type: Array }
+  }
 
-    constructor() {
-      super()
-      this.servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
-    }
+  constructor() {
+    super()
+    this.servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
+  }
   
   static styles = css`
     .navbar {
       background-color: #BC4BC2;
       color: white;
-      position: -webkit-sticky;
       position: sticky;
-      z-index: 1000;
       top: 0;
+      z-index: 1000;
       margin: 0;
       padding: 0;
     }
-
-    .discord-btn {
-    text-align: right;
-    }
     
     ul {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-  background-color: #Bc4Bc2;
-  width: 100%;
-  display: flex;
-  align-items: center;
-}
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #BC4BC2;
+      width: 100%;
+      display: flex;
+      align-items: center;
+    }
 
-ul li {
-  float: left;
-}
+    ul li {
+      display: flex;
+      align-items: center;
+    }
 
-ul li.rightside {
-margin-left: auto;
-}
+    ul li.rightside {
+      margin-left: auto;
+    }
 
-ul li a {
-  display: block;
-  color: white;
-  text-align: center;
-  padding: 14px 16px;
-  text-decoration: none;
-}
+    /* Target both your legacy links and new buttons identically */
+    ul li button, ul li a {
+      display: block;
+      background: none;
+      border: none;
+      font-family: inherit;
+      font-size: inherit;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
 
-ul li discord-login-btn {
-display: block;
-  color: white;
-  text-align: center;
-  padding: 14px 16px;
-  text-decoration: none;
-}
+    ul li discord-login-btn {
+      display: block;
+      color: white;
+      text-align: center;
+      padding: 14px 16px;
+      text-decoration: none;
+    }
 
-ul li a:hover {
-  background-color: #831889;
-}
+    ul li button:hover, ul li a:hover {
+      background-color: #831889;
+    }
   `;
 
   render() {
-    const discordLoginUrl = "https://discord.com/oauth2/authorize?client_id=1511812763901759648&response_type=code&redirect_uri=https%3A%2F%2Fblossom-price.onrender.com%2Fapi%2Fauth%2Fcallback&scope=guilds.members.read+identify";
-    console.log(this.user)
-
     return html`
       <header class="navbar">
-      <ul><li style="font-size: 150%">BCPricer</li>
-      <li><a href="/allitems">All Items</a></li>
-      <li><a href="/search">Search</a></li>
-      <li class="rightside"><a href="/">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a></li>
-      <li>${this.user ? html`<a href="/settings">${this.user.user}</a>` : html`<discord-login-btn></discord-login-btn>`}</li></div></ul>
+        <ul>
+          <li style="font-size: 150%; padding: 0 16px; font-weight: bold;">BCPricer</li>
+          
+          <li><button @click=${() => this._handleNav('/allitems')}>All Items</button></li>
+          <li><button @click=${() => this._handleNav('/search')}>Search</button></li>
+          
+          <li class="rightside">
+            <button @click=${() => this._handleNav('/')}>
+              ${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}
+            </button>
+          </li>
+          
+          <li>
+            ${this.user 
+              ? html`<button @click=${() => this._handleNav('/settings')Custom}>${this.user.user}</button>` 
+              : html`<discord-login-btn></discord-login-btn>`
+            }
+          </li>
+        </ul>
       </header>
     `;
+  }
+
+  // ✅ Fire a navigation request event upward to the parent app-view.js
+  _handleNav(path) {
+    this.dispatchEvent(new CustomEvent('nav-requested', {
+      detail: { path: path },
+      bubbles: true,
+      composed: true
+    }));
   }
 }
 customElements.define('top-navbar', Navbar);
