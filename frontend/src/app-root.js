@@ -24,11 +24,7 @@ export class AppView extends LitElement {
         this.router = new Router(this, [
       { 
         path: '/', 
-        render: () => {
-          this.selectedServer = undefined;
-          this.requestUpdate();
-          return html`<home-view .selectedServer=${this.selectedServer}></home-view>`
-        }
+        render: () => html`<home-view .selectedServer=${this.selectedServer}></home-view>`
       },
       { 
         path: '/server/:id', 
@@ -70,9 +66,8 @@ export class AppView extends LitElement {
     // Smoothly update the text in the browser's URL address bar without refreshing
     window.history.pushState({}, '', destinationPath);
     
-    // Explicitly command your @lit-labs/router to parse and render the new view!
-    this.router.goto(destinationPath);
-    this.requestUpdate()
+    // Sync selected server state and render the new route
+    this._syncFromPathName();
   });
 
   // 3. Keep the browser's native back and forward arrows working smoothly
