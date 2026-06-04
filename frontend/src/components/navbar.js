@@ -70,6 +70,15 @@ ul li a:hover {
 }
   `;
 
+  _navigateTo(path, event) {
+    event.preventDefault();
+    this.dispatchEvent(new CustomEvent('nav-requested', {
+      detail: { path },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
   render() {
     const discordLoginUrl = "https://discord.com/oauth2/authorize?client_id=1511812763901759648&response_type=code&redirect_uri=https%3A%2F%2Fblossom-price.onrender.com%2Fapi%2Fauth%2Fcallback&scope=guilds.members.read+identify";
     console.log(this.user)
@@ -77,10 +86,10 @@ ul li a:hover {
     return html`
       <header class="navbar">
       <ul><li style="font-size: 150%">BCPricer</li>
-      <li><a href="/allitems">All Items</a></li>
-      <li><a href="/search">Search</a></li>
-      <li class="rightside"><a href="/">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a></li>
-      <li>${this.user ? html`<a href="/settings">${this.user.user}</a>` : html`<discord-login-btn></discord-login-btn>`}</li></div></ul>
+      <li><a href="/allitems" @click=${(e) => this._navigateTo('/allitems', e)}>All Items</a></li>
+      <li><a href="/search" @click=${(e) => this._navigateTo('/search', e)}>Search</a></li>
+      <li class="rightside"><a href="/" @click=${(e) => this._navigateTo('/', e)}>${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a></li>
+      <li>${this.user ? html`<a href="/settings" @click=${(e) => this._navigateTo('/settings', e)}>${this.user.user}</a>` : html`<discord-login-btn></discord-login-btn>`}</li></div></ul>
       </header>
     `;
   }
