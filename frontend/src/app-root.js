@@ -62,6 +62,7 @@ export class AppView extends LitElement {
     
     // Explicitly command your @lit-labs/router to parse and render the new view!
     this.router.goto(destinationPath);
+    this.requestUpdate()
   });
 
   // 3. Keep the browser's native back and forward arrows working smoothly
