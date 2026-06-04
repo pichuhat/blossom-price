@@ -11,6 +11,8 @@ const { Pool } = require("pg")
 
 app.set('trust proxy', 1);
 
+const frontendHost = "https://improved-space-carnival-974vgqrjrwxr2pw7v-8081.app.github.dev/"
+
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Recommended for Supabase production connections to avoid drops
@@ -47,6 +49,8 @@ app.get('/api/auth/callback', async (req, res) => {
         return res.status(400).send('Missing authorization code.');
     }
 
+    let checkA = false
+
     try {
         // 1. Exchange the temporary code for a permanent Access Token
         const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', new URLSearchParams({
@@ -62,6 +66,7 @@ app.get('/api/auth/callback', async (req, res) => {
         const accessToken = tokenResponse.data.access_token;
 
         console.log("reached check step A")
+        checkA = true;
 
         // 2. Ask Discord for the user's specific profile INSIDE your server
         const guildMemberResponse = await axios.get(
@@ -70,12 +75,16 @@ app.get('/api/auth/callback', async (req, res) => {
         );
 
         console.log("reached check step B")
+        checkA = false;
 
         // Extract their verified info
         const memberData = guildMemberResponse.data;
         console.log(memberData)
-        const minecraftUsername = memberData.nick || memberData.user.username; 
+        const minecraftUsername = memberData.nick;
         const discordId = memberData.user.id;
+        const roles = memberData.roles
+
+        if (!roles.includes("822640342335356980")) return res.redirect(frontendHost + "?linkPopup=1")
 
         await pgPool.query(
             `INSERT INTO users (discord_id, username) 
@@ -101,9 +110,13 @@ app.get('/api/auth/callback', async (req, res) => {
 
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
         
-        res.redirect("https://improved-space-carnival-974vgqrjrwxr2pw7v-8081.app.github.dev/")
+        res.redirect(frontendHost)
 } catch(error) {
+    if (checkA) {
+        res.redirect(frontendHost + "?linkPopup=2")
+    } else {
     res.send("Uh Oh! " + error)
+    }
 }
 })
 

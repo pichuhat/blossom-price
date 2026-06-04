@@ -4,4 +4,19 @@
     <script type="module" src="./src/components/login-button.js"></script>
 </head>
 <discord-login-btn></discord-login-btn>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+
+    try {
+        if (params.get('linkPopup') == "1") {
+            //REPLACE WITH POPUP
+            window.alert("Failed to login: please join the BlossomCraft discord server and follow the instructions to link your minecraft account to the server.")
+        } else if (params.get('linkPopup') == "2") {
+            window.alert("Failed to login: your minecraft account isn't linked to the BlossomCraft discord server.")
+        }
+    } catch(error) {
+        console.log("No login failure code found")
+    }
+</script>
 </html>
