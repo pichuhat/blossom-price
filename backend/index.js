@@ -126,10 +126,11 @@ app.get('/api/ping', (req, res) => {
 
 app.get('/api/auth/me', (req, res) => {
     if (req.session && req.session.user) {
+        console.log(req.session.user)
         res.json({
             loggedIn: true,
-            user: res.session.user.username,
-            role: res.session.user.role
+            user: req.session.user.username,
+            role: req.session.user.role
         })
     } else {
         res.status(401).json({loggedIn: false, message: "Improper or nonexistent authentication"})

@@ -1,7 +1,6 @@
 <html lang="en">
 <head>
     <title>BCpricer</title>
-    <script type="module" src="./src/app-root.js"></script>
     <style>
         body {
             margin: 0;
@@ -9,8 +8,11 @@
         }
     </style>
 </head>
-<top-navbar logged-in></top-navbar>
+<body>
+<app-view></app-view>
+test
 
+<script type="module" src="./src/app-root.js"></script>
 <script>
     const params = new URLSearchParams(window.location.search);
 
@@ -25,4 +27,5 @@
         console.log("No login failure code found")
     }
 </script>
+</body>
 </html>

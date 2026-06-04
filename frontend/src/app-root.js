@@ -6,13 +6,15 @@ import { LitElement, html, css } from 'https://esm.sh/lit@3';
 export class AppView extends LitElement {
     static properties = {
         user: {type: Object},
-        loading: {type: Boolean}
+        loading: {type: Boolean},
+        currentPage: { type: String }
     }
 
     constructor() {
         super()
         this.user = null
-        this.loading = true
+        this.loading = false
+        this.currentPage = "home"
     }
 
 
@@ -56,6 +58,9 @@ export class AppView extends LitElement {
 
         if (!response.ok) {
             console.log("No valid login found.")
+            this.user = null;
+            this.loading = false;
+            return;
         }
 
         const result = await response.json()
@@ -85,4 +90,4 @@ export class AppView extends LitElement {
     `;
   }
 }
-customElements.define('discord-login-btn', DiscordLoginButton);
+customElements.define('app-view', AppView);
