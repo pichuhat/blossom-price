@@ -4,7 +4,14 @@ import "./login-button.js"
 
 export class Navbar extends LitElement {
     static properties = {
-      user: {type: Object}
+      user: {type: Object},
+      selectedServer: {type: Number},
+      servers: {type: Array}
+    }
+
+    constructor() {
+      super()
+      this.servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
     }
   
   static styles = css`
@@ -15,6 +22,8 @@ export class Navbar extends LitElement {
       position: sticky;
       z-index: 1000;
       top: 0;
+      margin: 0;
+      padding: 0;
     }
 
     .discord-btn {
@@ -63,12 +72,15 @@ ul li a:hover {
 
   render() {
     const discordLoginUrl = "https://discord.com/oauth2/authorize?client_id=1511812763901759648&response_type=code&redirect_uri=https%3A%2F%2Fblossom-price.onrender.com%2Fapi%2Fauth%2Fcallback&scope=guilds.members.read+identify";
+    console.log(this.user)
 
     return html`
       <header class="navbar">
-      <ul><li><a href="allitems.html">All Items</a></li>
-      <li><a href="search.html">Search</a></li>
-      <li class="rightside">${this.user ? html `<a href="settings.html">${this.user.name}</a>` : html `<discord-login-btn></discord-login-btn>`}</li></ul>
+      <ul><li style="font-size: 150%">BCPricer</li>
+      <li><a href="/allitems">All Items</a></li>
+      <li><a href="/search">Search</a></li>
+      <li class="rightside"><a href="/">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a></li>
+      <li>${this.user ? html`<a href="/settings">${this.user.user}</a>` : html`<discord-login-btn></discord-login-btn>`}</li></div></ul>
       </header>
     `;
   }

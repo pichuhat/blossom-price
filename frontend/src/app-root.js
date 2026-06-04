@@ -1,13 +1,17 @@
 import "./components/login-button.js"
 import "./components/navbar.js"
+import "./views/guest-view.js"
+import "./views/home-view.js"
 
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
 
 export class AppView extends LitElement {
     static properties = {
         user: {type: Object},
         loading: {type: Boolean},
-        currentPage: { type: String }
+        currentPage: { type: String },
+        selectedServer: { type: Number }
     }
 
     constructor() {
@@ -15,6 +19,29 @@ export class AppView extends LitElement {
         this.user = null
         this.loading = false
         this.currentPage = "home"
+        this.selectedServer = undefined
+
+        this.router = new Router(this, [
+      { 
+        path: '/', 
+        render: () => {
+          return html`<home-view .selectedServer=${this.selectedServer}></home-view>`
+        }
+      },
+      { 
+        path: '/server/:id', 
+        render: (params) => {
+          const serverId = parseInt(params.id, 10);
+          this.selectedServer = isNaN(serverId) ? undefined : serverId;
+          this.requestUpdate()
+          return html`<home-view .selectedServer=${this.selectedServer}></home-view>`;
+        }
+      },
+      {
+        path: '/settings',
+        render: () => html`<h2>User Settings View Coming Soon</h2>`
+      }
+    ]);
     }
 
 
@@ -25,29 +52,28 @@ export class AppView extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.checkLoginStatus();
-    
-    window.addEventListener('popstate', () => {
-      this._routeChanged();
-    });
-    
-    this._routeChanged();
+
+    window.addEventListener('popstate', () => this._syncServerFromURL());
+  
+  // Sync immediately on initial page boot
+  this._syncServerFromURL();
   }
 
-  _routeChanged() {
-    const path = window.location.pathname;
-    if (path === '/settings') {
-      this.currentPage = 'settings';
-    } else {
-      this.currentPage = 'home';
-    }
-  }
-
-  _handleNavigation(e) {
-    const page = e.detail.page; // 'settings'
-    this.currentPage = page;
+  _syncServerFromURL() {
+  const path = window.location.pathname; // Looks like "/server/0"
+  
+  if (path.startsWith('/server/')) {
+    // Extract the number at the end of the URL string
+    const idStr = path.split('/').pop();
+    const serverId = parseInt(idStr, 10);
     
-    window.history.pushState({}, '', `/${page}`);
+    // Update the parent's reactive property! 
+    // This will instantly force <top-navbar> to re-render with the new value!
+    this.selectedServer = isNaN(serverId) ? undefined : serverId;
+  } else {
+    this.selectedServer = undefined;
   }
+}
 
   async checkLoginStatus() {
     try {
@@ -80,13 +106,15 @@ export class AppView extends LitElement {
   }
 
   render() {
+    if (window.location.pathname.startsWith("/server/"))
     if (this.loading) {
         return html`<p>Please Wait...</p>`
     }
 
     return html`
-      <top-navbar .user=${this.user}></top-navbar>
-      ${this.user ? "Login success" : "Not logged in"}
+      <top-navbar .user=${this.user} .selectedServer=${this.selectedServer}></top-navbar>
+      ${this.user ? "" : html`<guest-view></guest-view>`}
+      ${this.router.outlet()}
     `;
   }
 }
