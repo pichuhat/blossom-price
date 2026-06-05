@@ -76,8 +76,7 @@ async function syncItems() {
             NOW() AS updated_at
         FROM jsonb_array_elements($1::jsonb) AS obj
     ) subquery
-    -- This filters out any items that contain the exact text "repeat ppearance" inside their tags array
-    WHERE NOT ('repeat ppearance' = ANY(subquery.generated_tags))
+    WHERE NOT ('Repeat Appearance' = ANY(subquery.generated_tags))
     ON CONFLICT (id) DO UPDATE 
     SET 
         crate_id = EXCLUDED.crate_id,
