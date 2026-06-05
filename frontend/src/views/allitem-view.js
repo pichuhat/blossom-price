@@ -59,10 +59,12 @@ export class AllItemView extends LitElement {
 
   _nextPage() {
     this.page++
+    this._fetchItems()
   }
 
   _previousPage() {
     this.page--
+    this._fetchItems()
   }
 
   _customPage() {
@@ -70,6 +72,7 @@ export class AllItemView extends LitElement {
     if (input === null) return;
     if (/^\d+$/.test(input.trim()) && input > 0 && input <= this.maxPages) {
     this.page = parseInt(input, 10);
+    this._fetchItems()
 } else {
   window.alert("Invalid input")
 }
@@ -140,7 +143,7 @@ export class AllItemView extends LitElement {
 
     return html`
       <h1>All Items</h1>
-      <span>Page ${this.page}/${this.maxPages}</span> <button ${previousDisabled} @click="${this._previousPage}">Previous</button><button ${nextDisabled} @click="${this._nextPage}">Next</button><button @click="${this._customPage}">...</button>
+      <span>Page ${this.page}/${this.maxPages}</span> <button ?disabled=${previousDisabled} @click="${this._previousPage}">Previous</button><button ?disabled=${nextDisabled} @click="${this._nextPage}">Next</button><button @click="${this._customPage}">...</button>
       <div class="grid">
         ${this.items.map(item => html`
           <div class="card">
