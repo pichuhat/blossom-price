@@ -30,7 +30,8 @@ export class AllItemView extends LitElement {
 
       if (!response.ok) throw new Error("Server fetch issue")
 
-      this.items = await response.json()
+      const result = await response.json()
+      this.items = JSON.parse(result.items)
     } catch(err) {
       console.error("Error loading allitems: " + err)
     } finally {
