@@ -47,11 +47,7 @@ async function syncItems() {
     const result = await response.json()
     const final = result.data
 
-    console.log("Fetched json, connecting...")
-
-    await pgPool.connect()
-
-    console.log("Connected, sending payload...")
+    console.log("Fetched, sending payload...")
 
     const sqlQuery = `
     INSERT INTO items (
@@ -99,8 +95,7 @@ async function syncItems() {
     } catch(error) {
         console.error("FAILED: " + error)
     } finally {
-        await pgPool.end()
-        console.log("Connection closed.")
+        console.log("Function complete")
     }
 }
 
@@ -262,13 +257,10 @@ app.get('/api/allitems', async (req, res) => {
         `
 
         try {
-        await pgPool.connect()
         const final = await pgPool.query(sqlQuery)
-        const count = Math.ceil(parseInt(res.rows[0].total, 10)/20);
+        const count = Math.ceil(parseInt(final.rows[0].total, 10)/20);
         } catch(error) {
             return res.status(500).json({success: false, count: null})
-        } finally {
-        await pgPool.end()
         }
 
         res.status(200).json({success: true, count: count})
