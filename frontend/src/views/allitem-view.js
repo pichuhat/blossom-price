@@ -140,7 +140,7 @@ export class AllItemView extends LitElement {
 
     return html`
       <h1>All Items</h1>
-      <span>Page ${this.page}/${this.maxPages}</span> <button ${previousDisabled} @click="${this._previousPage()}">Previous</button><button ${nextDisabled} @click="${this._nextPage()}">Next</button><button @click="${this._customPage()}">...</button>
+      <span>Page ${this.page}/${this.maxPages}</span> <button ${previousDisabled} @click="${this._previousPage}">Previous</button><button ${nextDisabled} @click="${this._nextPage}">Next</button><button @click="${this._customPage}">...</button>
       <div class="grid">
         ${this.items.map(item => html`
           <div class="card">
