@@ -151,7 +151,7 @@ app.get('/api/auth/me', (req, res) => {
 
 app.get('/api/allitems', async (req, res) => {
     try {
-    const result = await pool.query('SELECT * FROM items ORDER BY id ASC');
+    const result = await Pool.query('SELECT * FROM items ORDER BY id ASC');
     console.log(result.rows)
     res.json(result.rows)
     } catch(error) {
