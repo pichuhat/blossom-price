@@ -92,8 +92,6 @@ export class AppView extends LitElement {
     const idStr = path.split('/').pop();
     const serverId = parseInt(idStr, 10);
     
-    // Update the parent's reactive property! 
-    // This will instantly force <top-navbar> to re-render with the new value!
     this.selectedServer = isNaN(serverId) ? undefined : serverId;
   }
 }

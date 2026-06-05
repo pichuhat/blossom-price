@@ -149,6 +149,17 @@ app.get('/api/auth/me', (req, res) => {
     }
 })
 
+app.get('/api/allitems', async (req, res) => {
+    try {
+    const result = await pool.query('SELECT * FROM items ORDER BY id ASC');
+    console.log(result.rows)
+    res.json(result.rows)
+    } catch(error) {
+        console.error("Allitems query failed: " + error)
+        res.status(500).json({message: "Failed to fetch items"})
+    }
+})
+
 app.listen(5000, () => {
     console.log(`BCpricer running at port 5000`);
 });
