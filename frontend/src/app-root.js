@@ -2,6 +2,7 @@ import "./components/login-button.js"
 import "./components/navbar.js"
 import "./views/guest-view.js"
 import "./views/home-view.js"
+import "./views/allitem-view.js"
 
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
@@ -37,7 +38,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/allitems',
-        render: () => html`<section><h2>All Items</h2><p>All items view coming soon.</p></section>`
+        render: () => html`<all-item-view></all-item-view>`
       },
       {
         path: '/search',
