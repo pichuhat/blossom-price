@@ -63,7 +63,7 @@ async function syncItems() {
                 obj->>'ItemName',
                 obj->>'ItemHTML',
                 obj->>'RarityHuman',
-                (obj->>'WinPercentage')::NUMERIC,
+                COALESCE(NULLIF(obj->>'WinPercentage', ''), '0')::NUMERIC,
                 -- Filters out empty strings and bundles remaining tags into a single clean array
                 ARRAY_REMOVE(
                     ARRAY[
