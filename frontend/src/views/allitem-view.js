@@ -34,6 +34,8 @@ export class AllItemView extends LitElement {
       
       const result = await response.json()
       this.maxPages = result.count
+    } catch(error) {
+      console.error("Error loading max page count: " + error)
     }
   }
 
