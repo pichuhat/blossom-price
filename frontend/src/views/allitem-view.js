@@ -35,17 +35,33 @@ export class AllItemView extends LitElement {
 
   static styles = css`
     .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 20px;
       padding: 20px;
+      justify-content: center;
     }
     .card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: fit-content;
+      max-width: 100%;
       background-color: #2a2a2a;
       border: 1px solid #444;
       border-radius: 8px;
       padding: 16px;
       color: white;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .card img {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-top: 12px;
     }
     .price {
       color: #00ffcc;
@@ -56,6 +72,7 @@ export class AllItemView extends LitElement {
       display: flex;
       gap: 5px;
       flex-wrap: wrap;
+      justify-content: center;
     }
     .tag {
       background-color: #bc4bc2;
@@ -82,9 +99,13 @@ export class AllItemView extends LitElement {
                 <span class="tag">${tag}</span>
               `) : ''}
             </div>
-            <img src="https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png"
+            <img
+              src="https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png"
+              alt="${item.item_name}"
+            />
           </div>
         `)}
+      </div>
     `;
   }
 }
