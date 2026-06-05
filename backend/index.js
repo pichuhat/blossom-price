@@ -55,7 +55,7 @@ async function syncItems() {
 
     const sqlQuery = `
             INSERT INTO items (
-                id, crateID, item_name, itemHTML, rarityHuman, winChance, tags, updated_at
+                id, crate_id, item_name, item_html, rarity_human, win_chance, tags, updated_at
             )
             SELECT 
                 obj->>'id',
