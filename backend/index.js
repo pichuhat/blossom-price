@@ -31,6 +31,76 @@ const pgPool = new Pool({
   ssl: { rejectUnauthorized: false } 
 });
 
+async function syncItems() {
+    try {
+        console.log("Beginning new item update...")
+
+        const endpointURL = "https://www.blossom.atn.gg/api/items"
+        console.log("Fetching latest item set from URL " + endpointURL)
+
+        const response = await fetch(endpointURL, {
+  method: "GET",
+  headers: {
+    "I-INCLUDED-INFO": "id;CrateID;TagPrimary;TagSecondary;TagTertiary;TagQuaternary;TagQuinary;TagSenary;TagSeptenary;WinPercentage;RarityHuman;ItemName;ItemHTML;ConnectedItems",
+        }
+    })
+    const result = response.json()
+    const final = result.data
+
+    console.log("Fetched json, connecting...")
+
+    await pgPool.connect()
+
+    console.log("Connected, sending payload...")
+
+    const sqlQuery = `
+            INSERT INTO items (
+                id, crateID, item_name, itemHTML, rarityHuman, winChance, tags, updated_at
+            )
+            SELECT 
+                obj->>'id',
+                obj->>'CrateID',
+                obj->>'ItemName',
+                obj->>'ItemHTML',
+                obj->>'RarityHuman',
+                (obj->>'WinPercentage')::NUMERIC,
+                -- Filters out empty strings and bundles remaining tags into a single clean array
+                ARRAY_REMOVE(
+                    ARRAY[
+                        NULLIF(obj->>'TagPrimary', ''),
+                        NULLIF(obj->>'TagSecondary', ''),
+                        NULLIF(obj->>'TagTertiary', ''),
+                        NULLIF(obj->>'TagQuaternary', ''),
+                        NULLIF(obj->>'TagQuinary', ''),
+                        NULLIF(obj->>'TagSenary', ''),
+                        NULLIF(obj->>'TagSeptenary', '')
+                    ], 
+                    NULL
+                ),
+                NOW()
+            FROM jsonb_array_elements($1::jsonb) AS obj
+            ON CONFLICT (id) DO UPDATE 
+            SET 
+                crateID = EXCLUDED.crateID,
+                item_name = EXCLUDED.item_name,
+                itemHTML = EXCLUDED.itemHTML,
+                rarityHuman = EXCLUDED.rarityHuman,
+                winChance = EXCLUDED.winChance,
+                tags = EXCLUDED.tags, -- Overwrites array with fresh tags
+                updated_at = EXCLUDED.updated_at;
+        `;
+
+        await pgPool.query(sqlQuery, [JSON.stringify(final)])
+
+        console.log("SUCCESS: Database updated")
+    } catch(error) {
+        console.error("FAILED: " + error)
+    } finally {
+        await client.end()
+        console.log("Connection closed.")
+    }
+}
+
 app.use(session({
     // Tell express-session to use PostgreSQL instead of server RAM
     store: new pgSession({
@@ -149,7 +219,7 @@ app.get('/api/auth/me', (req, res) => {
     }
 })
 
-app.get('/api/allitems', async (req, res) => {
+/* app.get('/api/allitems', async (req, res) => {
     try {
     const result = await pgPool.query('SELECT * FROM items ORDER BY id ASC');
     console.log(result.rows)
@@ -158,7 +228,24 @@ app.get('/api/allitems', async (req, res) => {
         console.error("Allitems query failed: " + error)
         res.status(500).json({message: "Failed to fetch items"})
     }
-})
+}) */
+
+    app.get('/api/forceupdate', async (req, res) => {
+        if (req.session && req.session.user) {
+            if (req.session.user.role == "admin") {
+                console.log("Forced sync starting...")
+                try {
+                await syncItems()
+                } catch(error) {
+                    res.status(500).json({success: false, message: "Unknown not-auth error"})
+                }
+            } else {
+                res.status(403).json({success: false, message: "Improper permission"})
+            }
+        } else {
+            res.status(401).json({success: false, message: "Not logged in"})
+        }
+    })
 
 app.listen(5000, () => {
     console.log(`BCpricer running at port 5000`);
