@@ -232,6 +232,7 @@ app.get('/api/auth/me', (req, res) => {
 
     app.get('/api/forceupdate', async (req, res) => {
         if (req.session && req.session.user) {
+            console.log(req.session.user.role)
             if (req.session.user.role == "admin") {
                 console.log("Forced sync starting...")
                 try {
