@@ -259,11 +259,10 @@ app.get('/api/allitems', async (req, res) => {
         try {
         const final = await pgPool.query(sqlQuery)
         const count = Math.ceil(parseInt(final.rows[0].total, 10)/20);
+        res.status(200).json({success: true, count: count})
         } catch(error) {
             return res.status(500).json({success: false, count: null})
         }
-
-        res.status(200).json({success: true, count: count})
     })
 
 app.listen(5000, () => {
