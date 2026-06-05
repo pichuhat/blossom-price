@@ -241,6 +241,7 @@ app.get('/api/auth/me', (req, res) => {
                 try {
                 await syncItems()
                 } catch(error) {
+                    console.log(error)
                     res.status(500).json({success: false, message: "Unknown not-auth error"})
                 }
             } else {
