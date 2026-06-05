@@ -222,12 +222,21 @@ app.get('/api/auth/me', (req, res) => {
 
 app.get('/api/allitems', async (req, res) => {
     try {
-    const result = await pgPool.query('SELECT * FROM items ORDER BY id ASC');
-    console.log(result.rows)
-    res.json(result.rows)
+    const page = parseInt(req.query.page, 10) || 1
+    const limit = 20
+    const offset = (page-1)*limit;
+
+    const sqlQuery = `
+    SELECT * FROM items
+    ORDER BY id ASC
+    LIMIT $1 OFFSET $2
+    `
+    const result = await pgPool.query(sqlQuery, [limit, offset])
+
+    res.json({success: true, items: result.rows})
     } catch(error) {
         console.error("Allitems query failed: " + error)
-        res.status(500).json({message: "Failed to fetch items"})
+        res.status(500).json({success: false, message: "Failed to fetch items", items: null})
     }
 })
 
