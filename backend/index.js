@@ -54,41 +54,44 @@ async function syncItems() {
     console.log("Connected, sending payload...")
 
     const sqlQuery = `
-            INSERT INTO items (
-                id, crate_id, item_name, item_html, rarity_human, win_chance, tags, updated_at
-            )
-            SELECT 
-                obj->>'id',
-                obj->>'CrateID',
-                obj->>'ItemName',
-                obj->>'ItemHTML',
-                obj->>'RarityHuman',
-                COALESCE(NULLIF(obj->>'WinPercentage', ''), '0')::NUMERIC,
-                -- Filters out empty strings and bundles remaining tags into a single clean array
-                ARRAY_REMOVE(
-                    ARRAY[
-                        NULLIF(obj->>'TagPrimary', ''),
-                        NULLIF(obj->>'TagSecondary', ''),
-                        NULLIF(obj->>'TagTertiary', ''),
-                        NULLIF(obj->>'TagQuaternary', ''),
-                        NULLIF(obj->>'TagQuinary', ''),
-                        NULLIF(obj->>'TagSenary', ''),
-                        NULLIF(obj->>'TagSeptenary', '')
-                    ], 
-                    NULL
-                ),
-                NOW()
-            FROM jsonb_array_elements($1::jsonb) AS obj
-            ON CONFLICT (id) DO UPDATE 
-            SET 
-                crate_id = EXCLUDED.crate_id,
-                item_name = EXCLUDED.item_name,
-                item_html = EXCLUDED.item_html,
-                rarity_human = EXCLUDED.rarity_human,
-                win_chance = EXCLUDED.win_chance,
-                tags = EXCLUDED.tags,
-                updated_at = EXCLUDED.updated_at;
-        `;
+    INSERT INTO items (
+        id, crate_id, item_name, item_html, rarity_human, win_chance, tags, updated_at
+    )
+    SELECT * FROM (
+        SELECT 
+            (obj->>'id')::INT AS id,
+            (obj->>'CrateID')::INT AS crate_id,
+            obj->>'ItemName' AS item_name,
+            obj->>'ItemHTML' AS item_html,
+            obj->>'RarityHuman' AS rarity_human,
+            (NULLIF(obj->>'WinPercentage', ''))::NUMERIC AS win_chance,
+            ARRAY_REMOVE(
+                ARRAY[
+                    NULLIF(obj->>'TagPrimary', ''),
+                    NULLIF(obj->>'TagSecondary', ''),
+                    NULLIF(obj->>'TagTertiary', ''),
+                    NULLIF(obj->>'TagQuaternary', ''),
+                    NULLIF(obj->>'TagQuinary', ''),
+                    NULLIF(obj->>'TagSenary', ''),
+                    NULLIF(obj->>'TagSeptenary', '')
+                ], 
+                NULL
+            ) AS generated_tags,
+            NOW() AS updated_at
+        FROM jsonb_array_elements($1::jsonb) AS obj
+    ) subquery
+    -- This filters out any items that contain the exact text "repeat ppearance" inside their tags array
+    WHERE NOT ('repeat ppearance' = ANY(subquery.generated_tags))
+    ON CONFLICT (id) DO UPDATE 
+    SET 
+        crate_id = EXCLUDED.crate_id,
+        item_name = EXCLUDED.item_name,
+        item_html = EXCLUDED.item_html,
+        rarity_human = EXCLUDED.rarity_human,
+        win_chance = EXCLUDED.win_chance,
+        tags = EXCLUDED.tags,
+        updated_at = EXCLUDED.updated_at;
+`;
 
         await pgPool.query(sqlQuery, [JSON.stringify(final)])
 
@@ -222,7 +225,7 @@ app.get('/api/auth/me', (req, res) => {
     }
 })
 
-/* app.get('/api/allitems', async (req, res) => {
+app.get('/api/allitems', async (req, res) => {
     try {
     const result = await pgPool.query('SELECT * FROM items ORDER BY id ASC');
     console.log(result.rows)
@@ -231,7 +234,7 @@ app.get('/api/auth/me', (req, res) => {
         console.error("Allitems query failed: " + error)
         res.status(500).json({message: "Failed to fetch items"})
     }
-}) */
+})
 
     app.get('/api/forceupdate', async (req, res) => {
         if (req.session && req.session.user) {
@@ -240,6 +243,7 @@ app.get('/api/auth/me', (req, res) => {
                 console.log("Forced sync starting...")
                 try {
                 await syncItems()
+                res.status(200).json({success: true, message: "Updated"})
                 } catch(error) {
                     console.log(error)
                     res.status(500).json({success: false, message: "Unknown not-auth error"})
@@ -250,6 +254,24 @@ app.get('/api/auth/me', (req, res) => {
         } else {
             res.status(401).json({success: false, message: "Not logged in"})
         }
+    })
+
+    app.get("/api/pagecount", async (req, res) => {
+        const sqlQuery = `
+        SELECT COUNT(*) AS total FROM items
+        `
+
+        try {
+        await pgPool.connect()
+        const final = await pgPool.query(sqlQuery)
+        const count = Math.ceil(parseInt(res.rows[0].total, 10)/20);
+        } catch(error) {
+            return res.status(500).json({success: false, count: null})
+        } finally {
+        await pgPool.end()
+        }
+
+        res.status(200).json({success: true, count: count})
     })
 
 app.listen(5000, () => {
