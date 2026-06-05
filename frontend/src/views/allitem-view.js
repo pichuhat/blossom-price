@@ -40,6 +40,7 @@ export class AllItemView extends LitElement {
   }
 
   async _fetchItems() {
+    this.loading = true;
     try {
       const response = await fetch("https://blossom-price.onrender.com/api/allitems?page=" + this.page, {
         method: "GET",
