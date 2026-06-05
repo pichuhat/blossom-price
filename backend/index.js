@@ -81,11 +81,11 @@ async function syncItems() {
             FROM jsonb_array_elements($1::jsonb) AS obj
             ON CONFLICT (id) DO UPDATE 
             SET 
-                crateID = EXCLUDED.crateID,
+                crateID = EXCLUDED.crate_id,
                 item_name = EXCLUDED.item_name,
-                itemHTML = EXCLUDED.itemHTML,
-                rarityHuman = EXCLUDED.rarityHuman,
-                winChance = EXCLUDED.winChance,
+                itemHTML = EXCLUDED.item_html,
+                rarityHuman = EXCLUDED.rarity_human,
+                winChance = EXCLUDED.win_chance,
                 tags = EXCLUDED.tags, -- Overwrites array with fresh tags
                 updated_at = EXCLUDED.updated_at;
         `;
