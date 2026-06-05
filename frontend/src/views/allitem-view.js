@@ -75,14 +75,14 @@ export class AllItemView extends LitElement {
       <div class="grid">
         ${this.items.map(item => html`
           <div class="card">
-            <h3>${item.name}</h3>
-            <p class="price">Base Price: ${item.base_price} coins</p>
+            <h3>${item.item_name}</h3>
             
             <div class="tags">
-              ${item.categories ? item.categories.map(tag => html`
+              ${item.tags ? item.tags.map(tag => html`
                 <span class="tag">${tag}</span>
               `) : ''}
             </div>
+            <img src="https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png"
           </div>
         `)}
     `;
