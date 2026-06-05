@@ -44,7 +44,7 @@ async function syncItems() {
     "I-INCLUDED-INFO": "id;CrateID;TagPrimary;TagSecondary;TagTertiary;TagQuaternary;TagQuinary;TagSenary;TagSeptenary;WinPercentage;RarityHuman;ItemName;ItemHTML;ConnectedItems",
         }
     })
-    const result = response.json()
+    const result = await response.json()
     const final = result.data
 
     console.log("Fetched json, connecting...")
@@ -96,7 +96,7 @@ async function syncItems() {
     } catch(error) {
         console.error("FAILED: " + error)
     } finally {
-        await client.end()
+        await pgPool.end()
         console.log("Connection closed.")
     }
 }
