@@ -173,7 +173,7 @@ app.get('/api/auth/callback', async (req, res) => {
              VALUES ($1, $2) 
              ON CONFLICT (discord_id) 
              DO UPDATE SET username = EXCLUDED.username, updated_at = CURRENT_TIMESTAMP
-             RETURNING id, username, role`,
+             RETURNING discord_id, username, role`,
             [discordId, minecraftUsername]
         );
 
