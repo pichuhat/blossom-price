@@ -168,18 +168,21 @@ app.get('/api/auth/callback', async (req, res) => {
 
         if (!roles.includes("822640342335356980")) return res.redirect(frontendHost + "/?linkPopup=1")
 
-        await pgPool.query(
+        const dbresult = await pgPool.query(
             `INSERT INTO users (discord_id, username) 
              VALUES ($1, $2) 
              ON CONFLICT (discord_id) 
-             DO UPDATE SET username = EXCLUDED.username, updated_at = CURRENT_TIMESTAMP`,
+             DO UPDATE SET username = EXCLUDED.username, updated_at = CURRENT_TIMESTAMP
+             RETURNING id, username, role`,
             [discordId, minecraftUsername]
         );
+
+        const confirmationUser = dbresult.rows[0]
 
         req.session.user = {
             id: discordId,
             username: minecraftUsername,
-            role: 'player' // You can customize roles or query from DB later
+            role: confirmationUser.role
         };
 
         req.session.save((err) => {
