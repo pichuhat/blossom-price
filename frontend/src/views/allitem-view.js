@@ -16,6 +16,11 @@ export class AllItemView extends LitElement {
     this._fetchItems()
   }
 
+  _decodeEscapedUnicode(value) {
+    if (typeof value !== 'string') return value
+    return value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+  }
+
   async _fetchItems() {
     try {
       const response = await fetch("https://blossom-price.onrender.com/api/allitems", {
@@ -92,16 +97,16 @@ export class AllItemView extends LitElement {
       <div class="grid">
         ${this.items.map(item => html`
           <div class="card">
-            <h3>${item.item_name}</h3>
+            <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
             
             <div class="tags">
               ${item.tags ? item.tags.map(tag => html`
-                <span class="tag">${tag}</span>
+                <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
               `) : ''}
             </div>
             <img
               src="https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png"
-              alt="${item.item_name}"
+              alt="${this._decodeEscapedUnicode(item.item_name)}"
             />
           </div>
         `)}
