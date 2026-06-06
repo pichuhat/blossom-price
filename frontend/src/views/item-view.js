@@ -20,7 +20,7 @@ export class ItemView extends LitElement {
     }
 
     async _getItemData() {
-        const toSendUrl = "https://blossom-price.onrender.com/api/item/" + this.item
+        const toSendUrl = "https://blossom-price.onrender.com/api/item/" + this.selectedServer + "/" + this.item
 
         try {
         const response = await fetch(toSendUrl, {
