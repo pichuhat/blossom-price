@@ -164,7 +164,7 @@ export class ItemView extends LitElement {
 </div>
 <div class="market-column">
     <div class="box nogrow">
-    <span class="priceAdd">${servers[selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.itemData.price}</span><br>
+    <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.itemData.price}</span><br>
     <sub class="priceinfo">- ${this.itemData.username}<br>${this.itemData.recom_timestamp}</sub>
 </div>
 <div class="box nogrow  ">
