@@ -54,6 +54,7 @@ export class ItemView extends LitElement {
     display: inline-flex;
     align-items: center;
     gap: 12px;
+    flex-direction: column;
     }
 
     .tagbox {
