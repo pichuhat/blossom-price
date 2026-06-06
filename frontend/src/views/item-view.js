@@ -51,10 +51,18 @@ export class ItemView extends LitElement {
     }
 
     .box-content {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    flex-direction: column;
+    display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: fit-content;
+      max-width: 100%;
+      background-color: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      padding: 16px;
+      color: white;
+      box-sizing: border-box;
+      overflow: hidden;
     }
 
     .tagbox {
