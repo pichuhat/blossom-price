@@ -16,7 +16,7 @@ export class ItemView extends LitElement {
 
     connectedCallback() {
         super.connectedCallback()
-        _getItemData()
+        this._getItemData()
     }
 
     async _getItemData() {
