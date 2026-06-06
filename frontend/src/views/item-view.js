@@ -5,13 +5,15 @@ export class ItemView extends LitElement {
         selectedServer: { type: Number },
         item: {type: Number},
         itemData: {type: Object},
-        user: {type: Object}
+        user: {type: Object},
+        loading: {type: Boolean}
     }
 
     constructor() {
         super()
         this.user = null
         this.itemData = null
+        this.loading = true;
     }
 
     connectedCallback() {
@@ -33,6 +35,8 @@ export class ItemView extends LitElement {
         this.itemData = result.item
     } catch(err) {
         console.error("getItemData error: " + err)
+    } finally {
+        this.loading = false;
     }
     }
 
@@ -141,7 +145,8 @@ export class ItemView extends LitElement {
 
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
-    console.log(this.itemData)
+
+    if (this.loading) return html`Please wait...`
 
     return html`
     <div class="dashboard">
