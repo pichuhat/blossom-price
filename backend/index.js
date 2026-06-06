@@ -288,7 +288,7 @@ app.get('/api/allitems', async (req, res) => {
             FROM items i
             LEFT JOIN price_submissions p ON i.id = p.item_id
             AND p.status='accepted'
-            AND p.server_id = '$1'
+            AND p.server_id = $1
             LEFT JOIN users u ON p.submitted_by = u.discord_id
             WHERE i.id = $2
             ORDER BY i.id, p.timestamp DESC;
