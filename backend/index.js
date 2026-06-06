@@ -293,9 +293,8 @@ app.get('/api/allitems', async (req, res) => {
             WHERE i.id = $2
             ORDER BY i.id, p.timestamp DESC;
         `
-    })
 
-    try {
+        try {
     const result = await pgPool.query(sqlQuery, [serverToGet, idToGet])
 
     console.log(result.rows[0])
@@ -303,6 +302,7 @@ app.get('/api/allitems', async (req, res) => {
     } catch(err) {
         res.status(500).json({success: false, message: "query error", item: null})
     }
+    })
 
     
 
