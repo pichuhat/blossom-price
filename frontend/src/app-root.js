@@ -55,7 +55,7 @@ export class AppView extends LitElement {
           const serverId = parseInt(params.id, 10)
           const itemId = parseInt(params.itemid, 10)
           this.selectedServer = isNaN(serverId) ? undefined : serverId
-          this.reuqestUpdate()
+          this.requestUpdate()
           return html`<item-view .selectedServer=${this.selectedServer} .item=${itemId}></item-view>`
         }
       }
