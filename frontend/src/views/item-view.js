@@ -45,6 +45,7 @@ export class ItemView extends LitElement {
     background-color: #2a2a2a;
     border-radius: 5px;
     color: white;
+    width: fit-content;
     }
 
     .tagbox {
