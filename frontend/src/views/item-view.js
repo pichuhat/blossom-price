@@ -47,6 +47,7 @@ export class ItemView extends LitElement {
     }
     
     .dashboard {
+        margin-top: 10px;
         display: grid;
         grid-template-columns: max-content 1fr; 
         align-items: stretch; 
@@ -118,6 +119,7 @@ export class ItemView extends LitElement {
     table, th, td {
         border: 1px white solid;
         padding: 10px;
+        text-align: center;
     }
     
     table {
@@ -125,6 +127,7 @@ export class ItemView extends LitElement {
         margin: 0 auto;
         margin-top: 20px;
         width: 100%;
+        color: white;
     }
     
     .nogrow {
@@ -155,9 +158,9 @@ export class ItemView extends LitElement {
     <div class="box">
     <h1 class="center">${this.itemData.item_name}</h1>
     <div class="tagbox">
-        ${this.itemData.tags.map(tag => {
-            html`<span class="tag">${tag}</span>`
-        })}
+        ${this.itemData.tags ? this.itemData.tags.map(tag => {
+            return html`<span class="tag">${tag}</span>`
+        }) : ""}
     </div>
     <img src="https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png">
     </div>
@@ -166,6 +169,7 @@ export class ItemView extends LitElement {
     <div class="box nogrow">
     <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.itemData.price}</span><br>
     <sub class="priceinfo">- ${this.itemData.username}<br>${this.itemData.recom_timestamp}</sub>
+    ${this.user.role == "staff" || this.user.role == "admin" ? `<br><br><button onclick="window.alert('coming soon!')">Recommend New Price</button>` : ""}
 </div>
 <div class="box nogrow  ">
     <span class="boxheader priceAdd">Price Graph</span><br>

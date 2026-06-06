@@ -58,7 +58,7 @@ export class AppView extends LitElement {
           console.log(this.selectedServer)
           console.log(itemId)
           this.requestUpdate()
-          return html`<item-view .selectedServer=${this.selectedServer} .item=${itemId}></item-view>`
+          return html`<item-view .selectedServer=${this.selectedServer} .item=${itemId} .user=${this.user}></item-view>`
         }
       }
     ]);
