@@ -3,6 +3,7 @@ import "./components/navbar.js"
 import "./views/guest-view.js"
 import "./views/home-view.js"
 import "./views/allitem-view.js"
+import "./views/item-view.js"
 
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
@@ -47,6 +48,16 @@ export class AppView extends LitElement {
       {
         path: '/settings',
         render: () => html`<h2>User Settings View Coming Soon</h2>`
+      },
+      {
+        path: '/server/:id/item/:itemid',
+        render: (params) => {
+          const serverId = parseInt(params.id, 10)
+          const itemId = parseInt(itemid.id, 10)
+          this.selectedServer = isNan(serverId) ? undefined : serverId
+          this.reuqestUpdate()
+          return html`<item-view .selectedServer=${this.selectedServer} .item=${itemId}></item-view>`
+        }
       }
     ]);
     }

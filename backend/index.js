@@ -273,6 +273,39 @@ app.get('/api/allitems', async (req, res) => {
         }
     })
 
+    app.get("/api/item/:serverid/:itemid", async (req, res) => {
+        const serverToGet = req.params.serverid
+        const idToGet = req.params.itemid
+        const sqlQuery = `
+            SELECT DISTINCT ON (i.id)
+            i.*,
+            p.price AS price,
+            p.timestamp AS recom_timestamp,
+            p.submission_id AS recommendation_id,
+            p.submitted_by AS author_id,
+            p.server_id AS server,
+            u.username AS username
+            FROM items i
+            LEFT JOIN price_submissions p ON i.id = p.item_id
+            AND p.status='accepted'
+            AND p.server_id = '$1'
+            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            WHERE i.id = $2
+            ORDER BY i.id, p.timestamp DESC;
+        `
+    })
+
+    try {
+    const result = await pgPool.query(sqlQuery, [serverToGet, idToGet])
+
+    console.log(result.rows[0])
+    res.status(200).json({success: true, item: result.rows[0]})
+    } catch(err) {
+        res.status(500).json({success: false, message: "query error", item: null})
+    }
+
+    
+
 app.listen(5000, () => {
     console.log(`BCpricer running at port 5000`);
 });
