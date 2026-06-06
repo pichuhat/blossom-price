@@ -169,7 +169,7 @@ export class ItemView extends LitElement {
     <div class="box nogrow">
     <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.itemData.price}</span><br>
     <sub class="priceinfo">- ${this.itemData.username}<br>${this.itemData.recom_timestamp}</sub>
-    ${this.user.role == "staff" || this.user.role == "admin" ? `<br><br><button onclick="window.alert('coming soon!')">Recommend New Price</button>` : ""}
+    ${this.user && (this.user.role == "staff" || this.user.role == "admin") ? html`<br><br><button onclick="window.alert('coming soon!')">Recommend New Price</button>` : ""}
 </div>
 <div class="box nogrow  ">
     <span class="boxheader priceAdd">Price Graph</span><br>
