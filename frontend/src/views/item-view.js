@@ -141,6 +141,7 @@ export class ItemView extends LitElement {
 
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
+    console.log(this.itemData)
 
     return html`
     <div class="dashboard">
