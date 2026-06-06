@@ -13,6 +13,7 @@ export class ItemView extends LitElement {
         super()
         this.user = null
         this.itemData = null
+        this.selectedServer = null
         this.loading = true;
     }
 
