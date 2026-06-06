@@ -45,7 +45,15 @@ export class ItemView extends LitElement {
     background-color: #2a2a2a;
     border-radius: 5px;
     color: white;
-    width: fit-content;
+    display: flex;
+    justify-content: center;
+    width: 100%
+    }
+
+    .box-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
     }
 
     .tagbox {
@@ -60,7 +68,7 @@ export class ItemView extends LitElement {
     color: white;
     font-size: 80%;
     text-transform: uppercase;
-    padding: 2px 4px;
+    padding: 4px 8px;
     border-radius: 2px;
     }
   `;
@@ -69,7 +77,8 @@ export class ItemView extends LitElement {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
 
     return html`
-    <div class="center box">
+    <div class="box">
+    <div class="box-content">
     <h2>${this.itemData.item_name}</h2>
     <div class="tagbox">
     ${this.itemData.tags ? this.itemData.tags.map(tag => html`
@@ -78,6 +87,7 @@ export class ItemView extends LitElement {
     </div>
     <img src="https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.item}.png">
 
+    </div>
     </div>
     `;
   }
