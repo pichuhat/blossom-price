@@ -295,12 +295,13 @@ app.get('/api/allitems', async (req, res) => {
         `
 
         try {
+            console.log("reached A")
     const result = await pgPool.query(sqlQuery, [serverToGet, idToGet])
 
     console.log(result.rows[0])
     res.status(200).json({success: true, item: result.rows[0]})
     } catch(err) {
-        res.status(500).json({success: false, message: "query error", item: null})
+        res.status(500).json({success: false, message: "query error: " + err, item: null})
     }
     })
 
