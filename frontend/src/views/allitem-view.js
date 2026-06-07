@@ -82,12 +82,13 @@ export class AllItemView extends LitElement {
   }
 
   _routeToItemPage(id) {
+    console.log("received")
     const response = window.prompt("Enter a server name:")
     if (!this.servers.includes(response.toLowerCase())) return window.alert("That server does not exist!")
     this.dispatchEvent(new CustomEvent('nav-requested', {
     bubbles: true,
     composed: true,
-    detail: { path: `/server/${response}/item/${id}` }
+    detail: { path: `/server/${this.servers.indexOf(toLowerCase(response))}/item/${id}` }
   }));
   }
 
@@ -112,7 +113,13 @@ export class AllItemView extends LitElement {
       color: white;
       box-sizing: border-box;
       overflow: hidden;
+      transition: ease 0.3s;
     }
+
+    .card:hover {
+    transform: scale(1.2);
+    }
+
     .card img {
       display: block;
       width: auto;
