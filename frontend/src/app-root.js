@@ -100,7 +100,7 @@ export class AppView extends LitElement {
   
   if (path.startsWith('/server/')) {
     // Extract the number at the end of the URL string
-    const idStr = path.split('/')[1];
+    const idStr = path.split('/')[2];
     const serverId = parseInt(idStr, 10);
     
     this.selectedServer = isNaN(serverId) ? undefined : serverId;
