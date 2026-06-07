@@ -88,7 +88,7 @@ export class AllItemView extends LitElement {
     this.dispatchEvent(new CustomEvent('nav-requested', {
     bubbles: true,
     composed: true,
-    detail: { path: `/server/${this.servers.indexOf(toLowerCase(response))}/item/${id}` }
+    detail: { path: `/server/${this.servers.indexOf(response.toLowerCase())}/item/${id}` }
   }));
   }
 
@@ -117,7 +117,7 @@ export class AllItemView extends LitElement {
     }
 
     .card:hover {
-    transform: scale(1.2);
+    transform: scale(1.05);
     }
 
     .card img {
