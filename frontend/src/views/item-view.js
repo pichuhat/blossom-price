@@ -152,6 +152,11 @@ export class ItemView extends LitElement {
 
     if (this.loading) return html`Please wait...`
 
+    const timestamp = this.itemData.recom_timestamp
+    const date = new Date(timestamp)
+    const formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
+    const displayTime = formatter.format(date)
+
     return html`
     <div class="dashboard">
 <div class="profile-column">
@@ -168,7 +173,7 @@ export class ItemView extends LitElement {
 <div class="market-column">
     <div class="box nogrow">
     <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.itemData.price}</span><br>
-    <sub class="priceinfo">- ${this.itemData.username}<br>${this.itemData.recom_timestamp}</sub>
+    <sub class="priceinfo">- ${this.itemData.username}<br>${displayTime}</sub>
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") ? html`<br><br><button onclick="window.alert('coming soon!')">Recommend New Price</button>` : ""}
 </div>
 <div class="box nogrow  ">

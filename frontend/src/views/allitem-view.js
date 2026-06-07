@@ -5,7 +5,8 @@ export class AllItemView extends LitElement {
     items: {type: Object},
     loading: {type: Boolean},
     page: {type: Number},
-    maxPages: {type: Number}
+    maxPages: {type: Number},
+    servers: {type: Array}
   }
 
   constructor() {
@@ -13,6 +14,7 @@ export class AllItemView extends LitElement {
     this.loading = true
     this.page = 1
     this.maxPages = 1
+    this.servers = ["cherry", "spirit", "lotus", "tulip"]
   }
 
   connectedCallback() {
@@ -77,6 +79,16 @@ export class AllItemView extends LitElement {
 } else {
   window.alert("Invalid input")
 }
+  }
+
+  _routeToItemPage(id) {
+    const response = window.prompt("Enter a server name:")
+    if (!this.servers.includes(response.toLowerCase())) return window.alert("That server does not exist!")
+    this.dispatchEvent(new CustomEvent('nav-requested', {
+    bubbles: true,
+    composed: true,
+    detail: { path: `/server/${response}/item/${id}` }
+  }));
   }
 
   static styles = css`
@@ -147,7 +159,7 @@ export class AllItemView extends LitElement {
       <span>Page ${this.page}/${this.maxPages}</span> <button ?disabled=${previousDisabled} @click="${this._previousPage}">Previous</button><button ?disabled=${nextDisabled} @click="${this._nextPage}">Next</button><button @click="${this._customPage}">...</button>
       <div class="grid">
         ${this.items.map(item => html`
-          <div class="card">
+          <div class="card" @click="${() => this._routeToItemPage(item.id)}">
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
             
             <div class="tags">
