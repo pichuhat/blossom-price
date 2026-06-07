@@ -76,11 +76,8 @@ export class AppView extends LitElement {
     this.addEventListener('nav-requested', (event) => {
     // Extract the destination path sent inside the event payload
     const destinationPath = event.detail.path;
-    
-    // Smoothly update the text in the browser's URL address bar without refreshing
+
     window.history.pushState({}, '', destinationPath);
-    
-    // Sync selected server state and render the new route
     this._syncFromPathName();
   });
 
@@ -103,7 +100,7 @@ export class AppView extends LitElement {
   
   if (path.startsWith('/server/')) {
     // Extract the number at the end of the URL string
-    const idStr = path.split('/').pop();
+    const idStr = path.split('/')[1];
     const serverId = parseInt(idStr, 10);
     
     this.selectedServer = isNaN(serverId) ? undefined : serverId;
