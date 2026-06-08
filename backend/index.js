@@ -305,6 +305,40 @@ app.get('/api/allitems', async (req, res) => {
     }
     })
 
+    app.get('/api/itemhistory/:serverid/:itemid', async (req, res) => {
+        const serverToGet = req.params.serverid
+        const idToGet = req.params.itemid
+        const sqlQuery = `
+        SELECT
+        i.*,
+        p.price AS price,
+        p.timestamp AS timestamp,
+        p.submission_id AS recommendation_id,
+        p.submitted_by AS author_id,
+        p.server_id AS server,
+        p.status AS status,
+        u.username AS username
+        FROM items i
+        LEFT JOIN price_submissions p ON i.id = p.item_id
+        AND p.status='accepted'
+        AND p.server_id= $1
+        LEFT JOIN users u ON p.submitted_by = u.discord_id
+        WHERE i.id = $2
+        ORDER BY i.id, timestamp DESC;
+        `
+
+        try {
+        const result = await pgPool.query(sqlQuery, [serverToGet, idToGet])
+        res.status(200).json({success: true, history: result.rows})
+        } catch(err) {
+            res.status(500).json({success: false, message: `querry error: ${err}`, history: null})
+        }
+    })
+
+    app.get('/api/itemrecom/:serverid/:itemid', async (req, res) => {
+        res.status(500).json({success: false, message: "This endpoint is not available."})
+    })
+
     
 
 app.listen(5000, () => {

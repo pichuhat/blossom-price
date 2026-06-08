@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import "../components/price-history.js"
 
 export class ItemView extends LitElement {
     static properties = {
@@ -182,24 +183,8 @@ export class ItemView extends LitElement {
 </div>
 <div class="price-history box grow">
     <span class="priceAdd">Price History</span><br>
-    <span>Coming Soon! EXAMPLE TABLE</span>
     <div class="table-scroll-container">
-    <table>
-        <thead>
-            <tr>
-            <th scope="col">Timestamp</th>
-            <th scope="col">User</th>
-            <th scope="col">Reported Price</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>June 6, 2026, 3:00 PM</td>
-                <td>pichuhat</td>
-                <td>$5,000,000</td>
-            </tr>
-        </tbody>
-    </table>
+    <price-history .selectedServer=${this.selectedServer} .itemID=${this.item} .approvedOnly=true></price-history>
     </div>
 </div>
 </div>
