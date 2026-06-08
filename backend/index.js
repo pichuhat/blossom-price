@@ -343,7 +343,7 @@ app.get('/api/allitems', async (req, res) => {
         res.status(500).json({success: false, message: "This endpoint is not available."})
     })
 
-    app.get('/~/:path/*any', (req, res) => {
+    app.get('/~/*any', (req, res) => {
         res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
     })
 
@@ -352,7 +352,7 @@ app.get('/api/allitems', async (req, res) => {
 })
 
     app.get("/*any", (req, res) => {
-        if (req.path.startsWith('/api') || req.path.includes('.')) {
+        if (req.path.startsWith('/api') || req.path.includes('.') || req.path.startsWith('/~')) {
         return res.status(404).send("404 Unknown asset")
     }
         res.redirect(302, `/~${req.originalUrl}`)

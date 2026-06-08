@@ -25,11 +25,11 @@ export class AppView extends LitElement {
 
         this.router = new Router(this, [
       { 
-        path: '/~/', 
+        path: '/~{/}?', 
         render: () => html`<home-view .selectedServer=${this.selectedServer}></home-view>`
       },
       { 
-        path: '/server/:id', 
+        path: '/server/:id{/}?', 
         render: (params) => {
           const serverId = parseInt(params.id, 10);
           this.selectedServer = isNaN(serverId) ? undefined : serverId;
@@ -38,19 +38,19 @@ export class AppView extends LitElement {
         }
       },
       {
-        path: '/~/allitems',
+        path: '/~/allitems{/}?',
         render: () => html`<all-item-view></all-item-view>`
       },
       {
-        path: '/~/search',
+        path: '/~/search{/}?',
         render: () => html`<section><h2>Search</h2><p>Search view coming soon.</p></section>`
       },
       {
-        path: '/~/settings',
+        path: '/~/settings{/}?',
         render: () => html`<h2>User Settings View Coming Soon</h2>`
       },
       {
-        path: '/~/server/:id/item/:itemid',
+        path: '/~/server/:id/item/:itemid{/}?',
         render: (params) => {
           const serverId = parseInt(params.id, 10)
           const itemId = parseInt(params.itemid, 10)
@@ -74,7 +74,6 @@ export class AppView extends LitElement {
     this.checkLoginStatus();
 
     this.addEventListener('nav-requested', (event) => {
-    // Extract the destination path sent inside the event payload
     const destinationPath = event.detail.path;
 
     window.history.pushState({}, '', destinationPath);
