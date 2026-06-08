@@ -10,6 +10,7 @@ const pgSession = require("connect-pg-simple")(session)
 const { Pool } = require("pg")
 
 const cors = require('cors');
+const { rejects } = require("assert")
 
 app.set('trust proxy', 1);
 
@@ -118,7 +119,7 @@ app.use(session({
 app.use("/static", express.static(path.join(__dirname, "static")));
 
 app.get('/', (req, res) => {
-    res.send("hello")
+    res.redirect(301, '/~/')
 })
 
 app.get('/api/auth/callback', async (req, res) => {
@@ -339,7 +340,17 @@ app.get('/api/allitems', async (req, res) => {
         res.status(500).json({success: false, message: "This endpoint is not available."})
     })
 
-    
+    app.get('/~/:path*', (req, res) => {
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
+    })
+
+    app.get("/:path*", (req, res) => {
+        const pathToSend = req.params.path + (req.params[0] || "")
+        if (pathToSend.startsWith('/api') || pathToSend.includes('.')) {
+            return res.status(404).send("404 Unknown asset")
+        }
+        res.redirect(302, `/~/${pathToSend}`)
+    })
 
 app.listen(5000, () => {
     console.log(`BCpricer running at port 5000`);
