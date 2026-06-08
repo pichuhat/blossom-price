@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import "../components/price-history.js"
+import "./new-price-view.js"
 
 export class ItemView extends LitElement {
     static properties = {
@@ -7,7 +8,8 @@ export class ItemView extends LitElement {
         item: {type: Number},
         itemData: {type: Object},
         user: {type: Object},
-        loading: {type: Boolean}
+        loading: {type: Boolean},
+        openPriceRecom: {type: Boolean}
     }
 
     constructor() {
@@ -16,11 +18,17 @@ export class ItemView extends LitElement {
         this.itemData = null
         this.selectedServer = null
         this.loading = true;
+        this.openPriceRecom = false;
     }
 
     connectedCallback() {
         super.connectedCallback()
         this._getItemData()
+
+        this.addEventListener('close-recom', (event) => {
+            this.openPriceRecom = false;
+            this.requestUpdate()
+  });
     }
 
     async _getItemData() {
@@ -48,7 +56,7 @@ export class ItemView extends LitElement {
     }
     
     .dashboard {
-        margin-top: 10px;
+        margin-top: 20px;
         display: grid;
         grid-template-columns: max-content 1fr; 
         align-items: stretch; 
@@ -151,6 +159,11 @@ export class ItemView extends LitElement {
   _formatPrice(unformatted) {
         return Number(unformatted).toLocaleString()
     }
+    
+    _openPrice() {
+        this.openPriceRecom = true
+        this.requestUpdate()
+    }
 
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
@@ -163,6 +176,9 @@ export class ItemView extends LitElement {
     const displayTime = formatter.format(date)
 
     return html`
+    ${this.openPriceRecom ? html`
+        <new-price .itemData=${this.itemData} .selectedServer=${this.selectedServer} .selectedItem=${this.item}></new-price>
+        ` : ""}
     <div class="dashboard">
 <div class="profile-column">
     <div class="box">
@@ -179,7 +195,7 @@ export class ItemView extends LitElement {
     <div class="box nogrow">
     <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this._formatPrice(this.itemData.price)}</span><br>
     <sub class="priceinfo">- ${this.itemData.username}<br>${displayTime}</sub>
-    ${this.user && (this.user.role == "staff" || this.user.role == "admin") ? html`<br><br><button onclick="window.alert('coming soon!')">Recommend New Price</button>` : ""}
+    ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ? html`<br><br><button @click=${this._openPrice}>Recommend New Price</button>` : ""}
 </div>
 <div class="box nogrow  ">
     <span class="boxheader priceAdd">Price Graph</span><br>
