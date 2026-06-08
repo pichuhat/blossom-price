@@ -68,11 +68,6 @@ export class PriceHistory extends LitElement {
   render() {
     if (this.loading) return html`Loading history...`
 
-    const timestamp = this.history.recom_timestamp
-    const date = new Date(timestamp)
-    const formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
-    const displayTime = formatter.format(date)
-
     return html`
     <table>
         <thead>
