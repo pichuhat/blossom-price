@@ -40,7 +40,7 @@ export class PriceHistory extends LitElement {
     }
     `
 
-    _getHistory() {
+    async _getHistory() {
         const toFetch = this.approvedOnly ? `https://blossom-price.onrender.com/api/itemhistory/${this.selectedServer}/${this.itemID}` : `https://blossom-price.onrender.com/api/itemrecom/${this.selectedServer}/${this.itemID}`
 
         try {
