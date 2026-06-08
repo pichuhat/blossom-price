@@ -340,12 +340,12 @@ app.get('/api/allitems', async (req, res) => {
         res.status(500).json({success: false, message: "This endpoint is not available."})
     })
 
-    app.get('/~/:path*', (req, res) => {
+    app.get('/~/:path/*', (req, res) => {
         res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
     })
 
-    app.get("/:path*", (req, res) => {
-        const pathToSend = req.params.path + (req.params[0] || "")
+    app.get("/:path/*", (req, res) => {
+        const pathToSend = req.params.path + (req.params[0] ? '/' + req.params[0] : "")
         if (pathToSend.startsWith('/api') || pathToSend.includes('.')) {
             return res.status(404).send("404 Unknown asset")
         }
