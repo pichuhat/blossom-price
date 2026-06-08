@@ -24,7 +24,10 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
 }));
 
-const frontendHost = "https://bc-pricer.onrender.com"
+app.use(
+    '/src', 
+    express.static(path.join(__dirname, "..", "frontend", "src"))
+);
 
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -119,7 +122,7 @@ app.use(session({
 app.use("/static", express.static(path.join(__dirname, "static")));
 
 app.get('/', (req, res) => {
-    res.redirect(301, '/~/')
+    res.redirect(301, '/~')
 })
 
 app.get('/api/auth/callback', async (req, res) => {
@@ -193,10 +196,10 @@ app.get('/api/auth/callback', async (req, res) => {
 
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
         
-        res.redirect(frontendHost)
+        res.redirect("/")
 } catch(error) {
     if (checkA) {
-        res.redirect(frontendHost + "/?linkPopup=2")
+        res.redirect("/?linkPopup=2")
     } else {
     res.send("Uh Oh! " + error)
     }
@@ -313,7 +316,7 @@ app.get('/api/allitems', async (req, res) => {
         SELECT
         i.*,
         p.price AS price,
-        p.timestamp AS timestamp,
+        p.timestamp AS recom_timestamp,
         p.submission_id AS recommendation_id,
         p.submitted_by AS author_id,
         p.server_id AS server,
@@ -340,15 +343,19 @@ app.get('/api/allitems', async (req, res) => {
         res.status(500).json({success: false, message: "This endpoint is not available."})
     })
 
-    app.get('/~/:path/*', (req, res) => {
+    app.get('/~/:path/*any', (req, res) => {
         res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
     })
 
-    app.get("/:path/*", (req, res) => {
+    app.get(['/~', '/~/'], (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
+})
+
+    app.get("/*any", (req, res) => {
         if (req.path.startsWith('/api') || req.path.includes('.')) {
         return res.status(404).send("404 Unknown asset")
     }
-        res.redirect(302, `/~/${req.originalUrl}`)
+        res.redirect(302, `/~${req.originalUrl}`)
     })
 
 app.listen(5000, () => {

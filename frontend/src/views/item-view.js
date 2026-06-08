@@ -24,7 +24,7 @@ export class ItemView extends LitElement {
     }
 
     async _getItemData() {
-        const toSendUrl = "https://blossom-price.onrender.com/api/item/" + this.selectedServer + "/" + this.item
+        const toSendUrl = "/api/item/" + this.selectedServer + "/" + this.item
 
         try {
         const response = await fetch(toSendUrl, {
@@ -148,6 +148,10 @@ export class ItemView extends LitElement {
 }
   `;
 
+  _formatPrice(unformatted) {
+        return Number(unformatted).toLocaleString()
+    }
+
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
 
@@ -173,7 +177,7 @@ export class ItemView extends LitElement {
 </div>
 <div class="market-column">
     <div class="box nogrow">
-    <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.itemData.price}</span><br>
+    <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this._formatPrice(this.itemData.price)}</span><br>
     <sub class="priceinfo">- ${this.itemData.username}<br>${displayTime}</sub>
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") ? html`<br><br><button onclick="window.alert('coming soon!')">Recommend New Price</button>` : ""}
 </div>

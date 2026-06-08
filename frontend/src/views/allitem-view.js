@@ -30,7 +30,7 @@ export class AllItemView extends LitElement {
 
   async _getMaxPages() {
     try {
-      const response = await fetch("https://blossom-price.onrender.com/api/pagecount")
+      const response = await fetch("/api/pagecount")
 
       if (!response.ok) throw new Error("Server fetch issue")
       
@@ -44,7 +44,7 @@ export class AllItemView extends LitElement {
   async _fetchItems() {
     this.loading = true;
     try {
-      const response = await fetch("https://blossom-price.onrender.com/api/allitems?page=" + this.page, {
+      const response = await fetch("/api/allitems?page=" + this.page, {
         method: "GET",
         credentials: 'include'
       })

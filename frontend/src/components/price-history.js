@@ -42,7 +42,7 @@ export class PriceHistory extends LitElement {
     `
 
     async _getHistory() {
-        const toFetch = this.approvedOnly ? `https://blossom-price.onrender.com/api/itemhistory/${this.selectedServer}/${this.itemID}` : `https://blossom-price.onrender.com/api/itemrecom/${this.selectedServer}/${this.itemID}`
+        const toFetch = this.approvedOnly ? `/api/itemhistory/${this.selectedServer}/${this.itemID}` : `/api/itemrecom/${this.selectedServer}/${this.itemID}`
 
         try {
         const response = await fetch(toFetch, {
@@ -61,10 +61,13 @@ export class PriceHistory extends LitElement {
     }
 
     _formatDate(unformatted) {
-        console.log(unformatted)
         const date = new Date(unformatted)
         console.log(date)
         return this.formatter.format(date)
+    }
+
+    _formatPrice(unformatted) {
+        return Number(unformatted).toLocaleString()
     }
 
   render() {
@@ -81,7 +84,8 @@ export class PriceHistory extends LitElement {
         </thead>
         <tbody>
             ${this.history ? this.history.map(row => {
-                return html`<tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${row.username}</td><td>${row.price}</td></tr>`
+                console.log(row)
+                return html`<tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${row.username}</td><td>$${this._formatPrice(row.price)}</td></tr>`
             }) : ""}
         </tbody>
     </table>

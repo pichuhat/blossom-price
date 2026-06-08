@@ -25,7 +25,7 @@ export class AppView extends LitElement {
 
         this.router = new Router(this, [
       { 
-        path: '/', 
+        path: '/~/', 
         render: () => html`<home-view .selectedServer=${this.selectedServer}></home-view>`
       },
       { 
@@ -38,19 +38,19 @@ export class AppView extends LitElement {
         }
       },
       {
-        path: '/allitems',
+        path: '/~/allitems',
         render: () => html`<all-item-view></all-item-view>`
       },
       {
-        path: '/search',
+        path: '/~/search',
         render: () => html`<section><h2>Search</h2><p>Search view coming soon.</p></section>`
       },
       {
-        path: '/settings',
+        path: '/~/settings',
         render: () => html`<h2>User Settings View Coming Soon</h2>`
       },
       {
-        path: '/server/:id/item/:itemid',
+        path: '/~/server/:id/item/:itemid',
         render: (params) => {
           const serverId = parseInt(params.id, 10)
           const itemId = parseInt(params.itemid, 10)
@@ -109,7 +109,7 @@ export class AppView extends LitElement {
 
   async checkLoginStatus() {
     try {
-        const response = await fetch("https://blossom-price.onrender.com/api/auth/me", {
+        const response = await fetch("/api/auth/me", {
             method: 'GET',
             credentials: 'include' 
         })
