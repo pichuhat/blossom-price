@@ -11,6 +11,7 @@ export class PriceHistory extends LitElement {
     }
 
     constructor() {
+        super()
         this.selectedServer = null
         this.itemID = null
         this.approvedOnly = true
