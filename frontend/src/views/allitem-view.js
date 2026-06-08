@@ -88,7 +88,7 @@ export class AllItemView extends LitElement {
     this.dispatchEvent(new CustomEvent('nav-requested', {
     bubbles: true,
     composed: true,
-    detail: { path: `/*/server/${this.servers.indexOf(response.toLowerCase())}/item/${id}` }
+    detail: { path: `/~/server/${this.servers.indexOf(response.toLowerCase())}/item/${id}` }
   }));
   }
 
