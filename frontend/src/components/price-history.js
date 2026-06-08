@@ -61,7 +61,9 @@ export class PriceHistory extends LitElement {
     }
 
     _formatDate(unformatted) {
+        console.log(unformatted)
         const date = new Date(unformatted)
+        console.log(date)
         return this.formatter.format(date)
     }
 
