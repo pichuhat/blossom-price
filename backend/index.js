@@ -15,7 +15,7 @@ app.set('trust proxy', 1);
 
 // 2. Configure strict, credential-safe CORS
 app.use(cors({
-    origin: 'https://bc-pricer.onrender.com', 
+    origin: ['https://bc-pricer.onrender.com', process.env.DEV_URL], 
     
     credentials: true,
     
