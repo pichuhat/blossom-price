@@ -345,11 +345,10 @@ app.get('/api/allitems', async (req, res) => {
     })
 
     app.get("/:path/*", (req, res) => {
-        const pathToSend = req.params.path + (req.params[0] ? '/' + req.params[0] : "")
-        if (pathToSend.startsWith('/api') || pathToSend.includes('.')) {
-            return res.status(404).send("404 Unknown asset")
-        }
-        res.redirect(302, `/~/${pathToSend}`)
+        if (req.path.startsWith('/api') || req.path.includes('.')) {
+        return res.status(404).send("404 Unknown asset")
+    }
+        res.redirect(302, `/~/${req.originalUrl}`)
     })
 
 app.listen(5000, () => {
