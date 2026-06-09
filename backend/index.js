@@ -29,6 +29,8 @@ app.use(
     express.static(path.join(__dirname, "..", "frontend", "src"))
 );
 
+app.use(express.json())
+
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Recommended for Supabase production connections to avoid drops
@@ -356,6 +358,30 @@ app.get('/api/allitems', async (req, res) => {
         return res.status(404).send("404 Unknown asset")
     }
         res.redirect(302, `/~${req.originalUrl}`)
+    })
+
+    app.post('/api/recommend', async (req, res) => {
+        const input = req.body
+        if (req.session.user.role == 'staff' || req.session.user.role == 'admin') {
+            const sqlQuery = `
+            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+            `
+            const values = [req.body.item_id, req.body.server_id, req.session.user.id, req.body.price, 'pending']
+
+            try {
+
+            const result = await pgPool.query(sqlQuery, values)
+            res.status(200).json({success: true, message: "Uploaded"})
+
+            } catch(err) {
+                res.status(500).json({success: false, message: "Upload error"})
+            }
+
+        } else {
+            res.status(403).json({success: false, message: "Role required: staff"})
+        }
     })
 
 app.listen(5000, () => {

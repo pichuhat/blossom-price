@@ -11,7 +11,7 @@ export class NewPrice extends LitElement {
 
     constructor() {
         super()
-        this.loading = true;
+        this.loading = false;
         this.selectedServer = null;
         this.selectedItem = null;
         this.itemData = null;
@@ -69,15 +69,15 @@ export class NewPrice extends LitElement {
         } else {
             const asNumber = Number(original.slice(0, -1))
             if (original.at(-1).toLowerCase() == 'k') {
-                return this._formatPrice(asNumber * 1000)
+                return asNumber * 1000
             } else if (original.at(-1).toLowerCase() == 'm') {
-                return this._formatPrice(asNumber * 1000000)
+                return asNumber * 1000000
             } else {
                 return "Error"
             }
         }
     } else {
-        return this._formatPrice(original)
+        return original
     }
   }
 
@@ -89,15 +89,58 @@ export class NewPrice extends LitElement {
     }));
   }
 
+  async _uploadRecom() {
+    this.loading = true;
+    const price = this._getReadValue()
+    const data = {
+      item_id: this.selectedItem,
+      server_id: this.selectedServer,
+      price: price  
+    }
+
+    try {
+
+    const response = await fetch("/api/recommend", {
+      method: "POST",
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data),
+      credentials: 'include'
+    })
+    if (!response.ok) return console.log(response);
+
+    const result = await response.json()
+
+    if (result.success) {
+      window.alert("Recommendation submitted! Awaiting approval.")
+      this.dispatchEvent(new CustomEvent('close-recom', {
+        bubbles: true,
+        composed: true
+      }))
+    } else {
+      window.alert("An unknown error occurred.")
+      console.log(result.message)
+    }
+
+  } catch(err) {
+    window.alert("An error occurred.")
+    console.error(err)
+  } finally {
+    this.loading = false;
+  }
+    }
+
   render() {
+
     return html`
     <div class="newprice-dashboard">
       <div class="box">
-      <button class="leftbutton" @click=${(e) => this._closeMenu(e)}>Close</button>
+      <button class="leftbutton" @click=${(e) => this._closeMenu(e)} ?disabled=${this.loading}>Close</button>
       <h2>Recommend New Price</h2>
-      <h1>$${this._getReadValue()}</h1>
-      <input type="text" id="newprice" @input="${this._handleInput}"><br><br>
-      <button @click=${() => window.alert("Coming soon!")}>Submit</button>
+      <h1>$${this._formatPrice(this._getReadValue())}</h1>
+      <input type="text" id="newprice" @input="${this._handleInput}" ?disabled=${this.loading}><br><br>
+      <button @click=${this._uploadRecom} ?disabled=${this.loading}>Submit</button>
       </div>
       </div>
     `;
