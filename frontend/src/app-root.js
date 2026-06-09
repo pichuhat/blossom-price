@@ -4,6 +4,7 @@ import "./views/guest-view.js"
 import "./views/home-view.js"
 import "./views/allitem-view.js"
 import "./views/item-view.js"
+import "./views/staff-view.js"
 
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
@@ -59,6 +60,12 @@ export class AppView extends LitElement {
           console.log(itemId)
           this.requestUpdate()
           return html`<item-view .selectedServer=${this.selectedServer} .item=${itemId} .user=${this.user}></item-view>`
+        }
+      },
+      {
+        path: '/~/myrecoms',
+        render: () => {
+          return html`<my-recoms .user=${this.user}></my-recoms>`
         }
       }
     ]);

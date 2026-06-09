@@ -89,7 +89,8 @@ ul li a:hover {
       <li><a href="/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
       <li><a href="/search" @click=${(e) => this._navigateTo('/~/search', e)}>Search</a></li>
       <li class="rightside"><a href="/" @click=${(e) => this._navigateTo('/~/', e)}>${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a></li>
-      <li>${this.user ? html`<a href="/settings" @click=${(e) => this._navigateTo('/~/settings', e)}>${this.user.user}</a>` : html`<discord-login-btn></discord-login-btn>`}</li></div></ul>
+      ${(this.user.role == 'staff' || this.user.role == 'admin') && !this.loading ? html`<li><a href="/~/myrecoms" @click=${(e) => this._navigateTo('/~/myrecoms')}>My Recommendations</a></li>` : ""}
+      <li>${this.user ? html`<a href="/settings" @click=${(e) => this._navigateTo('/~/settings', e)}>${this.user.user}</a>` : html`<discord-login-btn></discord-login-btn>`}</li></ul>
       </header>
     `;
   }

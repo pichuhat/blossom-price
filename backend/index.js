@@ -301,10 +301,7 @@ app.get('/api/allitems', async (req, res) => {
         `
 
         try {
-            console.log("reached A")
     const result = await pgPool.query(sqlQuery, [serverToGet, idToGet])
-
-    console.log(result.rows[0])
     res.status(200).json({success: true, item: result.rows[0]})
     } catch(err) {
         res.status(500).json({success: false, message: "query error: " + err, item: null})
@@ -337,27 +334,8 @@ app.get('/api/allitems', async (req, res) => {
         const result = await pgPool.query(sqlQuery, [serverToGet, idToGet])
         res.status(200).json({success: true, history: result.rows})
         } catch(err) {
-            res.status(500).json({success: false, message: `querry error: ${err}`, history: null})
+            res.status(500).json({success: false, message: `query error: ${err}`, history: null})
         }
-    })
-
-    app.get('/api/itemrecom/:serverid/:itemid', async (req, res) => {
-        res.status(500).json({success: false, message: "This endpoint is not available."})
-    })
-
-    app.get('/~/*any', (req, res) => {
-        res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
-    })
-
-    app.get(['/~', '/~/'], (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
-})
-
-    app.get("/*any", (req, res) => {
-        if (req.path.startsWith('/api') || req.path.includes('.') || req.path.startsWith('/~')) {
-        return res.status(404).send("404 Unknown asset")
-    }
-        res.redirect(302, `/~${req.originalUrl}`)
     })
 
     app.post('/api/recommend', async (req, res) => {
@@ -382,6 +360,56 @@ app.get('/api/allitems', async (req, res) => {
         } else {
             res.status(403).json({success: false, message: "Role required: staff"})
         }
+    })
+
+    app.get('/api/listrecoms', async (req, res) => {
+        if (req.session.user.role == 'staff' || req.session.user.role == 'admin') {
+            const sqlQuery = `
+            SELECT
+            i.*,
+            p.price AS price,
+            p.timestamp AS recom_timestamp,
+            p.submission_id AS recommendation_id,
+            p.submitted_by AS author_id,
+            p.server_id AS server,
+            p.status AS status,
+            u.username AS username
+            FROM items i
+            LEFT JOIN price_submissions p ON i.id = p.item_id
+            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            WHERE p.submitted_by = $1
+            ORDER BY timestamp DESC;
+            `
+            const data = [req.session.user.id]
+
+            try {
+                const result = await pgPool.query(sqlQuery, data)
+                res.status(200).json({success: true, history: result.rows})
+            } catch(err) {
+                res.status(500).json({success: false, message: `ERROR: ${err}`, history: null})
+            }
+        } else {
+            res.status(403).json({success: false, message: "Role required: staff"})
+        }
+    })
+
+    //   ----------------------------------------------------------------------
+    //   [ ALL ENDPOINTS ABOVE THIS LINE                                      ]
+    //   ----------------------------------------------------------------------
+
+    app.get('/~/*any', (req, res) => {
+        res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
+    })
+
+    app.get(['/~', '/~/'], (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
+})
+
+    app.get("/*any", (req, res) => {
+        if (req.path.startsWith('/api') || req.path.includes('.') || req.path.startsWith('/~')) {
+        return res.status(404).send("404 Unknown asset")
+    }
+        res.redirect(302, `/~${req.originalUrl}`)
     })
 
 app.listen(5000, () => {
