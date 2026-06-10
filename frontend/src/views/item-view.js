@@ -19,6 +19,8 @@ export class ItemView extends LitElement {
         this.selectedServer = null
         this.loading = true;
         this.openPriceRecom = false;
+        this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
+        this.properPricing = true;
     }
 
     connectedCallback() {
@@ -31,7 +33,18 @@ export class ItemView extends LitElement {
   });
     }
 
+    updated(changedProperties) {
+        if ((changedProperties.has('item') || changedProperties.has('selectedServer')) && this.selectedServer != null && this.item != null) {
+            this.loading = true
+            this._getItemData()
+        }
+    }
+
     async _getItemData() {
+        if (this.selectedServer == null || this.item == null) {
+            return
+        }
+
         const toSendUrl = "/api/item/" + this.selectedServer + "/" + this.item
 
         try {
@@ -159,10 +172,42 @@ export class ItemView extends LitElement {
   _formatPrice(unformatted) {
         return Number(unformatted).toLocaleString()
     }
+
+    _formatDate(unformatted) {
+        const date = new Date(unformatted)
+        return this.formatter.format(date)
+    }
     
     _openPrice() {
         this.openPriceRecom = true
         this.requestUpdate()
+    }
+
+    _back() {
+        this.dispatchEvent(new CustomEvent('nav-requested', {
+        bubbles: true,
+        composed: true,
+        detail: { path: `/~/server/${this.selectedServer}/item/${Number(this.item) - 1}` }
+  }));
+    }
+
+    _next() {
+        this.dispatchEvent(new CustomEvent('nav-requested', {
+        bubbles: true,
+        composed: true,
+        detail: { path: `/~/server/${this.selectedServer}/item/${Number(this.item) + 1}` }
+  }));
+    }
+
+    _select() {
+        const ask = window.prompt(`Enter Spawner ID 1-65:`)
+        if (!ask) return;
+        if (isNaN(ask) || Number(ask) > 65 || Number(ask) < 1) return window.alert("Invalid input")
+        this.dispatchEvent(new CustomEvent('nav-requested', {
+        bubbles: true,
+        composed: true,
+        detail: { path: `/~/server/${this.selectedServer}/item/${999000 + Number(ask)}` }
+  }));
     }
 
   render() {
@@ -170,10 +215,11 @@ export class ItemView extends LitElement {
 
     if (this.loading) return html`Please wait...`
 
-    const timestamp = this.itemData.recom_timestamp
-    const date = new Date(timestamp)
-    const formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
-    const displayTime = formatter.format(date)
+    if (!this.itemData.recom_timestamp || !this.itemData.username) {
+        this.properPricing = false;
+    } else {
+        this.properPricing = true;
+    }
 
     return html`
     ${this.openPriceRecom ? html`
@@ -182,19 +228,20 @@ export class ItemView extends LitElement {
     <div class="dashboard">
 <div class="profile-column">
     <div class="box">
+    ${this.itemData.tags.includes('spawner') && this.user && (this.user.role == 'staff' || this.user.role == 'admin') ? html`<button @click=${this._back} ?disabled=${this.loading || this.item == 999001}>Previous Spawner (beta)</button><button @click=${this._select}>...</button><button @click=${this._next} ?disabled=${this.loading || this.item == 999065}>Next Spawner (beta)</button>` : ""}
     <h1 class="center">${this.itemData.item_name}</h1>
     <div class="tagbox">
         ${this.itemData.tags ? this.itemData.tags.map(tag => {
             return html`<span class="tag">${tag}</span>`
         }) : ""}
     </div>
-    <img src="https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png">
+    <img src=${this.itemData.tags.includes('spawner') ? `https://minecraft.wiki/images/Monster_Spawner_JE4.png` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png`}>
     </div>
 </div>
 <div class="market-column">
     <div class="box nogrow">
-    <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this._formatPrice(this.itemData.price)}</span><br>
-    <sub class="priceinfo">- ${this.itemData.username}<br>${displayTime}</sub>
+    <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.properPricing ? this._formatPrice(this.itemData.price) : "-"}</span><br>
+    <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ? html`<br><br><button @click=${this._openPrice}>Recommend New Price</button>` : ""}
 </div>
 <div class="box nogrow  ">

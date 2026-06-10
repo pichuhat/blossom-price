@@ -74,6 +74,7 @@ export class PriceHistory extends LitElement {
     if (this.loading) return html`Loading history...`
 
     return html`
+    ${this.history && this.history.length > 0 ? html`
     <table>
         <thead>
             <tr>
@@ -83,12 +84,13 @@ export class PriceHistory extends LitElement {
             </tr>
         </thead>
         <tbody>
-            ${this.history ? this.history.map(row => {
+            ${this.history.map(row => {
                 console.log(row)
                 return html`<tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${row.username}</td><td>$${this._formatPrice(row.price)}</td></tr>`
-            }) : ""}
+            })}
         </tbody>
     </table>
+    ` : html`No history to display :(`}
     `
   }
 }

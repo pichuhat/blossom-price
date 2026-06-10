@@ -164,7 +164,6 @@ app.get('/api/auth/callback', async (req, res) => {
 
         // Extract their verified info
         const memberData = guildMemberResponse.data;
-        console.log(memberData)
         const minecraftUsername = memberData.nick;
         const discordId = memberData.user.id;
         const roles = memberData.roles
@@ -193,7 +192,7 @@ app.get('/api/auth/callback', async (req, res) => {
                 console.error('Session save error:', err);
                 return res.status(500).send('Error saving session.');
             }
-            console.log(`Saved session for ${minecraftUsername} to Supabase!`);
+            console.log(`Saved session for ${minecraftUsername}`);
         })
 
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
@@ -231,10 +230,28 @@ app.get('/api/allitems', async (req, res) => {
     const limit = 20
     const offset = (page-1)*limit;
 
-    const sqlQuery = `
-    SELECT * FROM items
-    ORDER BY id ASC
+    const sqlQuery = `${req.query.selectedServer ? `
+    SELECT DISTINCT ON (i.id)
+    i.*,
+    p.price AS price,
+    p.timestamp AS recom_timestamp,
+    p.submission_id AS recommendation_id,
+    p.submitted_by AS author_id,
+    p.server_id AS server,
+    u.username AS username
+    FROM items i
+    LEFT JOIN price_submissions p ON i.id = p.item_id
+    AND p.status='accepted'
+    AND p.server_id = ${req.query.selectedServer}
+    LEFT JOIN users u ON p.submitted_by = u.discord_id
+    ORDER BY i.id, p.timestamp DESC
     LIMIT $1 OFFSET $2
+    `
+    : `
+    SELECT * FROM items i
+    ORDER BY i.id ASC
+    LIMIT $1 OFFSET $2
+    `}
     `
     const result = await pgPool.query(sqlQuery, [limit, offset])
 
@@ -321,13 +338,13 @@ app.get('/api/allitems', async (req, res) => {
         p.server_id AS server,
         p.status AS status,
         u.username AS username
-        FROM items i
-        LEFT JOIN price_submissions p ON i.id = p.item_id
+        FROM price_submissions p
+        LEFT JOIN items i ON i.id = p.item_id
         AND p.status='accepted'
         AND p.server_id= $1
         LEFT JOIN users u ON p.submitted_by = u.discord_id
         WHERE i.id = $2
-        ORDER BY i.id, timestamp DESC;
+        ORDER BY i.id, recom_timestamp DESC;
         `
 
         try {
@@ -442,6 +459,19 @@ app.get('/api/allitems', async (req, res) => {
             }
         } else {
             res.status(403).json({success: false, message: "Role required: admin"})
+        }
+    })
+
+    app.get('/api/spawners', async (req, res) => {
+        const sqlQuery = `
+        SELECT * FROM items AS i
+        WHERE 'spawner' = ANY(i.tags)
+        `
+        try {
+        const result = await pgPool.query(sqlQuery)
+        res.status(200).json({success: true, items: result.rows})
+        } catch(err) {
+            res.status(500).json({success: false, message: "Error: " + err})
         }
     })
 

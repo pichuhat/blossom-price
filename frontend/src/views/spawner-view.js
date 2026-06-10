@@ -1,11 +1,9 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 
-export class AllItemView extends LitElement {
+export class SpawnerView extends LitElement {
   static properties = {
     items: {type: Object},
     loading: {type: Boolean},
-    page: {type: Number},
-    maxPages: {type: Number},
     servers: {type: Array},
     selectedServer: {type: Number}
   }
@@ -13,16 +11,13 @@ export class AllItemView extends LitElement {
   constructor() {
     super()
     this.loading = true
-    this.page = 1
-    this.maxPages = 1
     this.servers = ["cherry", "spirit", "lotus", "tulip"]
     this.selectedServer = null
-    this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
+    this.items = null
   }
 
   connectedCallback() {
     super.connectedCallback()
-    this._getMaxPages()
     this._fetchItems()
   }
 
@@ -31,25 +26,10 @@ export class AllItemView extends LitElement {
     return value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
   }
 
-  async _getMaxPages() {
-    try {
-      const response = await fetch("/api/pagecount")
-
-      if (!response.ok) throw new Error("Server fetch issue")
-      
-      const result = await response.json()
-      this.maxPages = result.count
-    } catch(error) {
-      console.error("Error loading max page count: " + error)
-    }
-  }
-
   async _fetchItems() {
     this.loading = true;
-    const fetchURL = `/api/allitems?page=${this.page}${this.selectedServer !== null ? `&selectedServer=${this.selectedServer}` : ""}`
-    console.log(fetchURL)
     try {
-      const response = await fetch(fetchURL, {
+      const response = await fetch(`/api/spawners${this.selectedServer !== null ? `?selectedServer=${this.selectedServer}` : ""}`, {
         method: "GET",
         credentials: 'include'
       })
@@ -59,31 +39,10 @@ export class AllItemView extends LitElement {
       const result = await response.json()
       this.items = result.items
     } catch(err) {
-      console.error("Error loading allitems: " + err)
+      console.error("Error loading spawners: " + err)
     } finally {
       this.loading = false
     }
-  }
-
-  _nextPage() {
-    this.page++
-    this._fetchItems()
-  }
-
-  _previousPage() {
-    this.page--
-    this._fetchItems()
-  }
-
-  _customPage() {
-    const input = window.prompt("Enter page number 1-" + this.maxPages)
-    if (input === null) return;
-    if (/^\d+$/.test(input.trim()) && input > 0 && input <= this.maxPages) {
-    this.page = parseInt(input, 10);
-    this._fetchItems()
-} else {
-  window.alert("Invalid input")
-}
   }
 
   _routeToItemPage(id) {
@@ -96,11 +55,6 @@ export class AllItemView extends LitElement {
     detail: { path: `/~/server/${this.servers.indexOf(response.toLowerCase())}/item/${id}` }
   }));
   }
-
-  _formatStr(str) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
 
   static styles = css`
     .grid {
@@ -141,13 +95,9 @@ export class AllItemView extends LitElement {
       border-radius: 6px;
       margin-top: 12px;
     }
-    .priceAdd {
-        font-size: 100%;
-    }
     .price {
-        color: #00ffcc;
-        font-weight: bold;
-        font-size: 130%;
+      color: #00ffcc;
+      font-weight: bold;
     }
     .tags {
       margin-top: 10px;
@@ -166,30 +116,15 @@ export class AllItemView extends LitElement {
     }
   `;
 
-  _formatPrice(unformatted) {
-        return Number(unformatted).toLocaleString()
-    }
-
-     _formatDate(unformatted) {
-        const date = new Date(unformatted)
-        return this.formatter.format(date)
-    }
-
   render() {
     if (this.loading) return html`
-    <div class="center">
-    <h1>All Items</h1>
-    <span>Page ${this.page}/${this.maxPages}</span><br><button disabled>Previous</button><button disabled>...</button><button disabled>Next</button>
-    </div>
+    <h1>Spawners</h1>
     Please wait...
     `
-    const previousDisabled = this.page == 1 ? "disabled" : ""
-    const nextDisabled = this.page == this.maxPages ? "disabled" : ""
 
     return html`
     <div class="center">
-      <h1>All Items</h1>
-      <span>Page ${this.page}/${this.maxPages}</span><br><button ?disabled=${previousDisabled} @click="${this._previousPage}">Previous</button><button @click="${this._customPage}">...</button><button ?disabled=${nextDisabled} @click="${this._nextPage}">Next</button>
+      <h1>Spawners (BETA)</h1>
       </div>
       <div class="grid">
         ${this.items.map(item => html`
@@ -204,7 +139,7 @@ export class AllItemView extends LitElement {
               `) : ''}
             </div>
             <img
-              src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`}
+              src="https://minecraft.wiki/images/Monster_Spawner_JE4.png"
               alt="${this._decodeEscapedUnicode(item.item_name)}"
             />
           </div>
@@ -213,4 +148,4 @@ export class AllItemView extends LitElement {
     `;
   }
 }
-customElements.define('all-item-view', AllItemView);
+customElements.define('spawner-view', SpawnerView);

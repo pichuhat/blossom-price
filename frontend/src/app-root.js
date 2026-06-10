@@ -6,6 +6,7 @@ import "./views/allitem-view.js"
 import "./views/item-view.js"
 import "./views/staff-view.js"
 import "./views/admin-view.js"
+import "./views/spawner-view.js"
 
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
@@ -41,7 +42,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/allitems{/}?',
-        render: () => html`<all-item-view></all-item-view>`
+        render: () => html`<all-item-view .selectedServer=${this.selectedServer}></all-item-view>`
       },
       {
         path: '/~/search{/}?',
@@ -80,6 +81,10 @@ export class AppView extends LitElement {
             return html`<admin-view .user=${this.user}></admin-view>`
           }
         }
+      },
+      {
+        path: '/~/spawners{/}?',
+        render: () => html`<spawner-view .selectedServer=${this.selectedServer}></spawner-view>`
       }
     ]);
     }
@@ -92,6 +97,7 @@ export class AppView extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     this.checkLoginStatus();
+    this._getSelectedServer()
 
     this.addEventListener('nav-requested', (event) => {
     const destinationPath = event.detail.path;
@@ -112,6 +118,16 @@ export class AppView extends LitElement {
     this._syncServerFromURL();
     this.router.goto(path);
     this.requestUpdate();
+  }
+
+  _getSelectedServer() {
+    const cookies = document.cookie
+  ? Object.fromEntries(document.cookie.split('; ').map(c => c.split('=')))
+  : {};
+  if (cookies.selected_server) {
+    this.selectedServer = Number(cookies.selected_server)
+    console.log("Imported selected server from cookies")
+  }
   }
 
   _syncServerFromURL() {

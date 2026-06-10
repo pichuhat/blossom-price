@@ -66,6 +66,7 @@ export class HomeView extends LitElement {
   }
 
   _navigateToServer(id) {
+  document.cookie = `selected_server=${id}`
   this.selectedServer = id;
   window.history.pushState({}, '', `/server/${id}`);
   window.dispatchEvent(new PopStateEvent('popstate'));
