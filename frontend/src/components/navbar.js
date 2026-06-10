@@ -85,11 +85,13 @@ ul li a:hover {
 
     return html`
       <header class="navbar">
-      <ul><li style="font-size: 150%">BCPricer</li>
+      <ul><li style="font-size: 150%"><a href='/~/' @click=${() => this._navigateTo('/~/', e)}>BCPricer</a></li>
       <li><a href="/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
-      <li><a href="/search" @click=${(e) => this._navigateTo('/~/search', e)}>Search</a></li>
+      <li><a href="/search" @click=${(e) => this._navigateTo('/~/search', e)}>Advanced Search</a></li>
+      <li><input type="text" id="searchbar" placeholder="Search..."> <button @click=${this._search}>Search</button></li>
       <li class="rightside"><a href="/" @click=${(e) => this._navigateTo('/~/', e)}>${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a></li>
-      ${(this.user.role == 'staff' || this.user.role == 'admin') && !this.loading ? html`<li><a href="/~/myrecoms" @click=${(e) => this._navigateTo('/~/myrecoms')}>My Recommendations</a></li>` : ""}
+      ${!this.loading && this.user && (this.user.role == 'staff' || this.user.role == 'admin') ? html`<li><a href="/~/myrecoms" @click=${(e) => this._navigateTo('/~/myrecoms')}>My Recommendations</a></li>` : ""}
+      ${!this.loading && this.user && this.user.role == 'admin' ? html`<li><a href="/~/adminpanel" @click=${(e) => this._navigateTo('/~/adminpanel')}>Admin Panel</a></li>` : ""}
       <li>${this.user ? html`<a href="/settings" @click=${(e) => this._navigateTo('/~/settings', e)}>${this.user.user}</a>` : html`<discord-login-btn></discord-login-btn>`}</li></ul>
       </header>
     `;

@@ -393,6 +393,58 @@ app.get('/api/allitems', async (req, res) => {
         }
     })
 
+    app.get('/api/adminpanel/recoms', async (req, res) => {
+        if (req.session.user.role == 'admin') {
+            const sqlQuery = `
+            SELECT
+            i.*,
+            p.price AS price,
+            p.timestamp AS recom_timestamp,
+            p.submission_id AS recommendation_id,
+            p.submitted_by AS author_id,
+            p.server_id AS server,
+            p.status AS status,
+            u.username AS username
+            FROM price_submissions p
+            LEFT JOIN items i ON i.id = p.item_id
+            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            ORDER BY timestamp DESC;
+            `
+
+            try {
+                const result = await pgPool.query(sqlQuery)
+                res.status(200).json({success: true, history: result.rows})
+            } catch(err) {
+                res.status(500).json({success: false, message: `ERROR: ${err}`, history: null})
+            }
+        } else {
+            res.status(403).json({success: false, message: "Role required: admin"})
+        }
+    })
+
+    app.post('/api/adminpanel/updatestatus', async (req, res) => {
+        if (req.session.user.role == 'admin') {
+            const input = req.body
+            if (!input.type || !input.submission_id || !['accepted', 'denied', 'pending'].includes(input.type)) return res.status(400).json({success: false, message: "Missing or invalid arguments"})
+            const sqlQuery = `
+            UPDATE price_submissions
+            SET status = $1
+            WHERE submission_id = $2
+            `
+            const data = [input.type, input.submission_id]
+
+            try {
+                const result = await pgPool.query(sqlQuery, data)
+                console.log(result)
+                res.status(200).json({success: true, message: "Updated"})
+            } catch(error) {
+                res.status(500).json({success: false, message: `ERROR: ${error}`})
+            }
+        } else {
+            res.status(403).json({success: false, message: "Role required: admin"})
+        }
+    })
+
     //   ----------------------------------------------------------------------
     //   [ ALL ENDPOINTS ABOVE THIS LINE                                      ]
     //   ----------------------------------------------------------------------

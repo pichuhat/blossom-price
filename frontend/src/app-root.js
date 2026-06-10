@@ -5,6 +5,7 @@ import "./views/home-view.js"
 import "./views/allitem-view.js"
 import "./views/item-view.js"
 import "./views/staff-view.js"
+import "./views/admin-view.js"
 
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
@@ -63,9 +64,21 @@ export class AppView extends LitElement {
         }
       },
       {
-        path: '/~/myrecoms',
+        path: '/~/myrecoms{/}?',
         render: () => {
+          if (this.user && (this.user.role == 'staff' || this.user.role == 'admin')) {
           return html`<my-recoms .user=${this.user}></my-recoms>`
+          } else {
+            return html``
+          }
+        }
+      },
+      {
+        path: '/~/adminpanel{/}?',
+        render: () => {
+          if (this.user &&this.user.role == 'admin') {
+            return html`<admin-view .user=${this.user}></admin-view>`
+          }
         }
       }
     ]);
