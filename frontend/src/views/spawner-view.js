@@ -29,7 +29,7 @@ export class SpawnerView extends LitElement {
   async _fetchItems() {
     this.loading = true;
     try {
-      const response = await fetch(`/api/spawners${this.selectedServer !== null ? `?selectedServer=${this.selectedServer}` : ""}`, {
+      const response = await fetch(`/api/spawners${this.selectedServer != null ? `?selectedServer=${this.selectedServer}` : ""}`, {
         method: "GET",
         credentials: 'include'
       })

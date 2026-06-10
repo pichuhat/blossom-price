@@ -46,7 +46,7 @@ export class AllItemView extends LitElement {
 
   async _fetchItems() {
     this.loading = true;
-    const fetchURL = `/api/allitems?page=${this.page}${this.selectedServer !== null ? `&selectedServer=${this.selectedServer}` : ""}`
+    const fetchURL = `/api/allitems?page=${this.page}${this.selectedServer != null ? `&selectedServer=${this.selectedServer}` : ""}`
     console.log(fetchURL)
     try {
       const response = await fetch(fetchURL, {
