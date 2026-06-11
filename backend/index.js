@@ -47,7 +47,7 @@ async function syncItems() {
         const response = await fetch(endpointURL, {
   method: "GET",
   headers: {
-    "I-INCLUDED-INFO": "id;CrateID;TagPrimary;TagSecondary;TagTertiary;TagQuaternary;TagQuinary;TagSenary;TagSeptenary;WinPercentage;RarityHuman;ItemName;ItemHTML;ConnectedItems",
+    "I-INCLUDED-INFO": "id;CrateID;TagPrimary;TagSecondary;TagTertiary;TagQuaternary;TagQuinary;TagSenary;TagSeptenary;WinPercentage;RarityHuman;ItemName;ItemHTML;ConnectedItems;ItemHuman",
         }
     })
     const result = await response.json()
@@ -57,7 +57,7 @@ async function syncItems() {
 
     const sqlQuery = `
     INSERT INTO items (
-        id, crate_id, item_name, item_html, rarity_human, win_chance, tags, updated_at
+        id, crate_id, item_name, item_html, rarity_human, win_chance, tags, updated_at, item_human
     )
     SELECT * FROM (
         SELECT 
@@ -79,7 +79,8 @@ async function syncItems() {
                 ], 
                 NULL
             ) AS generated_tags,
-            NOW() AS updated_at
+            NOW() AS updated_at,
+            obj->>'ItemHuman' AS item_human
         FROM jsonb_array_elements($1::jsonb) AS obj
     ) subquery
     WHERE NOT ('Repeat Appearance' = ANY(subquery.generated_tags))
@@ -91,7 +92,8 @@ async function syncItems() {
         rarity_human = EXCLUDED.rarity_human,
         win_chance = EXCLUDED.win_chance,
         tags = EXCLUDED.tags,
-        updated_at = EXCLUDED.updated_at;
+        updated_at = EXCLUDED.updated_at,
+        item_human = EXCLUDED.item_human;
 `;
 
         await pgPool.query(sqlQuery, [JSON.stringify(final)])
@@ -472,6 +474,51 @@ app.get('/api/allitems', async (req, res) => {
         res.status(200).json({success: true, items: result.rows})
         } catch(err) {
             res.status(500).json({success: false, message: "Error: " + err})
+        }
+    })
+
+    app.get('/api/search/simple', async (req, res) => {
+        console.log(req.query)
+        const input = req.query.query
+        const server = req.query.selectedServer
+        if (!input || (server && isNaN(Number(server)))) return res.status(400).json({success: false, message: "Missing or invalid search param", result: null})
+        const sqlQuery = `
+        SELECT * FROM (
+            SELECT DISTINCT ON (i.id)
+                i.*,
+                CASE 
+                    WHEN to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1) THEN 'exact'
+                    ELSE 'fuzzy'
+                END as match_type,
+            p.price AS price,
+            p.timestamp AS recom_timestamp,
+            p.submission_id AS recommendation_id,
+            p.submitted_by AS author_id,
+            p.server_id AS server,
+            u.username AS username
+            FROM items i
+            LEFT JOIN price_submissions p ON i.id = p.item_id
+            AND p.status='accepted'
+            ${server ? `AND p.server_id = ${Number(server)}` : ""}
+            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            WHERE 
+                to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
+                OR 
+                to_tsvector('english', item_human) @@ plainto_tsquery('english', $1)
+            ORDER BY i.id, p.timestamp DESC
+        ) as search_results
+        ORDER BY 
+            CASE 
+                WHEN match_type = 'exact' THEN 1 
+                ELSE 2 
+            END, id ASC;
+        `
+
+        try {
+            const result = await pgPool.query(sqlQuery, [input])
+            res.status(200).json({success: true, result: result.rows})
+        } catch(err) {
+            res.status(500).json({success: false, message: `Server ERR: ${err}`, result: null})
         }
     })
 

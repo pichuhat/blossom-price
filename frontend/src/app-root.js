@@ -7,6 +7,7 @@ import "./views/item-view.js"
 import "./views/staff-view.js"
 import "./views/admin-view.js"
 import "./views/spawner-view.js"
+import "./views/search-view.js"
 
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
@@ -45,10 +46,6 @@ export class AppView extends LitElement {
         render: () => html`<all-item-view .selectedServer=${this.selectedServer}></all-item-view>`
       },
       {
-        path: '/~/search{/}?',
-        render: () => html`<section><h2>Search</h2><p>Search view coming soon.</p></section>`
-      },
-      {
         path: '/~/settings{/}?',
         render: () => html`<h2>User Settings View Coming Soon</h2>`
       },
@@ -85,6 +82,14 @@ export class AppView extends LitElement {
       {
         path: '/~/spawners{/}?',
         render: () => html`<spawner-view .selectedServer=${this.selectedServer}></spawner-view>`
+      },
+      {
+        path: '/~/search{/}?',
+        render: () => html`<search-view .selectedServer=${this.selectedServer}></search-view>`
+      },
+      {
+        path: '/~/advancedsearch{/}?',
+        render: () => html`<h2>Advanced Search</h2><p>Coming soon!</p>`
       }
     ]);
     }

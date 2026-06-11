@@ -88,7 +88,7 @@ ul li a:hover {
       <ul><li style="font-size: 150%"><a href='/~/' @click=${() => this._navigateTo('/~/', e)}>BCPricer</a></li>
       <li><a href="/~/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
       <li><a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a></li>
-      <li><a href="/search" @click=${(e) => this._navigateTo('/~/search', e)}>Advanced Search</a></li>
+      <li><a href="/~/advancedsearch" @click=${(e) => this._navigateTo('/~/advancedsearch', e)}>Advanced Search</a></li>
       <li><input type="text" id="searchbar" placeholder="Search..."> <button @click=${this._search}>Search</button></li>
       <li class="rightside"><a href="/~/" @click=${(e) => this._navigateTo('/~/', e)}>${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a></li>
       ${!this.loading && this.user && (this.user.role == 'staff' || this.user.role == 'admin') ? html`<li><a href="/~/myrecoms" @click=${(e) => this._navigateTo('/~/myrecoms')}>My Recommendations</a></li>` : ""}
