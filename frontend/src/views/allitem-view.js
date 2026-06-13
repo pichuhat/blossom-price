@@ -164,6 +164,32 @@ export class AllItemView extends LitElement {
       border-radius: 4px;
       text-transform: uppercase;
     }
+    .minibutton {
+    color: white;
+    background-color: #bc2bc4;
+    padding: 7px;
+    border: none;
+    transition: background-color 0.2s ease;
+    }
+    .minibutton:disabled {
+    background-color: #aaaaaa;
+    }
+    .minibutton:hover {
+    background-color: #831889;
+    }
+    .minibutton:hover:disabled {
+    background-color: #aaaaaa;
+    }
+    .leftbutton {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    margin-right: 1px;
+    }
+    .rightbutton {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    margin-left: 1px;
+    }
   `;
 
   _formatPrice(unformatted) {
@@ -189,7 +215,7 @@ export class AllItemView extends LitElement {
     return html`
     <div class="center">
       <h1>All Items</h1>
-      <span>Page ${this.page}/${this.maxPages}</span><br><button ?disabled=${previousDisabled} @click="${this._previousPage}">Previous</button><button @click="${this._customPage}">...</button><button ?disabled=${nextDisabled} @click="${this._nextPage}">Next</button>
+      <span>Page ${this.page}/${this.maxPages}</span><br><button ?disabled=${previousDisabled} @click="${this._previousPage}" class="minibutton leftbutton"><<<</button><button @click="${this._customPage}" class="minibutton">...</button><button ?disabled=${nextDisabled} @click="${this._nextPage}" class="minibutton rightbutton">>>></button>
       </div>
       <div class="grid">
         ${this.items.map(item => html`
