@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class PriceHistory extends LitElement {
 
@@ -25,7 +26,7 @@ export class PriceHistory extends LitElement {
         this._getHistory()
     }
 
-    static styles = css`
+    static styles = [sharedStyles, css`
     table, th, td {
         border: 1px white solid;
         padding: 10px;
@@ -38,8 +39,7 @@ export class PriceHistory extends LitElement {
         margin-top: 20px;
         width: 100%;
         color: white;
-    }
-    `
+    }`]
 
     async _getHistory() {
         const toFetch = this.approvedOnly ? `/api/itemhistory/${this.selectedServer}/${this.itemID}` : `/api/itemrecom/${this.selectedServer}/${this.itemID}`

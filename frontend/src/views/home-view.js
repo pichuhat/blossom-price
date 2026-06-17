@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 import "../components/login-button.js"
 
@@ -14,7 +15,7 @@ export class HomeView extends LitElement {
         this.selectedServer = undefined
     }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     .center {
     text-align: center;
     }
@@ -45,10 +46,9 @@ export class HomeView extends LitElement {
     width: 50%;
     height: 50%;
     }
-  `;
+  `]
 
   render() {
-    console.log("homeview")
     const isServerRoute = window.location.pathname.startsWith('/server/');
 
     return html`
@@ -66,7 +66,7 @@ export class HomeView extends LitElement {
   }
 
   _navigateToServer(id) {
-  document.cookie = `selected_server=${id}`
+  document.cookie = `selected_server=${id}; path=/;`
   this.selectedServer = id;
   window.history.pushState({}, '', `/server/${id}`);
   window.dispatchEvent(new PopStateEvent('popstate'));

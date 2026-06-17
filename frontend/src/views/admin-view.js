@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class AdminView extends LitElement {
     static properties = {
@@ -73,7 +74,7 @@ export class AdminView extends LitElement {
         }
     }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
   .dashboard {
   margin-top: 20px;
   display: flex;
@@ -88,7 +89,9 @@ export class AdminView extends LitElement {
     padding: 20px;
     color: white;
     text-align: center;
-    width: 50%;
+    min-width: 50%;
+    width: max-content;
+    max-width: 100%;
     }
 
     table, th, td {
@@ -104,7 +107,7 @@ export class AdminView extends LitElement {
         width: 100%;
         color: white;
     }
-  `;
+  `]
 
   _formatDate(unformatted) {
         const date = new Date(unformatted)

@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class SearchView extends LitElement {
   static properties = {
@@ -19,6 +20,17 @@ export class SearchView extends LitElement {
   connectedCallback() {
     super.connectedCallback()
     this._fetchItems()
+    this._onAppSearch = (e) => {
+      // URL is already updated by the navbar; just re-fetch based on window.location.search
+      this.loading = true
+      this._fetchItems()
+    }
+    window.addEventListener('app-search', this._onAppSearch)
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('app-search', this._onAppSearch)
+    super.disconnectedCallback()
   }
 
   _decodeEscapedUnicode(value) {
@@ -65,7 +77,7 @@ export class SearchView extends LitElement {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     .grid {
       display: flex;
       flex-wrap: wrap;
@@ -127,7 +139,7 @@ export class SearchView extends LitElement {
       border-radius: 4px;
       text-transform: uppercase;
     }
-  `;
+  `]
 
   _formatPrice(unformatted) {
         return Number(unformatted).toLocaleString()
@@ -149,6 +161,12 @@ export class SearchView extends LitElement {
         }));
         this._fetchItems()
     }
+
+    updated(changedProperties) {
+  if (changedProperties.has('selectedServer')) {
+    this._fetchItems()
+  }
+}
 
   render() {
     if (this.loading) return html`

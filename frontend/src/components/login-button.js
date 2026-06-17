@@ -1,8 +1,9 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class DiscordLoginButton extends LitElement {
   // Scoped CSS styles using standard browser Shadow DOM
-  static styles = css`
+  static styles = [sharedStyles, css`
     .discord-btn {
       background-color: #5865F2;
       color: white;
@@ -12,7 +13,7 @@ export class DiscordLoginButton extends LitElement {
       font-weight: bold;
       display: inline-block;
     }
-  `;
+  `]
 
   render() {
     console.log(window.location.hostname)

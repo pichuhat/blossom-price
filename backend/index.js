@@ -465,12 +465,30 @@ app.get('/api/allitems', async (req, res) => {
     })
 
     app.get('/api/spawners', async (req, res) => {
-        const sqlQuery = `
-        SELECT * FROM items AS i
-        WHERE 'spawner' = ANY(i.tags)
-        `
+            const sqlQuery = req.query.selectedServer != null
+        ? `SELECT DISTINCT ON (i.id)
+           i.*,
+           p.price AS price,
+           p.timestamp AS recom_timestamp,
+           p.submission_id AS recommendation_id,
+           p.submitted_by AS author_id,
+           p.server_id AS server,
+           u.username AS username
+           FROM items i
+           LEFT JOIN price_submissions p ON i.id = p.item_id
+               AND p.status='accepted'
+               AND p.server_id = $1
+           LEFT JOIN users u ON p.submitted_by = u.discord_id
+           WHERE 'spawner' = ANY(i.tags)
+           ORDER BY i.id, p.timestamp DESC`
+        : `SELECT * FROM items i
+           WHERE 'spawner' = ANY(i.tags)
+           ORDER BY i.id ASC`;
+
+    const params = req.query.selectedServer != null ? [Number(req.query.selectedServer)] : [];
+
         try {
-        const result = await pgPool.query(sqlQuery)
+        const result = await pgPool.query(sqlQuery, params)
         res.status(200).json({success: true, items: result.rows})
         } catch(err) {
             res.status(500).json({success: false, message: "Error: " + err})

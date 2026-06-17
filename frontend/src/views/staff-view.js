@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class MyRecoms extends LitElement {
     static properties = {
@@ -37,7 +38,7 @@ export class MyRecoms extends LitElement {
         }
     }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
   .dashboard {
   margin-top: 20px;
   display: flex;
@@ -68,7 +69,7 @@ export class MyRecoms extends LitElement {
         width: 100%;
         color: white;
     }
-  `;
+  `]
 
   _formatDate(unformatted) {
         const date = new Date(unformatted)

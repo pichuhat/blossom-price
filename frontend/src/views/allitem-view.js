@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class AllItemView extends LitElement {
   static properties = {
@@ -65,6 +66,12 @@ export class AllItemView extends LitElement {
     }
   }
 
+  updated(changedProperties) {
+  if (changedProperties.has('selectedServer')) {
+    this._fetchItems()
+  }
+}
+
   _nextPage() {
     this.page++
     this._fetchItems()
@@ -102,7 +109,7 @@ export class AllItemView extends LitElement {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     .grid {
       display: flex;
       flex-wrap: wrap;
@@ -140,6 +147,9 @@ export class AllItemView extends LitElement {
       height: auto;
       border-radius: 6px;
       margin-top: 12px;
+      object-fit: contain;
+      min-width: 50%;
+      min-height: 50%;
     }
     .priceAdd {
         font-size: 100%;
@@ -190,7 +200,7 @@ export class AllItemView extends LitElement {
     border-bottom-right-radius: 5px;
     margin-left: 1px;
     }
-  `;
+  `]
 
   _formatPrice(unformatted) {
         return Number(unformatted).toLocaleString()
@@ -230,7 +240,7 @@ export class AllItemView extends LitElement {
               `) : ''}
             </div>
             <img
-              src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`}
+              src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
               alt="${this._decodeEscapedUnicode(item.item_name)}"
             />
           </div>

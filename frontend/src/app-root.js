@@ -9,6 +9,7 @@ import "./views/admin-view.js"
 import "./views/spawner-view.js"
 import "./views/search-view.js"
 
+import { sharedStyles } from './styles.js';
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
 
@@ -33,7 +34,7 @@ export class AppView extends LitElement {
         render: () => html`<home-view .selectedServer=${this.selectedServer}></home-view>`
       },
       { 
-        path: '/server/:id{/}?', 
+        path: '/~/server/:id{/}?', 
         render: (params) => {
           const serverId = parseInt(params.id, 10);
           this.selectedServer = isNaN(serverId) ? undefined : serverId;
@@ -95,9 +96,9 @@ export class AppView extends LitElement {
     }
 
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     
-  `;
+  `]
 
   connectedCallback() {
     super.connectedCallback();
@@ -105,11 +106,15 @@ export class AppView extends LitElement {
     this._getSelectedServer()
 
     this.addEventListener('nav-requested', (event) => {
-    const destinationPath = event.detail.path;
+      const destinationPath = event.detail && event.detail.path ? event.detail.path : window.location.pathname + window.location.search;
+      this._getSelectedServer()
 
-    window.history.pushState({}, '', destinationPath);
-    this._syncFromPathName();
-  });
+      const destinationURL = new URL(destinationPath, window.location.origin);
+      window.history.pushState({}, '', destinationURL);
+      this.router.goto(destinationURL.pathname);
+      this._syncServerFromURL();
+      this.requestUpdate();
+    });
 
   // 3. Keep the browser's native back and forward arrows working smoothly
   window.addEventListener('popstate', () => this._syncFromPathName());
@@ -136,15 +141,15 @@ export class AppView extends LitElement {
   }
 
   _syncServerFromURL() {
-  const path = window.location.pathname; // Looks like "/server/0"
-  
-  if (path.startsWith('/server/')) {
-    // Extract the number at the end of the URL string
-    const idStr = path.split('/')[2];
-    const serverId = parseInt(idStr, 10);
+    const path = window.location.pathname; // Looks like "/~/server/0"
     
-    this.selectedServer = isNaN(serverId) ? undefined : serverId;
-  }
+    if (path.startsWith('/~/server/')) {
+      // Extract the number at the end of the URL string
+      const idStr = path.split('/')[3];
+      const serverId = parseInt(idStr, 10);
+      
+      this.selectedServer = isNaN(serverId) ? undefined : serverId;
+    }
 }
 
   async checkLoginStatus() {
@@ -178,7 +183,6 @@ export class AppView extends LitElement {
   }
 
   render() {
-    if (window.location.pathname.startsWith("/server/"))
     if (this.loading) {
         return html`<p>Please Wait...</p>`
     }

@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class SpawnerView extends LitElement {
   static properties = {
@@ -14,11 +15,18 @@ export class SpawnerView extends LitElement {
     this.servers = ["cherry", "spirit", "lotus", "tulip"]
     this.selectedServer = null
     this.items = null
+    this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
   }
 
   connectedCallback() {
     super.connectedCallback()
     this._fetchItems()
+  }
+
+  updated(hasChanged) {
+    if (hasChanged.has("selectedServer")) {
+      this._fetchItems()
+    }
   }
 
   _decodeEscapedUnicode(value) {
@@ -56,7 +64,7 @@ export class SpawnerView extends LitElement {
   }));
   }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     .grid {
       display: flex;
       flex-wrap: wrap;
@@ -114,7 +122,21 @@ export class SpawnerView extends LitElement {
       border-radius: 4px;
       text-transform: uppercase;
     }
-  `;
+  `]
+
+    _formatStr(str) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+_formatPrice(unformatted) {
+        return Number(unformatted).toLocaleString()
+    }
+
+     _formatDate(unformatted) {
+        const date = new Date(unformatted)
+        return this.formatter.format(date)
+    }
 
   render() {
     if (this.loading) return html`
@@ -130,7 +152,7 @@ export class SpawnerView extends LitElement {
         ${this.items.map(item => html`
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
-            ${this.selectedServer && item.price && item.recom_timestamp && item.username ? html`<div class="center">
+            ${this.selectedServer != null && item.price && item.recom_timestamp && item.username ? html`<div class="center">
             <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price: </span><br><span class="price">$${this._formatPrice(item.price)}</span><br><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
             </div>` : html`<sub>No price available :(</sub>`}
             <div class="tags">

@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { sharedStyles } from '../styles.js';
 
 export class NewPrice extends LitElement {
     static properties = {
@@ -18,7 +19,7 @@ export class NewPrice extends LitElement {
         this.currentValue = "0";
     }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
   .box {
     background-color: #222222;
     border: 1px solid #444444;
@@ -46,7 +47,7 @@ export class NewPrice extends LitElement {
     margin-right: auto;
     margin-left: 0;
     }
-  `;
+  `]
 
   firstUpdated() {
     this.shadowRoot.getElementById("newprice").focus()

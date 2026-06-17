@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import "../components/price-history.js"
 import "./new-price-view.js"
+import { sharedStyles } from '../styles.js';
 
 export class ItemView extends LitElement {
     static properties = {
@@ -63,7 +64,7 @@ export class ItemView extends LitElement {
     }
     }
 
-  static styles = css`
+  static styles = [sharedStyles, css`
     .center {
     text-align: center;
     }
@@ -74,9 +75,9 @@ export class ItemView extends LitElement {
         grid-template-columns: max-content 1fr; 
         align-items: stretch; 
         gap: 24px;              
-        width: 50%;
+        margin: 20px auto 0 auto;
+        width: min(900px, 90%);
         box-sizing: border-box;
-        justify-self: center;
     }
 
     .box {
@@ -86,6 +87,12 @@ export class ItemView extends LitElement {
     padding: 20px;
     color: white;
     text-align: center;
+    }
+
+    .box img {
+    object-fit: contain;
+      min-width: 50%;
+      min-height: 50%;
     }
     
     .profile-column {
@@ -167,7 +174,7 @@ export class ItemView extends LitElement {
   overflow-y: auto;
   max-height: 100%;
 }
-  `;
+  `]
 
   _formatPrice(unformatted) {
         return Number(unformatted).toLocaleString()
@@ -235,11 +242,14 @@ export class ItemView extends LitElement {
             return html`<span class="tag">${tag}</span>`
         }) : ""}
     </div>
-    <img src=${this.itemData.tags.includes('spawner') ? `https://minecraft.wiki/images/Monster_Spawner_JE4.png` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png`}>
+    <img
+    src=${this.itemData.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (this.itemData.tags.includes('currency') ? `/src/images/${this.itemData.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png`)}
+    alt=${this.itemData.item_name}
+    >
     </div>
 </div>
 <div class="market-column">
-    <div class="box nogrow">
+    <div class="box nogrow full">
     <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.properPricing ? this._formatPrice(this.itemData.price) : "-"}</span><br>
     <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ? html`<br><br><button @click=${this._openPrice}>Recommend New Price</button>` : ""}
