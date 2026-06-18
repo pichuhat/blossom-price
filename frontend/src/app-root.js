@@ -112,8 +112,11 @@ export class AppView extends LitElement {
       const destinationURL = new URL(destinationPath, window.location.origin);
       window.history.pushState({}, '', destinationURL);
       this.router.goto(destinationURL.pathname);
+
+      Promise.resolve().then(() => {
       this._syncServerFromURL();
       this.requestUpdate();
+      });
     });
 
   // 3. Keep the browser's native back and forward arrows working smoothly

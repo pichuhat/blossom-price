@@ -454,7 +454,6 @@ app.get('/api/allitems', async (req, res) => {
 
             try {
                 const result = await pgPool.query(sqlQuery, data)
-                console.log(result)
                 res.status(200).json({success: true, message: "Updated"})
             } catch(error) {
                 res.status(500).json({success: false, message: `ERROR: ${error}`})

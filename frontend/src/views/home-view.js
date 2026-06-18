@@ -49,7 +49,7 @@ export class HomeView extends LitElement {
   `]
 
   render() {
-    const isServerRoute = window.location.pathname.startsWith('/server/');
+    const isServerRoute = window.location.pathname.startsWith('/~/server/');
 
     return html`
     <div class="center">
@@ -68,7 +68,7 @@ export class HomeView extends LitElement {
   _navigateToServer(id) {
   document.cookie = `selected_server=${id}; path=/;`
   this.selectedServer = id;
-  window.history.pushState({}, '', `/server/${id}`);
+  window.history.pushState({}, '', `/~/server/${id}`);
   window.dispatchEvent(new PopStateEvent('popstate'));
 }
 }

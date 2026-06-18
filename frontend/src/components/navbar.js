@@ -156,6 +156,12 @@ ul li a:hover, ul li.searchContainer:hover {
       this.selectedServer = id
     }
 
+    updated(hasChanged) {
+    if (hasChanged.has("selectedServer")) {
+      this.requestUpdate()
+    }
+  }
+
   render() {
     const discordLoginUrl = "https://discord.com/oauth2/authorize?client_id=1511812763901759648&response_type=code&redirect_uri=https%3A%2F%2Fblossom-price.onrender.com%2Fapi%2Fauth%2Fcallback&scope=guilds.members.read+identify";
     console.log(this.user)
