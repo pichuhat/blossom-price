@@ -218,7 +218,7 @@ export class ASView extends LitElement {
 
     return html`
     <div class="center">
-    <h1>Search${this.items && this.items.length > 0 ? " Results" : ""}</h1>
+    <h1>Advanced Search${this.items && this.items.length > 0 ? " Results" : ""}</h1>
       <input type="text" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}> <button @click=${this._search} ?disabled=${this.loading}>Search</button>
       <br>Crate: <select id="crate">
       <option value="">All</option>
