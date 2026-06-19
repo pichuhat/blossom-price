@@ -11,6 +11,7 @@ const { Pool } = require("pg")
 
 const cors = require('cors');
 const { rejects } = require("assert")
+const { getPackedSettings } = require("http2")
 
 app.set('trust proxy', 1);
 
@@ -103,6 +104,18 @@ async function syncItems() {
         console.error("FAILED: " + error)
     } finally {
         console.log("Function complete")
+    }
+}
+
+async function getTags() {
+    try {
+        const fetchURL = "https://www.blossom.atn.gg/api/tags"
+        const response = await fetch(fetchURL)
+        const result = await response.json()
+        result.push('spawner', 'currency')
+        return result
+    } catch(e) {
+        console.log(`ERROR: tag fetch failed: ${e}`)
     }
 }
 
@@ -539,6 +552,114 @@ app.get('/api/allitems', async (req, res) => {
         }
     })
 
+    app.get('/api/cratelist', async (req, res) => {
+        const sqlQuery = `
+        SELECT id, "CrateName"
+        FROM crates
+        ORDER BY id ASC
+        `
+        try {
+            const result = await pgPool.query(sqlQuery)
+            res.status(200).json({success: true, result: result.rows})
+        } catch(err) {
+            res.status(500).json({success: false, message: `Server ERR: ${err}`, result: null})
+        }
+    })
+
+    app.get('/api/taglist', (req, res) => {
+        console.log("tags")
+        res.status(200).json(tags)
+    })
+
+    app.get('/api/search/advanced', async (req, res) => {
+        const input = req.query.query
+        const server = req.query.selectedServer
+        const crate = req.query.crate
+        const tags = req.query.tags 
+      ? (Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags]) 
+      : [];
+        if (!input || (server && isNaN(Number(server))) || (crate && isNaN(Number(crate)))) return res.status(400).json({success: false, message: "Missing or invalid search param", result: null})
+        // 1. Initialize the values array and the counter
+const values = input ? [input] : [];
+let paramIndex = input ? 2 : 1; 
+
+// 2. Build the query pieces dynamically
+let serverCondition = "";
+if (server) {
+    serverCondition = `LEFT JOIN price_submissions p ON  i.id = p.item_id AND p.status = 'accepted' AND p.server_id = $${paramIndex} LEFT JOIN users u ON p.submitted_by = u.discord_id`;
+    values.push(Number(server));
+    paramIndex++;
+}
+
+let crateCondition = "";
+if (crate) {
+    crateCondition = ` AND i.crate_id = $${paramIndex}`;
+    values.push(Number(crate));
+    paramIndex++;
+}
+
+let tagCondition = ""
+if (tags) {
+    tagCondition = ` AND tags @> $${paramIndex}::text[]`
+    values.push(tags)
+    paramIndex++
+}
+
+// 3. Construct the final SQL string
+const sqlQuery = input ? `
+SELECT * FROM (
+    SELECT DISTINCT ON (i.id)
+        i.*,
+        CASE 
+            WHEN to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1) THEN 'exact'
+            ELSE 'fuzzy'
+        END as match_type,
+        p.price AS price,
+        p.timestamp AS recom_timestamp,
+        p.submission_id AS recommendation_id,
+        p.submitted_by AS author_id,
+        p.server_id AS server,
+        u.username AS username
+    FROM items i
+    ${serverCondition}
+    WHERE 
+        (to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
+        OR 
+        to_tsvector('english', item_human) @@ plainto_tsquery('english', $1))
+        ${crateCondition}
+        ${tagCondition}
+    ORDER BY i.id${serverCondition ? `, p.timestamp DESC` : ""}
+) as search_results
+ORDER BY 
+    CASE 
+        WHEN match_type = 'exact' THEN 1 
+        ELSE 2 
+    END, 
+    id ASC;
+` : `
+SELECT DISTINCT ON (i.id)
+i.*,
+p.price AS price,
+p.timestamp AS recom_timestamp,
+p.submission_id AS recommendation_id,
+p.submitted_by AS author_id,
+p.server_id AS server,
+u.username AS username
+FROM items i
+${serverCondition}
+WHERE i.id = i.id${crateCondition}${tagCondition}
+ORDER BY i.id ASC
+`;
+
+        try {
+            const result = await pgPool.query(sqlQuery, values);
+            res.status(200).json({success: true, result: result.rows})
+        } catch(e) {
+            res.status(500).json({success: false, message: `Likely server error: ${e}`, result: null})
+            console.log(e)
+        }
+    })
+
     //   ----------------------------------------------------------------------
     //   [ ALL ENDPOINTS ABOVE THIS LINE                                      ]
     //   ----------------------------------------------------------------------
@@ -558,6 +679,9 @@ app.get('/api/allitems', async (req, res) => {
         res.redirect(302, `/~${req.originalUrl}`)
     })
 
-app.listen(5000, () => {
+    let tags = []
+app.listen(5000, async () => {
+    console.log("Fetching tags...")
+    tags = await getTags()
     console.log(`BCpricer running at port 5000`);
 });

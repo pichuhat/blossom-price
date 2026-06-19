@@ -8,6 +8,7 @@ import "./views/staff-view.js"
 import "./views/admin-view.js"
 import "./views/spawner-view.js"
 import "./views/search-view.js"
+import "./views/advanced-search.js"
 
 import { sharedStyles } from './styles.js';
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
@@ -90,7 +91,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/advancedsearch{/}?',
-        render: () => html`<h2>Advanced Search</h2><p>Coming soon!</p>`
+        render: () => html`<advanced-search-view .selectedServer=${this.selectedServer}></advanced-search-view>`
       }
     ]);
     }
