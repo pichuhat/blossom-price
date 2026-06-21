@@ -16,7 +16,6 @@ export class DiscordLoginButton extends LitElement {
   `]
 
   render() {
-    console.log(window.location.hostname)
     const discordLoginUrl = `https://discord.com/oauth2/authorize?client_id=1511812763901759648&response_type=code&redirect_uri=https%3A%2F%2F${window.location.hostname}%2Fapi%2Fauth%2Fcallback&scope=guilds.members.read+identify`;
 
     return html`

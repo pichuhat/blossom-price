@@ -23,5 +23,56 @@ export const sharedStyles = css`
   --wa-color-brand-on-loud: white;       /* text on solid brand bg */
   --wa-color-brand-on-normal: #97319a;
   --wa-color-brand-on-quiet: #7d2a7e;
+
+   --wa-color-focus: #bc4bc2;
 }
+
+.minibutton {
+    color: white;
+    background-color: #bc2bc4;
+    padding: 7px;
+    border: none;
+    transition: background-color 0.2s ease;
+    }
+    .minibutton:disabled {
+    background-color: #aaaaaa;
+    }
+    .minibutton:hover {
+    background-color: #831889;
+    }
+    .minibutton:hover:disabled {
+    background-color: #aaaaaa;
+    }
+    .leftbutton {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    margin-right: 1px;
+    }
+    .rightbutton {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    margin-left: 1px;
+    }
+    .searchBox {
+    background-color: var(--wa-color-brand-border-loud);
+    }
+    .navsearch {
+    background-color: var(--wa-color-brand-fill-normal);
+    border: 3px var(--wa-color-brand-border-loud) solid;
+    margin-right: 0;
+    padding: 3px;
+    border-right: none;
+    }
+    .navbutton {
+    padding: 3px;
+    background-color: var(--wa-color-brand-border-loud);
+    color: white;
+    transition: background-color 0.2s ease;
+    margin-left: 0;
+    border: 3px var(--wa-color-brand-border-loud) solid;
+    transition: 0.2s background-color ease;
+    }
+    .navbutton:hover {
+    background-color: var(--wa-color-border-normal);
+    }
 `

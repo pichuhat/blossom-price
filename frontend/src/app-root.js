@@ -15,6 +15,7 @@ import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/select/select.js
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/option/option.js';
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/input/input.js'
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button/button.js'
+import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/spinner/spinner.js'
 
 import { sharedStyles } from './styles.js';
 import { LitElement, html, css } from 'https://esm.sh/lit@3';

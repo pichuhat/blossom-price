@@ -173,7 +173,7 @@ ul li a:hover, ul li.searchContainer:hover {
       <li><a href="/~/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
       <li><a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a></li>
       <li><a href="/~/advancedsearch" @click=${(e) => this._navigateTo('/~/advancedsearch', e)}>Advanced Search</a></li>
-      <li class="searchContainer"><input type="text" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}> <button @click=${this._search} ?disabled=${this.loading}>Search</button></li>
+      <li class="searchContainer"><div class="searchBox"><input type="text" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="leftbutton rightbutton navsearch"><button @click=${this._search} ?disabled=${this.loading} class="leftbutton rightbutton navbutton">Search</button></div></div></li>
       <li class="rightside dropdown">
       <a href="#">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a>
       <div class="dropdown-content">

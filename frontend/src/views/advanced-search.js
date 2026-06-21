@@ -188,7 +188,7 @@ export class ASView extends LitElement {
     _search() {
         const inputEl = this.shadowRoot.querySelector('#search').value
         const selectedCrate = this.shadowRoot.querySelector('#crate').value
-        let selectedTags = this.shadowRoot.querySelector('#tags').value.map(tag => tag.replaceAll("_", " "))
+        let selectedTags = this.shadowRoot.querySelector('#tags').value ? this.shadowRoot.querySelector('#tags').value.map(tag => tag.replaceAll("_", " ")) : []
         console.log(selectedTags)
         if (selectedTags) {
         const e = selectedTags.map(tag => `&tags=${tag}`)
@@ -211,30 +211,24 @@ export class ASView extends LitElement {
 }
 
   render() {
-    if (this.loading) return html`
-    <div class="center">
-    <h1>Search</h1>
-    <input type="text" id="search" placeholder="Search..." ?disabled=disabled value=${new URLSearchParams(window.location.search).get('query')}> <button ?disabled=disabled>Search</button>
-    </div>
-    Please wait...
-    `
 
     return html`
     <div class="center outerbox">
     <h1>Advanced Search${this.items && this.items.length > 0 ? " Results" : ""} (BETA)</h1>
     <div class="ASparams">  
     <wa-input label="Search Term" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}></wa-input>
-    <br><wa-select label="Crate" id="crate">
+    <br><wa-select label="Crate" id="crate" ?disabled=${this.loading}>
       <wa-option value="" ?selected=${!this.selectedCrate}>All</wa-option>
       ${this.crates.map(crate => html`<wa-option value=${crate.id} ?selected=${this.selectedCrate == crate.id}>${crate.CrateName}</wa-option>`)}
       </wa-select>
-      <br><wa-select label="Tags" id="tags" placeholder="Select tags..." multiple with-clear>
+      <br><wa-select label="Tags" id="tags" placeholder="Select tags..." multiple with-clear ?disabled=${this.loading}>
       ${this.tags.map(tag => html`<wa-option value=${tag.replaceAll(" ", "_")} ?selected=${this.selectedTags.includes(tag)}>${tag}</wa-option>`)}
       </wa-select>
-      <br><wa-button @click=${this._search} variant="brand" ?disabled=${this.loading}>Search</wa-button>
+      <br><wa-button @click=${this._search} variant="brand" ?disabled=${this.loading} ?loading=${this.loading}>Search</wa-button>
       </div>
       </div>
       <div class="grid">
+      ${this.loading ? html`<wa-spinner></wa-spinner>` : html`
         ${this.items && this.items.length > 0 ? this.items.map(item => html`
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
@@ -252,6 +246,7 @@ export class ASView extends LitElement {
             />
           </div>
         `) : "Search results will appear here!"}
+      `}
       </div>
     `;
   }
