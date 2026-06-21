@@ -567,7 +567,6 @@ app.get('/api/allitems', async (req, res) => {
     })
 
     app.get('/api/taglist', (req, res) => {
-        console.log("tags")
         res.status(200).json(tags)
     })
 
@@ -578,7 +577,7 @@ app.get('/api/allitems', async (req, res) => {
         const tags = req.query.tags 
       ? (Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags]) 
       : [];
-        if (!input || (server && isNaN(Number(server))) || (crate && isNaN(Number(crate)))) return res.status(400).json({success: false, message: "Missing or invalid search param", result: null})
+        if ((server && isNaN(Number(server))) || (crate && isNaN(Number(crate)))) return res.status(400).json({success: false, message: "Missing or invalid search param", result: null})
         // 1. Initialize the values array and the counter
 const values = input ? [input] : [];
 let paramIndex = input ? 2 : 1; 

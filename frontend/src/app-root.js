@@ -10,6 +10,12 @@ import "./views/spawner-view.js"
 import "./views/search-view.js"
 import "./views/advanced-search.js"
 
+import "https://ka-f.webawesome.com/webawesome@3.9.0/webawesome.loader.js"
+import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/select/select.js';
+import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/option/option.js';
+import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/input/input.js'
+import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button/button.js'
+
 import { sharedStyles } from './styles.js';
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';

@@ -77,7 +77,7 @@ export class ASView extends LitElement {
     this.selectedCrate = params.get('crate') || false
     this.selectedTags = params.getAll('tags') || []
     this.loading = true;
-    const fetchURL = `/api/search/advanced?query=${query}${this.selectedServer != null ? `&selectedServer=${this.selectedServer}` : ""}${this.selectedCrate ? `&crate=${this.selectedCrate}` : ""}${this.selectedTags ? this.selectedTags.map(tag => `&tags=${tag}`) : ""}`
+    const fetchURL = `/api/search/advanced?query=${query}${this.selectedServer != null ? `&selectedServer=${this.selectedServer}` : ""}${this.selectedCrate ? `&crate=${this.selectedCrate}` : ""}${this.selectedTags ? this.selectedTags.map(tag => `&tags=${tag}`).join('') : ""}`
     console.log(fetchURL)
     try {
       const response = await fetch(fetchURL, {
@@ -187,10 +187,15 @@ export class ASView extends LitElement {
 
     _search() {
         const inputEl = this.shadowRoot.querySelector('#search').value
-        if (!inputEl) return window.alert("You're supposed to... type something in the search box...")
         const selectedCrate = this.shadowRoot.querySelector('#crate').value
-        const selectedTags = [...this.shadowRoot.querySelector('#tags').selectedOptions].map(option => option.value)
-        const path = `/~/advancedsearch?query=${inputEl}${selectedCrate ? `&crate=${selectedCrate}` : ""}${selectedTags ? selectedTags.map(tag => `&tags=${tag}`) : ""}`
+        let selectedTags = this.shadowRoot.querySelector('#tags').value.map(tag => tag.replaceAll("_", " "))
+        console.log(selectedTags)
+        if (selectedTags) {
+        const e = selectedTags.map(tag => `&tags=${tag}`)
+        selectedTags = e.join("")
+        console.log(e, selectedTags)
+        }
+        const path = `/~/advancedsearch?query=${inputEl}${selectedCrate ? `&crate=${selectedCrate}` : ""}${selectedTags ? selectedTags : ""}`
         this.dispatchEvent(new CustomEvent('nav-requested', {
         detail: { path },
         bubbles: true,
@@ -214,20 +219,20 @@ export class ASView extends LitElement {
     Please wait...
     `
 
-    console.log(this.selectedCrate)
-
     return html`
-    <div class="center">
-    <h1>Advanced Search${this.items && this.items.length > 0 ? " Results" : ""}</h1>
-      <input type="text" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}> <button @click=${this._search} ?disabled=${this.loading}>Search</button>
-      <br>Crate: <select id="crate">
-      <option value="">All</option>
-      ${this.crates.map(crate => html`<option value=${crate.id} ?selected=${this.selectedCrate == crate.id}>${crate.CrateName}</option>`)}
-      </select>
-      <br>Tags: <select id="tags" multiple>
-      <option value="">All</option>
-      ${this.tags.map(tag => html`<option value=${tag} ?selected=${this.selectedTags.includes(tag)}>${tag}</option>`)}
-      </select>
+    <div class="center outerbox">
+    <h1>Advanced Search${this.items && this.items.length > 0 ? " Results" : ""} (BETA)</h1>
+    <div class="ASparams">  
+    <wa-input label="Search Term" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}></wa-input>
+    <br><wa-select label="Crate" id="crate">
+      <wa-option value="" ?selected=${!this.selectedCrate}>All</wa-option>
+      ${this.crates.map(crate => html`<wa-option value=${crate.id} ?selected=${this.selectedCrate == crate.id}>${crate.CrateName}</wa-option>`)}
+      </wa-select>
+      <br><wa-select label="Tags" id="tags" placeholder="Select tags..." multiple with-clear>
+      ${this.tags.map(tag => html`<wa-option value=${tag.replaceAll(" ", "_")} ?selected=${this.selectedTags.includes(tag)}>${tag}</wa-option>`)}
+      </wa-select>
+      <br><wa-button @click=${this._search} variant="brand" ?disabled=${this.loading}>Search</wa-button>
+      </div>
       </div>
       <div class="grid">
         ${this.items && this.items.length > 0 ? this.items.map(item => html`
