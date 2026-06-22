@@ -5,6 +5,11 @@ export const sharedStyles = css`
   width: 100%;
 }
 
+.innerbox {
+width: 50%;
+margin: 0 auto;
+}
+
 .ASparams {
   border: 2px solid #bc2bc4;
   border-radius: 5px;
@@ -53,9 +58,6 @@ export const sharedStyles = css`
     border-bottom-right-radius: 5px;
     margin-left: 1px;
     }
-    .searchBox {
-    background-color: var(--wa-color-brand-border-loud);
-    }
     .navsearch {
     background-color: var(--wa-color-brand-fill-normal);
     border: 3px var(--wa-color-brand-border-loud) solid;
@@ -74,5 +76,11 @@ export const sharedStyles = css`
     }
     .navbutton:hover {
     background-color: var(--wa-color-border-normal);
+    }
+    wa-input wa-icon {
+    transition: color 0.2s ease;
+    }
+    wa-input wa-icon:hover {
+    color: #d3d3d3;
     }
 `

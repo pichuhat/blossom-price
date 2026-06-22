@@ -15,10 +15,12 @@ export class SearchView extends LitElement {
     this.servers = ["cherry", "spirit", "lotus", "tulip"]
     this.selectedServer = null
     this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
+    this.searchBox = null
   }
 
   connectedCallback() {
     super.connectedCallback()
+    this.searchBox = this.shadowRoot.querySelector('#search')
     this._fetchItems()
     this._onAppSearch = (e) => {
       // URL is already updated by the navbar; just re-fetch based on window.location.search
@@ -38,9 +40,17 @@ export class SearchView extends LitElement {
     return value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
   }
 
+  _handleEnter(e) {
+    if (e.key == "Enter") {
+      e.preventDefault()
+      this._search()
+    }
+  }
+
   async _fetchItems() {
     const params = new URLSearchParams(window.location.search)
     const query = params.get('query')
+    this.shadowRoot.querySelector("#search").value = query
     this.loading = true;
     const fetchURL = `/api/search/simple?query=${query}${this.selectedServer != null ? `&selectedServer=${this.selectedServer}` : ""}`
     console.log(fetchURL)
@@ -169,21 +179,19 @@ export class SearchView extends LitElement {
 }
 
   render() {
-    if (this.loading) return html`
-    <div class="center">
-    <h1>Search</h1>
-    <input type="text" id="search" placeholder="Search..." ?disabled=disabled value=${new URLSearchParams(window.location.search).get('query')}> <button ?disabled=disabled>Search</button>
-    </div>
-    Please wait...
-    `
 
     return html`
     <div class="center">
-    <h1>Search${this.items && this.items.length > 0 ? " Results" : ""}</h1>
-      <input type="text" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}> <button @click=${this._search} ?disabled=${this.loading}>Search</button>
+    <h1>Search${this.items && this.items.length > 0 && !this.loading ? " Results" : ""}</h1>
+    <div class="outerbox">
+    <div class="innerbox">
+     <wa-input id="search" placeholder="Search..." ?disabled=${this.loading} @keydown=${(e) => this._handleEnter(e)} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input>
+      </div>
+      </div>
       </div>
       <div class="grid">
-        ${this.items && this.items.length > 0 ? this.items.map(item => html`
+      ${this.loading ? html`<wa-spinner></wa-spinner>` : 
+        this.items && this.items.length > 0 ? this.items.map(item => html`
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
             ${this.selectedServer && item.price && item.recom_timestamp && item.username ? html`<div class="center">

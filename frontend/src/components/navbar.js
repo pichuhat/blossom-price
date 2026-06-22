@@ -162,10 +162,19 @@ ul li a:hover, ul li.searchContainer:hover {
     }
   }
 
+  _handleEnter(e) {
+    if (e.key == "Enter") {
+      e.preventDefault()
+      this._search()
+    }
+  }
+
   render() {
     const discordLoginUrl = "https://discord.com/oauth2/authorize?client_id=1511812763901759648&response_type=code&redirect_uri=https%3A%2F%2Fblossom-price.onrender.com%2Fapi%2Fauth%2Fcallback&scope=guilds.members.read+identify";
     console.log(this.user)
     console.log("Navbar SelServer: " + this.selectedServer)
+
+    if (this.loading) return html``
 
     return html`
       <header class="navbar">
@@ -173,7 +182,7 @@ ul li a:hover, ul li.searchContainer:hover {
       <li><a href="/~/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
       <li><a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a></li>
       <li><a href="/~/advancedsearch" @click=${(e) => this._navigateTo('/~/advancedsearch', e)}>Advanced Search</a></li>
-      <li class="searchContainer"><div class="searchBox"><input type="text" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="leftbutton rightbutton navsearch"><button @click=${this._search} ?disabled=${this.loading} class="leftbutton rightbutton navbutton">Search</button></div></div></li>
+      <li class="searchContainer"><wa-input pill id="search" @keydown=${(e) => this._handleEnter(e)} placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input></div></li>
       <li class="rightside dropdown">
       <a href="#">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a>
       <div class="dropdown-content">
