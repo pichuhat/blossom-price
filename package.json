@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "@lit-labs/router": "^0.1.4",
+    "connect-pg-simple": "^10.0.0",
+    "express-session": "^1.19.0",
+    "pg": "^8.21.0"
+  }
+}

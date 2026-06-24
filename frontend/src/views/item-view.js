@@ -32,12 +32,15 @@ export class ItemView extends LitElement {
             this.openPriceRecom = false;
             this.requestUpdate()
   });
+<<<<<<< HEAD
         window.addEventListener('keydown', this._handleGlobalKeydown)
     }
 
     disconnectedCallback() {
         super.disconnectedCallback()
         window.removeEventListener('keydown', this._handleGlobalKeydown)
+=======
+>>>>>>> ccba40f986e991085b7029524b3a64ea4ed746ad
     }
 
     updated(changedProperties) {
@@ -70,12 +73,15 @@ export class ItemView extends LitElement {
     }
     }
 
+<<<<<<< HEAD
     _handleGlobalKeydown = (e) => {
     if (!this.openPriceRecom && e.key == 'Enter') {
         this.openPriceRecom = true;
     }
   }
 
+=======
+>>>>>>> ccba40f986e991085b7029524b3a64ea4ed746ad
   static styles = [sharedStyles, css`
     .center {
     text-align: center;
@@ -264,7 +270,11 @@ export class ItemView extends LitElement {
     <div class="box nogrow full">
     <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.properPricing ? this._formatPrice(this.itemData.price) : "-"}</span><br>
     <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
+<<<<<<< HEAD
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ? html`<br><br><wa-button pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price</wa-button>` : ""}
+=======
+    ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ? html`<br><br><button @click=${this._openPrice}>Recommend New Price</button>` : ""}
+>>>>>>> ccba40f986e991085b7029524b3a64ea4ed746ad
 </div>
 <div class="box nogrow  ">
     <span class="boxheader priceAdd">Price Graph</span><br>

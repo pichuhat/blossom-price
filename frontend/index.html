@@ -1,0 +1,29 @@
+<html lang="en" class="wa-theme-default wa-palette-default wa-brand-pink">
+<head>
+    <title>BCpricer</title>
+    <style>
+    </style>
+    <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.9.0/styles/webawesome.css">
+<script type="module" src="https://ka-f.webawesome.com/webawesome@3.9.0/webawesome.loader.js"></script>
+    <meta charset="UTF-8">
+</head>
+<body>
+<app-view></app-view>
+
+<script type="module" src="/src/app-root.js"></script>
+<script>
+    const params = new URLSearchParams(window.location.search);
+
+    try {
+        if (params.get('linkPopup') == "2") {
+            //REPLACE WITH POPUP
+            window.alert("Failed to login: please join the BlossomCraft discord server and follow the instructions to link your minecraft account to the server.")
+        } else if (params.get('linkPopup') == "1") {
+            window.alert("Failed to login: your minecraft account isn't linked to the BlossomCraft discord server.")
+        }
+    } catch(error) {
+        console.log("No login failure code found")
+    }
+</script>
+</body>
+</html>
