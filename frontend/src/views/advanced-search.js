@@ -37,10 +37,10 @@ export class ASView extends LitElement {
     await this._fetchTags()
     await this._fetchCrates()
     await this._fetchItems()
+    this.loading = false;
   }
 
   async _fetchTags() {
-    this.loading = true;
     const fetchURL = `/api/taglist`
     try {
       const response = await fetch(fetchURL, {
@@ -56,7 +56,6 @@ export class ASView extends LitElement {
   }
 
   async _fetchCrates() {
-    this.loading = true;
     const fetchURL = `/api/cratelist`
     try {
       const response = await fetch(fetchURL, {
@@ -76,7 +75,6 @@ export class ASView extends LitElement {
     const query = params.get('query')
     this.selectedCrate = params.get('crate') || false
     this.selectedTags = params.getAll('tags') || []
-    this.loading = true;
     const fetchURL = `/api/search/advanced?query=${query}${this.selectedServer != null ? `&selectedServer=${this.selectedServer}` : ""}${this.selectedCrate ? `&crate=${this.selectedCrate}` : ""}${this.selectedTags ? this.selectedTags.map(tag => `&tags=${tag}`).join('') : ""}`
     console.log(fetchURL)
     try {
@@ -91,8 +89,6 @@ export class ASView extends LitElement {
       this.items = result.result
     } catch(err) {
       console.error("Error loading advanced search: " + err)
-    } finally {
-      this.loading = false
     }
   }
 
@@ -201,7 +197,8 @@ export class ASView extends LitElement {
         bubbles: true,
         composed: true
         }));
-        this._fetchItems()
+        this.loading = true;
+        this._fetchItems().finally(() => this.loading = false)
     }
 
     updated(changedProperties) {
@@ -216,7 +213,7 @@ export class ASView extends LitElement {
     <div class="center outerbox">
     <h1>Advanced Search${this.items && this.items.length > 0 ? " Results" : ""} (BETA)</h1>
     <div class="ASparams">  
-    <wa-input label="Search Term" id="search" placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}></wa-input>
+    <wa-input label="Search Term" id="search" placeholder="Search..." autocomplete="off" ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}></wa-input>
     <br><wa-select label="Crate" id="crate" ?disabled=${this.loading}>
       <wa-option value="" ?selected=${!this.selectedCrate}>All</wa-option>
       ${this.crates.map(crate => html`<wa-option value=${crate.id} ?selected=${this.selectedCrate == crate.id}>${crate.CrateName}</wa-option>`)}
@@ -227,27 +224,11 @@ export class ASView extends LitElement {
       <br><wa-button @click=${this._search} variant="brand" ?disabled=${this.loading} ?loading=${this.loading}>Search</wa-button>
       </div>
       </div>
-      <div class="grid">
-      ${this.loading ? html`<wa-spinner></wa-spinner>` : html`
+      ${this.loading ? html`<div class="grid"><wa-spinner></wa-spinner></div>` : html`
         ${this.items && this.items.length > 0 ? this.items.map(item => html`
-          <div class="card" @click="${() => this._routeToItemPage(item.id)}">
-            <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
-            ${this.selectedServer && item.price && item.recom_timestamp && item.username ? html`<div class="center">
-            <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price: </span><br><span class="price">$${this._formatPrice(item.price)}</span><br><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
-            </div>` : html`<sub>No price available :(</sub>`}
-            <div class="tags">
-              ${item.tags ? item.tags.map(tag => html`
-                <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
-              `) : ''}
-            </div>
-            <img
-              src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`}
-              alt="${this._decodeEscapedUnicode(item.item_name)}"
-            />
-          </div>
-        `) : "Search results will appear here!"}
+          <items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>
+          `) : html`<div class="grid">Search results will appear here!</div>`}
       `}
-      </div>
     `;
   }
 }

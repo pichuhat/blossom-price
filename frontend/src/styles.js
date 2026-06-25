@@ -19,11 +19,13 @@ text-align: center;
 }
 
 .ASparams {
-  border: 2px solid #bc2bc4;
   border-radius: 5px;
   width: 50%;
   padding: 10px;
   margin: 0 auto;
+  background-color: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 0 0 1px var(--color-border), 0 4px 16px var(--color-glow);
 }
 
 :host {

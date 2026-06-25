@@ -17,7 +17,7 @@ export class AllItemView extends LitElement {
     this.page = 1
     this.maxPages = 1
     this.servers = ["cherry", "spirit", "lotus", "tulip"]
-    this.selectedServer = null
+    this.selectedServer = undefined
     this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
   }
 
@@ -227,25 +227,7 @@ export class AllItemView extends LitElement {
       <h1>All Items</h1>
       <span>Page ${this.page}/${this.maxPages}</span><br><button ?disabled=${previousDisabled} @click="${this._previousPage}" class="minibutton leftbutton"><<<</button><button @click="${this._customPage}" class="minibutton">...</button><button ?disabled=${nextDisabled} @click="${this._nextPage}" class="minibutton rightbutton">>>></button>
       </div>
-      <div class="grid">
-        ${this.items.map(item => html`
-          <div class="card" @click="${() => this._routeToItemPage(item.id)}">
-            <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
-            ${this.selectedServer && item.price && item.recom_timestamp && item.username ? html`<div class="center">
-            <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price: </span><br><span class="price">$${this._formatPrice(item.price)}</span><br><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
-            </div>` : html`<sub>No price available :(</sub>`}
-            <div class="tags">
-              ${item.tags ? item.tags.map(tag => html`
-                <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
-              `) : ''}
-            </div>
-            <img
-              src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
-              alt="${this._decodeEscapedUnicode(item.item_name)}"
-            />
-          </div>
-        `)}
-      </div>
+      <items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>
     `;
   }
 }

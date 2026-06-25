@@ -84,83 +84,8 @@ export class SearchView extends LitElement {
   }));
   }
 
-  _formatStr(str) {
-  if (!str) return "";
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
   static styles = [sharedStyles, css`
-    .grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      padding: 20px;
-      justify-content: center;
-    }
-    .center {
-    text-align: center;
-    }
-    .card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: fit-content;
-      max-width: 100%;
-      background-color: #2a2a2a;
-      border: 1px solid #444;
-      border-radius: 8px;
-      padding: 16px;
-      color: white;
-      box-sizing: border-box;
-      overflow: hidden;
-      transition: ease 0.3s;
-    }
-
-    .card:hover {
-    transform: scale(1.05);
-    }
-
-    .card img {
-      display: block;
-      width: auto;
-      max-width: 100%;
-      height: auto;
-      border-radius: 6px;
-      margin-top: 12px;
-    }
-    .priceAdd {
-        font-size: 100%;
-    }
-    .price {
-        color: #00ffcc;
-        font-weight: bold;
-        font-size: 130%;
-    }
-    .tags {
-      margin-top: 10px;
-      display: flex;
-      gap: 5px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .tag {
-      background-color: #bc4bc2;
-      color: white;
-      font-size: 80%;
-      padding: 2px 8px;
-      border-radius: 4px;
-      text-transform: uppercase;
-    }
   `]
-
-  _formatPrice(unformatted) {
-        return Number(unformatted).toLocaleString()
-    }
-
-     _formatDate(unformatted) {
-        const date = new Date(unformatted)
-        return this.formatter.format(date)
-    }
 
     _search() {
         const inputEl = this.shadowRoot.querySelector('#search').value
@@ -191,8 +116,8 @@ export class SearchView extends LitElement {
       </div>
       </div>
       </div>
-      ${this.loading ? html`<wa-spinner></wa-spinner>` : 
-        this.items && this.items.length > 0 ? html`<items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>` : "Search results will appear here!"}
+      ${this.loading ? html`<div class="grid"><wa-spinner></wa-spinner></div>` : 
+        this.items && this.items.length > 0 ? html`<items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>` : html`<div class="grid">Search results will appear here!</div>`}
     `;
   }
 }
