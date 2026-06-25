@@ -1,9 +1,11 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { sharedStyles } from '../styles.js';
 
+import "./multi-item-view.js";
+
 export class SearchView extends LitElement {
   static properties = {
-    items: {type: Object},
+    items: {type: Array},
     loading: {type: Boolean},
     servers: {type: Array},
     selectedServer: {type: Number}
@@ -189,26 +191,8 @@ export class SearchView extends LitElement {
       </div>
       </div>
       </div>
-      <div class="grid">
       ${this.loading ? html`<wa-spinner></wa-spinner>` : 
-        this.items && this.items.length > 0 ? this.items.map(item => html`
-          <div class="card" @click="${() => this._routeToItemPage(item.id)}">
-            <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
-            ${this.selectedServer && item.price && item.recom_timestamp && item.username ? html`<div class="center">
-            <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price: </span><br><span class="price">$${this._formatPrice(item.price)}</span><br><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
-            </div>` : html`<sub>No price available :(</sub>`}
-            <div class="tags">
-              ${item.tags ? item.tags.map(tag => html`
-                <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
-              `) : ''}
-            </div>
-            <img
-              src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`}
-              alt="${this._decodeEscapedUnicode(item.item_name)}"
-            />
-          </div>
-        `) : "Search results will appear here!"}
-      </div>
+        this.items && this.items.length > 0 ? html`<items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>` : "Search results will appear here!"}
     `;
   }
 }

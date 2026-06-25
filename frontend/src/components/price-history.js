@@ -28,7 +28,7 @@ export class PriceHistory extends LitElement {
 
     static styles = [sharedStyles, css`
     table, th, td {
-        border: 1px white solid;
+        border: 1px var(--color-border) solid;
         padding: 10px;
         text-align: center;
     }
@@ -38,7 +38,7 @@ export class PriceHistory extends LitElement {
         margin: 0 auto;
         margin-top: 20px;
         width: 100%;
-        color: white;
+        color: var(--color-text);
     }`]
 
     async _getHistory() {

@@ -19,7 +19,7 @@ export class Navbar extends LitElement {
   
   static styles = [sharedStyles, css`
     .navbar {
-      background-color: #BC4BC2;
+      background-color: var(--color-navbar);
       color: white;
       position: -webkit-sticky;
       position: sticky;
@@ -27,6 +27,7 @@ export class Navbar extends LitElement {
       top: 0;
       margin: 0;
       padding: 0;
+      border-bottom: 3px solid var(--color-navbar-accent)
     }
 
     .discord-btn {
@@ -37,7 +38,7 @@ export class Navbar extends LitElement {
   list-style-type: none;
   margin: 0;
   padding: 0;
-  background-color: #Bc4Bc2;
+  background-color: var(--color-navbar);
   width: 100%;
   display: flex;
   align-items: center;
@@ -57,6 +58,7 @@ ul li a, ul li.searchContainer {
   text-align: center;
   padding: 14px 16px;
   text-decoration: none;
+  transition: background-color 0s ease;
 }
 
 ul li discord-login-btn {
@@ -68,7 +70,7 @@ display: block;
 }
 
 ul li a:hover, ul li.searchContainer:hover {
-  background-color: #831889;
+  background-color: var(--color-navbar-hover);
 }
 
 .dropdown {
@@ -79,7 +81,7 @@ ul li a:hover, ul li.searchContainer:hover {
 .dropdown-content {
   display: none;
   position: absolute;
-  background-color: #831889;
+  background-color: var(--color-dropdown-bg);
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
   padding: 12px 16px;
@@ -96,10 +98,11 @@ ul li a:hover, ul li.searchContainer:hover {
   text-decoration: none;
   text-align: center;
   width: 100%;
+  transition: background-color 0s ease;
 }
 
 .dropdown-content a:hover {
-  background-color: #6b0d6b;
+  background-color: var(--color-dropdown-hover);
 }
 
 .dropdown:hover .dropdown-content {
@@ -169,10 +172,18 @@ ul li a:hover, ul li.searchContainer:hover {
     }
   }
 
+  _toggleDark() {
+    const isDark = localStorage.getItem('theme') == 'dark'
+    localStorage.setItem('theme', isDark ? 'light' : 'dark')
+    document.documentElement.classList.toggle('wa-dark')
+    this.requestUpdate()
+  }
+
   render() {
-    const discordLoginUrl = "https://discord.com/oauth2/authorize?client_id=1511812763901759648&response_type=code&redirect_uri=https%3A%2F%2Fblossom-price.onrender.com%2Fapi%2Fauth%2Fcallback&scope=guilds.members.read+identify";
     console.log(this.user)
     console.log("Navbar SelServer: " + this.selectedServer)
+
+    const isDark = localStorage.getItem('theme') == "dark"
 
     if (this.loading) return html``
 
@@ -183,7 +194,8 @@ ul li a:hover, ul li.searchContainer:hover {
       <li><a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a></li>
       <li><a href="/~/advancedsearch" @click=${(e) => this._navigateTo('/~/advancedsearch', e)}>Advanced Search</a></li>
       <li class="searchContainer"><wa-input pill id="search" @keydown=${(e) => this._handleEnter(e)} placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input></div></li>
-      <li class="rightside dropdown">
+      <li class="rightside"><a href="#" class="forceAlign" @click=${this._toggleDark}><wa-icon name=${isDark ? 'moon' : 'sun'}></wa-icon></a></li>
+      <li class="dropdown">
       <a href="#">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a>
       <div class="dropdown-content">
       ${this.servers.map(server => html`<a href="#" @click=${(event) => this._serverNavigate(this.servers.indexOf(server), event)}>${server}</a>`)}

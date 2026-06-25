@@ -86,19 +86,20 @@ export class ItemView extends LitElement {
         display: grid;
         grid-template-columns: max-content 1fr; 
         align-items: stretch; 
-        gap: 24px;              
+        gap: 24px;
         margin: 20px auto 0 auto;
         width: min(900px, 90%);
         box-sizing: border-box;
     }
 
     .box {
-    background-color: #222222;
-    border: 1px solid #444444;
+    background-color: var(--color-surface-raised);
+    border: 2px solid var(--color-border);
     border-radius: 8px;
     padding: 20px;
-    color: white;
+    color: var(--color-text);
     text-align: center;
+    box-shadow: 0 0 0 1px var(--color-border), 0 4px 16px var(--color-glow);
     }
 
     .box img {
@@ -147,7 +148,7 @@ export class ItemView extends LitElement {
     }
     
     .price {
-        color: #00ffcc;
+        color: var(--color-price);
         font-weight: bold;
         font-size: 200%;
     }

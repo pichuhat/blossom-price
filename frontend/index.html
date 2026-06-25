@@ -5,7 +5,53 @@
     </style>
     <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.9.0/styles/webawesome.css">
 <script type="module" src="https://ka-f.webawesome.com/webawesome@3.9.0/webawesome.loader.js"></script>
-    <meta charset="UTF-8">
+<script>
+    if (localStorage.getItem('theme') == 'dark') {
+        document.documentElement.classList.add('wa-dark')
+    }
+</script>    
+<meta charset="UTF-8">
+    <style>
+        :root {
+        --color-surface: #ffffff;
+  --color-surface-raised: #f0f0f0;
+  --color-border: #c5a8c8;
+  --color-border-alt: #c5a8c8;
+  --color-border-forcelight: #c5a8c8;
+  --color-text: #111111;
+  --color-text-muted: #555555;
+  --color-price: #007a5e;
+  --color-navbar: #bc4bc2;
+  --color-navbar-hover: #831889;
+  --color-navbar-accent: transparent;
+  --color-dropdown-bg: #831889;
+  --color-dropdown-hover: #6b0d6b;
+  --color-dropdown-border: transparent;
+  --color-tag-bg: #bc2bc4;
+  --color-tag-text: #ffffff;
+  --color-glow: rgba(0, 0, 0, 0.08);
+  --color-glow-hover: rgba(0, 0, 0, 0.14);
+}
+    .wa-dark {
+  --color-surface: #161616;
+  --color-surface-raised: #232323;
+  --color-border: #bc4bc2;
+  --color-border-alt: #444;
+  --color-text: #f0f0f0;
+  --color-text-muted: #aaaaaa;
+  --color-price: #e07be0;
+  --color-navbar: #0d0d0d;
+  --color-navbar-hover: #2a0a2e;
+  --color-navbar-accent: #bc4bc2;
+  --color-dropdown-bg: #1a1a1a;
+  --color-dropdown-hover: #2a0a2e;
+  --color-dropdown-border: #bc4bc2;
+  --color-tag-bg: #bc2bc4;
+  --color-tag-text: #ffffff;
+  --color-glow: rgba(188, 75, 194, 0.15);
+  --color-glow-hover: rgba(188, 75, 194, 0.25);
+}
+</style>
 </head>
 <body>
 <app-view></app-view>
