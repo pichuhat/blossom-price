@@ -6,13 +6,16 @@ import "../components/login-button.js"
 export class HomeView extends LitElement {
     static properties = {
         selectedServer: { type: Number },
-        servers: {type: Array}
+        servers: {type: Array},
+        countItems: {type: Number}
     }
 
     constructor() {
         super()
         this.servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
         this.selectedServer = undefined
+        this.countItems = null
+        this.countServerItems = null
     }
 
   static styles = [sharedStyles, css`
@@ -48,15 +51,31 @@ export class HomeView extends LitElement {
     }
   `]
 
+  connectedCallback() {
+    super.connectedCallback()
+    this._fetchCount()
+  }
+
+ async _fetchCount() {
+  const fetchURL = `/api/countprices`
+  try {
+    const response = await fetch(fetchURL)
+    if (!response.ok) return window.alert("An error occurred.")
+    const result = await response.json()
+    this.countItems = result.result
+  } catch(e) {
+    window.alert("An error occurred.")
+    console.error(e)
+  }
+ }
+
   render() {
-    const isServerRoute = window.location.pathname.startsWith('/~/server/');
 
     return html`
     <div class="center">
-      <h1>BCpricer</h1>
-      ${isServerRoute ? html`
-        <h3>Featured</h3>
-        Coming soon
+      <span class="bigText">BlossomPricer</span><br>
+      ${this.selectedServer ? html`
+        <span class="bigSubText">${this.countItems ? this.countItems : html`<wa-spinner></wa-spinner>`} items priced. <span class="alt">And counting.</span></span>
         ` : html`
         <h3>Select a Subserver</h3>
         <div class="serverbox"><button class="select" @click=${() => this._navigateToServer(0)}>Cherry</button><button class="select" @click=${() => this._navigateToServer(1)}>Spirit</button><button class="select" @click=${() => this._navigateToServer(2)}>Lotus</button><button class="select" @click=${() => this._navigateToServer(3)}>Tulip</button></div>

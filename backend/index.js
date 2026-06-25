@@ -119,6 +119,8 @@ async function getTags() {
     }
 }
 
+const isProduction = process.env.IS_DEV === 'production'
+
 app.use(session({
     // Tell express-session to use PostgreSQL instead of server RAM
     store: new pgSession({
@@ -130,9 +132,9 @@ app.use(session({
     saveUninitialized: false,           // Don't create empty sessions for guests
     cookie: {
         maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie lasts for 30 days (in milliseconds)
-        secure: true,
+        secure: isProduction,
         httpOnly: true,                   // Protects cookie against malicious frontend scripts
-        sameSite: 'none'                   // Essential for cross-site cookie security
+        sameSite: isProduction ? 'none' : 'lax'                   // Essential for cross-site cookie security
     }
 }));
 
@@ -656,6 +658,19 @@ ORDER BY i.id ASC
         } catch(e) {
             res.status(500).json({success: false, message: `Likely server error: ${e}`, result: null})
             console.log(e)
+        }
+    })
+
+    app.get('/api/countprices', async (req, res) => {
+        const sqlQuery = `
+        SELECT COUNT(DISTINCT item_id)
+        FROM price_submissions
+        WHERE status = 'accepted'`
+        try {
+            const result = await pgPool.query(sqlQuery)
+            res.status(200).json({success: true, result: result.rows[0].count})
+        } catch(e) {
+            res.status(500).json({success: false, message: `ERROR: ${e}`})
         }
     })
 

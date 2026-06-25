@@ -16,10 +16,10 @@ export class ASView extends LitElement {
     this.servers = ["cherry", "spirit", "lotus", "tulip"]
     this.selectedServer = null
     this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
-    this.crates = null
-    this.tags = null
+    this.crates = []
+    this.tags = []
     this.selectedCrate = null
-    this.selectedTags = null
+    this.selectedTags = []
   }
 
   connectedCallback() {
