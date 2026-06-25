@@ -74,7 +74,7 @@ export class HomeView extends LitElement {
     return html`
     <div class="center">
       <span class="bigText">BlossomPricer</span><br>
-      ${this.selectedServer ? html`
+      ${this.selectedServer != undefined ? html`
         <span class="bigSubText">${this.countItems ? this.countItems : html`<wa-spinner></wa-spinner>`} items priced. <span class="alt">And counting.</span></span>
         ` : html`
         <h3>Select a Subserver</h3>

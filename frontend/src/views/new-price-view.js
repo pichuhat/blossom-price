@@ -90,7 +90,7 @@ export class NewPrice extends LitElement {
       if (original > 0) {
         return original
       } else {
-        return "-"
+        return 0
       }
     }
   }
@@ -122,9 +122,10 @@ export class NewPrice extends LitElement {
   async _uploadRecom() {
     this.loading = true;
     const price = this._getReadValue()
-    if (!price || isNaN(price)) {
+    if (!price || isNaN(price) || price <= 0 || price > 50000000 || Math.round(price) != price) {
       this._redFlash()
       this.loading = false
+      return
     }
     const data = {
       item_id: this.selectedItem,
@@ -172,6 +173,7 @@ export class NewPrice extends LitElement {
       <div class="box">
       <wa-button pill size="xs" class="leftbutton" @click=${(e) => this._closeMenu(e)} ?disabled=${this.loading} variant="brand"><wa-icon name="times"></wa-icon></wa-button>
       <span class="bigText bigSubText">Recommend New Price</span>
+      <br><sub><b>Price limit: $50,000,000</b></sub>
       <h1 id="priceDisplay">$${this._formatPrice(this._getReadValue()) || '-'}</h1>
       <input id="newprice" @input=${this._handleInput} @keydown=${(e) => this._handleKeydown(e)} ?disabled=${this.loading}><br><br>
       <wa-button pill variant="brand" @click=${this._uploadRecom} ?disabled=${this.loading}>Submit</wa-button>
