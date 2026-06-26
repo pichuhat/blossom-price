@@ -225,9 +225,9 @@ export class ASView extends LitElement {
       </div>
       </div>
       ${this.loading ? html`<div class="grid"><wa-spinner></wa-spinner></div>` : html`
-        ${this.items && this.items.length > 0 ? this.items.map(item => html`
+        ${this.items && this.items.length > 0 ? html`
           <items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>
-          `) : html`<div class="grid">Search results will appear here!</div>`}
+          ` : html`<div class="grid">Search results will appear here!</div>`}
       `}
     `;
   }
