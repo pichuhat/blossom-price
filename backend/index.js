@@ -707,6 +707,42 @@ ORDER BY i.id ASC
         }
     })
 
+    app.get('/api/recents/:serverid', async (req, res) => {
+        const server = Number(req.params.serverid)
+        if (![0, 1, 2, 3].includes(server)) return res.status(400).json({message: "Invalid server id", success: false, result: null})
+        const sqlQuery = `
+        SELECT *
+        FROM (
+            SELECT DISTINCT ON (i.id)
+                i.*,
+                p.price AS price,
+                p.timestamp AS recom_timestamp,
+                p.submission_id AS recommendation_id,
+                p.submitted_by AS author_id,
+                p.server_id AS server,
+                p.status AS status,
+                p.is_range AS is_range,
+                p.max_price AS max_price,
+                u.username AS username
+            FROM price_submissions p
+            INNER JOIN items i ON i.id = p.item_id
+            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            WHERE p.status = 'accepted'
+            AND p.server_id = $1
+            ORDER BY i.id, p.timestamp DESC
+        ) sub
+        ORDER BY recom_timestamp DESC
+        LIMIT 5;    
+        `
+        const values = [server]
+        try {
+            const result = await pgPool.query(sqlQuery, values)
+            res.status(200).json({success: true, result: result.rows})
+        } catch(e) {
+            res.status(500).json({success: false, result: null})
+        }
+    })
+
     //   ----------------------------------------------------------------------
     //   [ ALL ENDPOINTS ABOVE THIS LINE                                      ]
     //   ----------------------------------------------------------------------

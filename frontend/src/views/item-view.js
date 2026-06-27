@@ -71,7 +71,7 @@ export class ItemView extends LitElement {
     }
 
     _handleGlobalKeydown = (e) => {
-    if (!this.openPriceRecom && e.key == 'Enter') {
+    if (!this.openPriceRecom && e.key == 'Enter' && (this.user.role == 'staff' || this.user.role == 'admin')) {
         this.openPriceRecom = true;
     }
   }

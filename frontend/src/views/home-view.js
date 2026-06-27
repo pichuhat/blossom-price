@@ -7,7 +7,9 @@ export class HomeView extends LitElement {
     static properties = {
         selectedServer: { type: Number },
         servers: {type: Array},
-        countItems: {type: Number}
+        countItems: {type: Number},
+        recentItems: {type: Array},
+        loading: {type: Boolean}
     }
 
     constructor() {
@@ -16,6 +18,8 @@ export class HomeView extends LitElement {
         this.selectedServer = undefined
         this.countItems = null
         this.countServerItems = null
+        this.recentItems = null
+        this.loading = false
     }
 
   static styles = [sharedStyles, css`
@@ -53,7 +57,34 @@ export class HomeView extends LitElement {
 
   connectedCallback() {
     super.connectedCallback()
-    this._fetchCount()
+    this._fetchAll()
+  }
+
+  async updated(changedProperties) {
+    if (changedProperties.has('selectedServer') && this.selectedServer != undefined) {
+      this.loading = true;
+      await this._fetchRecents()
+      this.loading = false;
+    }
+  }
+
+  async _fetchAll() {
+    this.loading = true;
+    await this._fetchCount()
+    this.loading = false;
+  }
+
+  async _fetchRecents() {
+    const fetchURL = `/api/recents/${this.selectedServer}`
+    try {
+      const response = await fetch(fetchURL)
+      if (!response.ok) return window.alert('An error occurred. Type: 2')
+        const result = await response.json()
+        this.recentItems = result.result
+    } catch(e) {
+      window.alert("An error occurred. Type: 3")
+      console.error(e)
+    }
   }
 
  async _fetchCount() {
@@ -70,12 +101,15 @@ export class HomeView extends LitElement {
  }
 
   render() {
+    console.log(`DEBUG: LOADING ${this.loading} SELSERVER ${this.selectedServer}`)
 
     return html`
     <div class="center">
-      <span class="bigText">BlossomPricer</span><br>
+      <span class="biggerText">BlossomPricer</span><br>
       ${this.selectedServer != undefined ? html`
-        <span class="bigSubText">${this.countItems ? this.countItems : html`<wa-spinner></wa-spinner>`} items priced. <span class="alt">And counting.</span></span>
+        <span class="bigText">${this.countItems ? this.countItems : html`<wa-spinner></wa-spinner>`} items priced</span><br><span class="bigSubText">across all servers. </span><span class="bigSubText alt">And counting.</span>
+        <h3>Recently Priced Items (${this.servers[this.selectedServer]})</h3>
+        ${this.recentItems != null && !this.loading ? html`<items-display .selectedServer=${this.selectedServer} .items=${this.recentItems}></items-display>` : html`<div class="center self-center"><wa-spinner></wa-spinner></div>`}
         ` : html`
         <h3>Select a Subserver</h3>
         <div class="serverbox"><button class="select" @click=${() => this._navigateToServer(0)}>Cherry</button><button class="select" @click=${() => this._navigateToServer(1)}>Spirit</button><button class="select" @click=${() => this._navigateToServer(2)}>Lotus</button><button class="select" @click=${() => this._navigateToServer(3)}>Tulip</button></div>

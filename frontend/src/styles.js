@@ -107,6 +107,10 @@ vertical-align: middle;
     wa-input wa-icon:hover {
     color: #d3d3d3;
     }
+    .biggerText {
+    font-size: 300%;
+    font-weight: bold;
+    }
     .bigText {
     font-size: 200%;
     font-weight: bold;
@@ -114,7 +118,7 @@ vertical-align: middle;
     .bigSubText {
     font-size: 150%;
     }
-    .bigSubText .alt {
+    .alt {
     font-style: italic;
     }
     .bold {
@@ -179,4 +183,8 @@ vertical-align: middle;
       padding: 20px;
       justify-content: center;
     }
+      .grid-single-row {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
 `
