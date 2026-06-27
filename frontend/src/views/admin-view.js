@@ -167,7 +167,7 @@ export class AdminView extends LitElement {
         if (this.toShow == 'all' || this.toShow == row.status) {
             console.log(row.status)
             return html`
-            <tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${servers[row.server]}</td><td>${row.item_name}</td><td>${row.username}</td><td>$${this._formatPrice(row.price)}</td><td>${this._formatStr(row.status)}</td><td><button @click=${() => this._updateStatus(row.recommendation_id, 'accepted')} ?disabled=${row.status == 'accepted' || this.disabledList.includes(row.submission_id)}>Approve</button><button @click=${() => this._updateStatus(row.recommendation_id, 'denied')} ?disabled=${row.status == 'denied' || this.disabledList.includes(row.submission_id)}>Deny</button></td></tr>
+            <tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${servers[row.server]}</td><td>${row.item_name}</td><td>${row.username}</td><td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}</td><td>${this._formatStr(row.status)}</td><td><button @click=${() => this._updateStatus(row.recommendation_id, 'accepted')} ?disabled=${row.status == 'accepted' || this.disabledList.includes(row.submission_id)}>Approve</button><button @click=${() => this._updateStatus(row.recommendation_id, 'denied')} ?disabled=${row.status == 'denied' || this.disabledList.includes(row.submission_id)}>Deny</button></td></tr>
             `
         }
     })}

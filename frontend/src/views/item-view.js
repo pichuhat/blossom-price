@@ -263,7 +263,7 @@ export class ItemView extends LitElement {
 </div>
 <div class="market-column">
     <div class="box nogrow full">
-    <span class="priceAdd">${servers[this.selectedServer]} Valuation: </span><br><span class="price priceAdd">$${this.properPricing ? this._formatPrice(this.itemData.price) : "-"}</span><br>
+    <span class="priceAdd">${servers[this.selectedServer]} Price${this.itemData.is_range ? " Range" : ''}: </span><br><span class="price priceAdd">$${this.properPricing ? `${this._formatPrice(this.itemData.price)}${this.itemData.is_range ? ` to $${this._formatPrice(this.itemData.max_price)}` : ""}` : "-"}</span><br>
     <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ? html`<br><br><wa-button pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price</wa-button>` : ""}
 </div>

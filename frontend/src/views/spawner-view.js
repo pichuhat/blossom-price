@@ -148,25 +148,7 @@ _formatPrice(unformatted) {
     <div class="center">
       <h1>Spawners (BETA)</h1>
       </div>
-      <div class="grid">
-        ${this.items.map(item => html`
-          <div class="card" @click="${() => this._routeToItemPage(item.id)}">
-            <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
-            ${this.selectedServer != null && item.price && item.recom_timestamp && item.username ? html`<div class="center">
-            <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price: </span><br><span class="price">$${this._formatPrice(item.price)}</span><br><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
-            </div>` : html`<sub>No price available :(</sub>`}
-            <div class="tags">
-              ${item.tags ? item.tags.map(tag => html`
-                <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
-              `) : ''}
-            </div>
-            <img
-              src="https://minecraft.wiki/images/Monster_Spawner_JE4.png"
-              alt="${this._decodeEscapedUnicode(item.item_name)}"
-            />
-          </div>
-        `)}
-      </div>
+        <items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>
     `;
   }
 }

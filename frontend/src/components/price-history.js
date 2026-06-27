@@ -86,7 +86,7 @@ export class PriceHistory extends LitElement {
         <tbody>
             ${this.history.map(row => {
                 console.log(row)
-                return html`<tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${row.username}</td><td>$${this._formatPrice(row.price)}</td></tr>`
+                return html`<tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${row.username}</td><td>$${this._formatPrice(row.price)}${row.is_range ? html` to $${this._formatPrice(row.max_price)}` : ""}</td></tr>`
             })}
         </tbody>
     </table>

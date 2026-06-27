@@ -53,7 +53,7 @@ export class MyRecoms extends LitElement {
     padding: 20px;
     color: white;
     text-align: center;
-    width: 50%;
+    min-width: 50%;
     }
 
     table, th, td {
@@ -126,7 +126,7 @@ export class MyRecoms extends LitElement {
         ${this.data.map(row => {
         if (this.toShow == 'all' || this.toShow == row.status) {
             return html`
-            <tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${servers[row.server]}</td><td>${row.item_name}</td><td>$${this._formatPrice(row.price)}</td><td>${this._formatStr(row.status)}</td></tr>
+            <tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${servers[row.server]}</td><td>${row.item_name}</td><td>$${this._formatPrice(row.price)}${row.is_range ? html` to $${this._formatPrice(row.max_price)}` : ""}</td><td>${this._formatStr(row.status)}</td></tr>
             `
         }
     })}

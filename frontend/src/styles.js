@@ -5,6 +5,11 @@ export const sharedStyles = css`
   transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
+.self-center {
+margin-left: auto;
+margin-right: auto;
+}
+
 .outerbox {
   width: 100%;
 }
@@ -26,6 +31,7 @@ text-align: center;
   background-color: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   box-shadow: 0 0 0 1px var(--color-border), 0 4px 16px var(--color-glow);
+  color: var(--color-text)
 }
 
 :host {
@@ -110,6 +116,9 @@ vertical-align: middle;
     }
     .bigSubText .alt {
     font-style: italic;
+    }
+    .bold {
+    font-weight: bold;
     }
     .card {
       display: flex;

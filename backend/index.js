@@ -255,6 +255,8 @@ app.get('/api/allitems', async (req, res) => {
     p.submission_id AS recommendation_id,
     p.submitted_by AS author_id,
     p.server_id AS server,
+    p.is_range AS is_range,
+    p.max_price AS max_price,
     u.username AS username
     FROM items i
     LEFT JOIN price_submissions p ON i.id = p.item_id
@@ -324,6 +326,8 @@ app.get('/api/allitems', async (req, res) => {
             p.submission_id AS recommendation_id,
             p.submitted_by AS author_id,
             p.server_id AS server,
+            p.is_range AS is_range,
+            p.max_price AS max_price,
             u.username AS username
             FROM items i
             LEFT JOIN price_submissions p ON i.id = p.item_id
@@ -354,6 +358,8 @@ app.get('/api/allitems', async (req, res) => {
         p.submitted_by AS author_id,
         p.server_id AS server,
         p.status AS status,
+        p.is_range AS is_range,
+        p.max_price AS max_price,
         u.username AS username
         FROM price_submissions p
         LEFT JOIN items i ON i.id = p.item_id
@@ -375,12 +381,27 @@ app.get('/api/allitems', async (req, res) => {
     app.post('/api/recommend', async (req, res) => {
         const input = req.body
         if (req.session.user.role == 'staff' || req.session.user.role == 'admin') {
-            const sqlQuery = `
-            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status)
-            VALUES ($1, $2, $3, $4, $5)
+            if (!req.body.item_id || !req.body.server_id || !req.session.user.id || !req.body.price || (req.body.is_range && !req.body.max_price)) return res.status(400).json("Missing, mismatched, or invalid params")
+            const sqlQuery = req.body.is_range ? `
+            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+            ` : `
+            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
             `
+             if (req.body.is_range && req.body.price == req.body.max_price) return res.status(400).json({success: false, message: "min and max prices must be different"})
+            if (req.body.is_range && req.body.price > req.body.max_price) {
+                [req.body.price, req.body.max_price] = [req.body.max_price, req.body.price]
+            }
+
             const values = [req.body.item_id, req.body.server_id, req.session.user.id, req.body.price, 'pending']
+            if (req.body.is_range) {
+                values.push(true, req.body.max_price)
+            } else {
+                values.push(false)
+            }
 
             try {
 
@@ -407,6 +428,8 @@ app.get('/api/allitems', async (req, res) => {
             p.submitted_by AS author_id,
             p.server_id AS server,
             p.status AS status,
+            p.is_range AS is_range,
+            p.max_price AS max_price,
             u.username AS username
             FROM items i
             LEFT JOIN price_submissions p ON i.id = p.item_id
@@ -438,6 +461,8 @@ app.get('/api/allitems', async (req, res) => {
             p.submitted_by AS author_id,
             p.server_id AS server,
             p.status AS status,
+            p.is_range AS is_range,
+            p.max_price AS max_price,
             u.username AS username
             FROM price_submissions p
             LEFT JOIN items i ON i.id = p.item_id
@@ -487,6 +512,8 @@ app.get('/api/allitems', async (req, res) => {
            p.submission_id AS recommendation_id,
            p.submitted_by AS author_id,
            p.server_id AS server,
+           p.is_range AS is_range,
+           p.max_price AS max_price,
            u.username AS username
            FROM items i
            LEFT JOIN price_submissions p ON i.id = p.item_id
@@ -527,6 +554,8 @@ app.get('/api/allitems', async (req, res) => {
             p.submission_id AS recommendation_id,
             p.submitted_by AS author_id,
             p.server_id AS server,
+            p.is_range AS is_range,
+            p.max_price AS max_price,
             u.username AS username
             FROM items i
             LEFT JOIN price_submissions p ON i.id = p.item_id
@@ -620,6 +649,8 @@ SELECT * FROM (
         p.submission_id AS recommendation_id,
         p.submitted_by AS author_id,
         p.server_id AS server,
+        p.is_range AS is_range,
+        p.max_price AS max_price,
         u.username AS username
     FROM items i
     ${serverCondition}
@@ -645,6 +676,8 @@ p.timestamp AS recom_timestamp,
 p.submission_id AS recommendation_id,
 p.submitted_by AS author_id,
 p.server_id AS server,
+p.is_range AS is_range,
+p.max_price AS max_price,
 u.username AS username
 FROM items i
 ${serverCondition}
