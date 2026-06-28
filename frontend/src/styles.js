@@ -1,4 +1,5 @@
-import { css } from 'https://esm.sh/lit@3';
+import { css, unsafeCSS } from 'https://esm.sh/lit@3';
+const fontUrl = new URL('./fonts/Mozart NBP Regular.ttf', import.meta.url).href;
 
 export const sharedStyles = css`
 :host, *, *::before, *::after {
@@ -27,11 +28,19 @@ text-align: center;
   border-radius: 5px;
   width: 50%;
   padding: 10px;
-  margin: 0 auto;
+  margin: 20px auto;
   background-color: var(--color-surface-raised);
   border: 1px solid var(--color-border);
   box-shadow: 0 0 0 1px var(--color-border), 0 4px 16px var(--color-glow);
   color: var(--color-text)
+}
+
+.forceLeft {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  text-align: left;
+  margin-left: 20px;
 }
 
 :host {
@@ -107,6 +116,9 @@ vertical-align: middle;
     wa-input wa-icon:hover {
     color: #d3d3d3;
     }
+    .forceGap {
+    margin-top: 20px;
+    }
     .biggerText {
     font-size: 300%;
     font-weight: bold;
@@ -145,7 +157,7 @@ vertical-align: middle;
     transform: scale(1.02);
     }
 
-    .card img {
+    .card img, .card .give-preview-text-outer {
       display: block;
       width: auto;
       max-width: 100%;
@@ -186,5 +198,107 @@ vertical-align: middle;
       .grid-single-row {
   flex-wrap: nowrap;
   overflow: hidden;
+}
+  @font-face {
+    font-family: 'Mozart NBP';
+    src: url('${unsafeCSS(fontUrl)}') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+.give-preview-text-outer {
+    overflow: auto;
+    max-width: 100%;
+}
+.give-preview-text {
+    padding: 2px;
+    display: inline-block;
+    background-color: rgba(17,2,16,.8)
+}
+.give-preview-text-inner {
+    font-family: 'Mozart NBP';
+    font-smooth: never;
+    -webkit-font-smoothing: none;
+    -moz-osx-font-smoothing: none;
+    font-size: 24px;
+    line-height: .8;
+    padding: 4px 5px;
+    border: 2px solid #2c0863;
+    border-radius: 2px;
+}
+.mc-bold {
+    font-weight: bold;
+}
+
+.mc-italic {
+    font-style: italic;
+}
+.mc-underlined {
+    text-decoration: underline;
+}
+
+/* &0 */
+.mc-black {
+    color: #000000;
+}
+/* &1 */
+.mc-dark-blue {
+    color: #0000AA;
+}
+/* &2 */
+.mc-dark-green {
+    color: #00AA00;
+}
+/* &3 */
+.mc-dark-aqua {
+    color: #00AAAA;
+}
+/* &4 */
+.mc-dark-red {
+    color: #AA0000 ;
+}
+/* &5 */
+.mc-dark-purple {
+    color: #AA00AA ;
+}
+/* &6 */
+.mc-gold {
+    color: #FFAA00;
+}
+/* &7 */
+.mc-gray {
+    color: #AAAAAA ;
+}
+/* &8 */
+.mc-dark-gray {
+    color: #555555 ;
+}
+/* &9 */
+.mc-blue {
+    color: #5555FF;
+}
+/* &a */
+.mc-green {
+    color: #55FF55 ;
+}
+/* &b */
+.mc-aqua {
+    color: #55FFFF;
+}
+/* &c */
+.mc-red {
+    color: #FF5555;
+}
+/* &d */
+.mc-light-purple {
+    color: #FF55FF;
+}
+/* &e */
+.mc-yellow {
+    color: #FFFF55;
+}
+/* &f */
+.mc-white {
+    color: #FFFFFF;
 }
 `

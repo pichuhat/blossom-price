@@ -17,6 +17,7 @@ import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/input/input.js'
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button/button.js'
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/spinner/spinner.js'
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/icon/icon.js'
+import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/switch/switch.js'
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button-group/button-group.js'
 
 import { sharedStyles } from './styles.js';

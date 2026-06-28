@@ -1,10 +1,12 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
 import { sharedStyles } from '../styles.js';
 
 export class BoxView extends LitElement {
     static properties = {
         selectedServer: {type: Number},
-        items: {type: Array}
+        items: {type: Array},
+        lowDataMode: {type: Boolean}
     }
 
     constructor() {
@@ -12,12 +14,18 @@ export class BoxView extends LitElement {
         this.selectedServer = undefined
         this.servers = ["cherry", "spirit", "lotus", "tulip"]
         this.items = []
+        this.lowDataMode = true;
         this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
     }
 
     static styles = [sharedStyles, css`
 
         `]
+
+    connectedCallback() {
+      super.connectedCallback()
+      this._getLDMStatus()
+    }
 
     _decodeEscapedUnicode(value) {
     if (typeof value !== 'string') return value
@@ -48,9 +56,19 @@ _formatPrice(unformatted) {
         return this.formatter.format(date)
     }
 
+    _handleLDM(e) {
+      this.lowDataMode = e.target.checked
+      localStorage.setItem('LDM', this.lowDataMode)
+    }
+
+    _getLDMStatus() {
+      this.lowDataMode = JSON.parse(localStorage.getItem('LDM') ?? 'true')
+    }
+
     render() {
         return html`
         <div class="center">
+        <div class="forceGap"><wa-switch ?checked=${this.lowDataMode} id="LDMtoggle" @change=${this._handleLDM}>Low Data Mode</wa-switch></div>
         <div class="grid">${this.items.map(item => html`
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
@@ -62,10 +80,20 @@ _formatPrice(unformatted) {
                 <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
               `) : ''}
             </div>
+            ${this.lowDataMode && !item.tags.includes('spawner') && !item.tags.includes('currency') ? html`
+            <div class="give-preview-text-outer">
+              <div class="give-preview-text w-100">
+                <div class="give-preview-text-inner text-start" style="text-align: left;">
+                  ${unsafeHTML(this._decodeEscapedUnicode(item.item_html))}
+                </div>
+              </div>
+            </div>  
+            ` : html`
             <img
             src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
             alt="${this._decodeEscapedUnicode(item.item_name)}"
             />
+            `}
           </div>
         `)}</div></div>`
     }
