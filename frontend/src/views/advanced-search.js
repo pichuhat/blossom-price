@@ -36,7 +36,6 @@ export class ASView extends LitElement {
     this.loading = true;
     await this._fetchTags()
     await this._fetchCrates()
-    await this._fetchItems()
     this.loading = false;
   }
 
@@ -214,11 +213,11 @@ export class ASView extends LitElement {
     <h1>Advanced Search${this.items && this.items.length > 0 ? " Results" : ""} (BETA)</h1>
     <div class="ASparams">  
     <wa-input label="Search Term" id="search" placeholder="Search..." autocomplete="off" ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}></wa-input>
-    <br><wa-select label="Crate" id="crate" ?disabled=${this.loading}>
+    <br><wa-select label="Crate" id="crate" value=${this.selectedCrate || ""} ?disabled=${this.loading}>
       <wa-option value="" ?selected=${!this.selectedCrate}>All</wa-option>
       ${this.crates.map(crate => html`<wa-option value=${crate.id} ?selected=${this.selectedCrate == crate.id}>${crate.CrateName}</wa-option>`)}
       </wa-select>
-      <br><wa-select label="Tags" id="tags" placeholder="Select tags..." multiple with-clear ?disabled=${this.loading}>
+      <br><wa-select label="Tags" id="tags" value=${this.selectedTags.join(' ')} placeholder="Select tags..." multiple with-clear ?disabled=${this.loading}>
       ${this.tags.map(tag => html`<wa-option value=${tag.replaceAll(" ", "_")} ?selected=${this.selectedTags.includes(tag)}>${tag}</wa-option>`)}
       </wa-select>
       <br><wa-button @click=${this._search} variant="brand" ?disabled=${this.loading} ?loading=${this.loading}>Search</wa-button>

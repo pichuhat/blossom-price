@@ -643,15 +643,14 @@ SELECT * FROM (
         CASE 
             WHEN to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1) THEN 'exact'
             ELSE 'fuzzy'
-        END as match_type,
-        p.price AS price,
+        END as match_type${serverCondition ? `, p.price AS price,
         p.timestamp AS recom_timestamp,
         p.submission_id AS recommendation_id,
         p.submitted_by AS author_id,
         p.server_id AS server,
         p.is_range AS is_range,
         p.max_price AS max_price,
-        u.username AS username
+        u.username AS username` : ""}
     FROM items i
     ${serverCondition}
     WHERE 
@@ -670,15 +669,14 @@ ORDER BY
     id ASC;
 ` : `
 SELECT DISTINCT ON (i.id)
-i.*,
-p.price AS price,
-p.timestamp AS recom_timestamp,
-p.submission_id AS recommendation_id,
-p.submitted_by AS author_id,
-p.server_id AS server,
-p.is_range AS is_range,
-p.max_price AS max_price,
-u.username AS username
+        i.*${serverCondition ? `, p.price AS price,
+        p.timestamp AS recom_timestamp,
+        p.submission_id AS recommendation_id,
+        p.submitted_by AS author_id,
+        p.server_id AS server,
+        p.is_range AS is_range,
+        p.max_price AS max_price,
+        u.username AS username` : ""}
 FROM items i
 ${serverCondition}
 WHERE i.id = i.id${crateCondition}${tagCondition}
