@@ -14,7 +14,6 @@ export class AllItemView extends LitElement {
   constructor() {
     super()
     this.loading = true
-    this.page = 1
     this.maxPages = 1
     this.servers = ["cherry", "spirit", "lotus", "tulip"]
     this.selectedServer = undefined
@@ -23,8 +22,20 @@ export class AllItemView extends LitElement {
 
   connectedCallback() {
     super.connectedCallback()
-    this._getMaxPages()
-    this._fetchItems()
+    this._fetchAll()
+  }
+
+  async _fetchAll() {
+    await this._getMaxPages()
+    this._getSelectedPage()
+    await this._fetchItems()
+  }
+
+  _getSelectedPage() {
+    const params = new URLSearchParams(window.location.search)
+    const selectedPage = Number(params.get('page'))
+    if (isNaN(selectedPage) || Math.round(selectedPage) != selectedPage || selectedPage > this.maxPages || this.selectedPage < 1) return this.page = 1;
+    this.page = selectedPage;
   }
 
   _decodeEscapedUnicode(value) {
@@ -72,13 +83,21 @@ export class AllItemView extends LitElement {
   }
 }
 
+  _updateURL() {
+    const url = new URL(window.location)
+    url.searchParams.set('page', this.page)
+    window.history.replaceState({}, '', url);
+  }
+
   _nextPage() {
     this.page++
+    this._updateURL()
     this._fetchItems()
   }
 
   _previousPage() {
     this.page--
+    this._updateURL()
     this._fetchItems()
   }
 
@@ -86,7 +105,8 @@ export class AllItemView extends LitElement {
     const input = window.prompt("Enter page number 1-" + this.maxPages)
     if (input === null) return;
     if (/^\d+$/.test(input.trim()) && input > 0 && input <= this.maxPages) {
-    this.page = parseInt(input, 10);
+    this.page = Number(input)
+    this._updateURL()
     this._fetchItems()
 } else {
   window.alert("Invalid input")
@@ -212,22 +232,16 @@ export class AllItemView extends LitElement {
     }
 
   render() {
-    if (this.loading) return html`
-    <div class="center">
-    <h1>All Items</h1>
-    <span>Page ${this.page}/${this.maxPages}</span><br><button disabled>Previous</button><button disabled>...</button><button disabled>Next</button>
-    </div>
-    Please wait...
-    `
-    const previousDisabled = this.page == 1 ? "disabled" : ""
-    const nextDisabled = this.page == this.maxPages ? "disabled" : ""
+    const previousDisabled = this.page == 1 ? true : false
+    const nextDisabled = this.page == this.maxPages ? true : false
 
     return html`
     <div class="center">
       <h1>All Items</h1>
-      <span>Page ${this.page}/${this.maxPages}</span><br><button ?disabled=${previousDisabled} @click="${this._previousPage}" class="minibutton leftbutton"><<<</button><button @click="${this._customPage}" class="minibutton">...</button><button ?disabled=${nextDisabled} @click="${this._nextPage}" class="minibutton rightbutton">>>></button>
+      <span>Page ${this.page}/${this.maxPages}</span><br>
+      <wa-button-group size="xxs" orientation="horizontal"><wa-button @click=${this._previousPage} ?disabled=${previousDisabled || this.loading} variant="brand"><<<</wa-button><wa-button @click=${this._customPage} ?disabled=${this.loading} variant="brand">...</wa-button><wa-button @click=${this._nextPage} ?disabled=${nextDisabled || this.loading} variant="brand">>>></wa-button></wa-button-group>
       </div>
-      <items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>
+      ${this.loading ? html`<div class="grid"><wa-spinner></wa-spinner></div>` : html`<items-display .selectedServer=${this.selectedServer} .items=${this.items}></items-display>`}
     `;
   }
 }
