@@ -20,6 +20,7 @@ export class ASView extends LitElement {
     this.tags = []
     this.selectedCrate = null
     this.selectedTags = []
+    this.truncated = false
   }
 
   connectedCallback() {
@@ -85,6 +86,7 @@ export class ASView extends LitElement {
       if (!response.ok) throw new Error("Server fetch issue")
 
       const result = await response.json()
+      this.truncated = result.truncated
       this.items = result.result
     } catch(err) {
       console.error("Error loading advanced search: " + err)
@@ -211,7 +213,8 @@ export class ASView extends LitElement {
     return html`
     <div class="center outerbox">
     <h1>Advanced Search${this.items && this.items.length > 0 ? " Results" : ""} (BETA)</h1>
-    <div class="ASparams">  
+    <div class="ASparams">
+    ${this.truncated && !this.loading ? html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>Search Results Limited</strong><br>This search was limited to 150 items. Don't worry, this is a temporary fix!</wa-callout><br>` : ''}
     <wa-input label="Search Term" id="search" placeholder="Search..." autocomplete="off" ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')}></wa-input>
     <br><wa-select label="Crate" id="crate" value=${this.selectedCrate || ""} ?disabled=${this.loading}>
       <wa-option value="" ?selected=${!this.selectedCrate}>All</wa-option>

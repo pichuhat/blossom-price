@@ -18,6 +18,7 @@ export class SearchView extends LitElement {
     this.selectedServer = null
     this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
     this.searchBox = null
+    this.truncated = false;
   }
 
   connectedCallback() {
@@ -66,6 +67,7 @@ export class SearchView extends LitElement {
 
       const result = await response.json()
       this.items = result.result
+      this.truncated = result.truncated
     } catch(err) {
       console.error("Error loading allitems: " + err)
     } finally {
@@ -112,8 +114,9 @@ export class SearchView extends LitElement {
     <h1>Search${this.items && this.items.length > 0 && !this.loading ? " Results" : ""}</h1>
     <div class="outerbox">
     <div class="innerbox">
-     <wa-input id="search" placeholder="Search..." ?disabled=${this.loading} @keydown=${(e) => this._handleEnter(e)} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input>
-      </div>
+    ${this.truncated && !this.loading ? html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>Search Results Limited</strong><br>This search was limited to 150 items. Don't worry, this is a temporary fix!</wa-callout><br>` : ''}
+     <wa-input id="search" placeholder="Search..." ?disabled=${this.loading} @keydown=${(e) => this._handleEnter(e)} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s" autocomplete="off"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input> 
+     </div>
       </div>
       </div>
       ${this.loading ? html`<div class="grid"><wa-spinner></wa-spinner></div>` : 

@@ -21,6 +21,8 @@ app.use(
 
 app.use(express.json())
 
+app.set('trust proxy', 1)
+
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Recommended for Supabase production connections to avoid drops
@@ -618,12 +620,14 @@ app.get('/api/allitems', async (req, res) => {
             CASE 
                 WHEN match_type = 'exact' THEN 1 
                 ELSE 2 
-            END, id ASC;
+            END, id ASC
+        LIMIT 151;
         `
 
         try {
             const result = await pgPool.query(sqlQuery, [input])
-            res.status(200).json({success: true, result: result.rows})
+            const truncated = result.rows.length > 150
+            res.status(200).json({success: true, result: result.rows, truncated: truncated})
         } catch(err) {
             res.status(500).json({success: false, message: `Server ERR: ${err}`, result: null})
         }
@@ -712,7 +716,8 @@ ORDER BY
         WHEN match_type = 'exact' THEN 1 
         ELSE 2 
     END, 
-    id ASC;
+    id ASC
+LIMIT 151;
 ` : `
 SELECT DISTINCT ON (i.id)
         i.*${serverCondition ? `, p.price AS price,
@@ -727,11 +732,14 @@ FROM items i
 ${serverCondition}
 WHERE i.id = i.id${crateCondition}${tagCondition}
 ORDER BY i.id ASC
+LIMIT 151;
 `;
 
         try {
             const result = await pgPool.query(sqlQuery, values);
-            res.status(200).json({success: true, result: result.rows})
+            const truncated = result.rows.length > 150
+            if (truncated) result.rows = result.rows.slice(0, 150)
+            res.status(200).json({success: true, result: result.rows, truncated: truncated})
         } catch(e) {
             res.status(500).json({success: false, message: `Likely server error: ${e}`, result: null})
             console.log(e)
