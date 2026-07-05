@@ -845,7 +845,7 @@ LIMIT 151;
     })
 
     let tags = []
-app.listen(5000, async () => {
+app.listen(5000, '0.0.0.0', async () => {
     console.log("Fetching tags...")
     tags = await getTags()
     console.log(`BCpricer running at port 5000`);
