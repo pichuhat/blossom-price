@@ -18,6 +18,10 @@ export class BoxView extends LitElement {
         this.items = []
         this.lowDataMode = true;
         this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
+        this.ALLOWED_STYLE_PROPS = {
+          color: /^#[0-9a-fA-F]{3,8}$/,
+          'font-weight': /^(bold|normal|[1-9]00)$/,
+        };
     }
 
     static styles = [sharedStyles, css`
@@ -28,14 +32,28 @@ export class BoxView extends LitElement {
       super.connectedCallback()
       this._getLDMStatus()
 
-      DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
-  if (data.attrName === 'style') {
-    const isSafeColor = /^color:\s*#[0-9a-fA-F]{3,8};?\s*$/.test(data.attrValue.trim());
-    if (!isSafeColor) {
-      data.keepAttr = false; // strip it entirely if it doesn't match
-    }
-  }
-  });
+    DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
+      if (data.attrName !== 'style') return;
+
+        const declarations = data.attrValue
+          .split(';')
+          .map(d => d.trim())
+          .filter(Boolean);
+
+        const safeDeclarations = declarations.filter(decl => {
+          const [prop, ...rest] = decl.split(':');
+          const value = rest.join(':').trim();
+          const propName = prop?.trim().toLowerCase();
+          const validator = this.ALLOWED_STYLE_PROPS[propName];
+          return validator && validator.test(value);
+        });
+
+        if (safeDeclarations.length === 0) {
+          data.keepAttr = false;
+        } else {
+          data.attrValue = safeDeclarations.join('; ');
+        }
+      });
     }
 
     _decodeEscapedUnicode(value) {
