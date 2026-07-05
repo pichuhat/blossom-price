@@ -181,7 +181,6 @@ ul li a:hover, ul li.searchContainer:hover {
 
   render() {
     console.log(this.user)
-    console.log("Navbar SelServer: " + this.selectedServer)
 
     const isDark = localStorage.getItem('theme') == "dark"
 

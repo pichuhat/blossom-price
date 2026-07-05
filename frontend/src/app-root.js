@@ -151,7 +151,6 @@ export class AppView extends LitElement {
   : {};
   if (cookies.selected_server) {
     this.selectedServer = Number(cookies.selected_server)
-    console.log("Imported selected server from cookies")
   }
   }
 

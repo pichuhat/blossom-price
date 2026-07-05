@@ -792,7 +792,7 @@ LIMIT 151;
             ORDER BY i.id, p.timestamp DESC
         ) sub
         ORDER BY recom_timestamp DESC
-        LIMIT 5;    
+        LIMIT 10;    
         `
         const values = [server]
         try {

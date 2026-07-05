@@ -101,7 +101,6 @@ export class HomeView extends LitElement {
  }
 
   render() {
-    console.log(`DEBUG: LOADING ${this.loading} SELSERVER ${this.selectedServer}`)
 
     return html`
     <div class="center">
