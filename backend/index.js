@@ -153,7 +153,7 @@ app.get('/api/auth/callback', async (req, res) => {
             client_secret: process.env.DISCORD_CLIENT_SECRET,
             grant_type: 'authorization_code',
             code: code,
-            redirect_uri: process.env.DISCORD_REDIRECT_URI,
+            redirect_uri: `${req.protocol}://${req.get('host')}/api/auth/callback`,
         }), {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
