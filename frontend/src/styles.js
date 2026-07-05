@@ -64,51 +64,12 @@ align-items: center;
 .forceAlign wa-icon {
 vertical-align: middle;
 }
-
-.minibutton {
-    color: white;
-    background-color: #bc2bc4;
-    padding: 7px;
-    border: none;
-    transition: background-color 0.2s ease;
-    }
-    .minibutton:disabled {
-    background-color: #aaaaaa;
-    }
-    .minibutton:hover {
-    background-color: #831889;
-    }
-    .minibutton:hover:disabled {
-    background-color: #aaaaaa;
-    }
-    .leftbutton {
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    margin-right: 1px;
-    }
-    .rightbutton {
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-    margin-left: 1px;
-    }
     .navsearch {
     background-color: var(--wa-color-brand-fill-normal);
     border: 3px var(--wa-color-brand-border-loud) solid;
     margin-right: 0;
     padding: 3px;
     border-right: none;
-    }
-    .navbutton {
-    padding: 3px;
-    background-color: var(--wa-color-brand-border-loud);
-    color: white;
-    transition: background-color 0.2s ease;
-    margin-left: 0;
-    border: 3px var(--wa-color-brand-border-loud) solid;
-    transition: 0.2s background-color ease;
-    }
-    .navbutton:hover {
-    background-color: var(--wa-color-border-normal);
     }
     wa-input wa-icon {
     transition: color 0.2s ease;
@@ -164,6 +125,16 @@ vertical-align: middle;
       height: auto;
       border-radius: 6px;
       margin-top: 12px;
+    }
+    .fullcard {
+    background-color: var(--color-surface-raised);
+    border: 2px solid var(--color-border);
+    border-radius: 8px;
+    padding: 20px;
+    color: var(--color-text);
+    text-align: center;
+    box-shadow: 0 0 0 1px var(--color-border-alt), 0 4px 16px var(--color-glow);
+    min-width: 50%;
     }
     .priceAdd {
         font-size: 100%;
@@ -301,4 +272,18 @@ vertical-align: middle;
 .mc-white {
     color: #FFFFFF;
 }
+table, th, td {
+        border: 1px var(--color-text) solid;
+        padding: 10px;
+        text-align: center;
+        transition: border ease 0s;
+    }
+    
+    table {
+        border-collapse: collapse;
+        margin: 0 auto;
+        margin-top: 20px;
+        width: 100%;
+        color: var(--color-text);
+    }
 `

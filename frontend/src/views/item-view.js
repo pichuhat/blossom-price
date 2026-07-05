@@ -10,7 +10,8 @@ export class ItemView extends LitElement {
         itemData: {type: Object},
         user: {type: Object},
         loading: {type: Boolean},
-        openPriceRecom: {type: Boolean}
+        openPriceRecom: {type: Boolean},
+        hasPending: {type: Boolean}
     }
 
     constructor() {
@@ -22,11 +23,11 @@ export class ItemView extends LitElement {
         this.openPriceRecom = false;
         this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
         this.properPricing = true;
+        this.hasPending = false;
     }
 
     connectedCallback() {
         super.connectedCallback()
-        this._getItemData()
 
         this.addEventListener('close-recom', (event) => {
             this.openPriceRecom = false;
@@ -39,18 +40,48 @@ export class ItemView extends LitElement {
         super.disconnectedCallback()
         window.removeEventListener('keydown', this._handleGlobalKeydown)
     }
+    
+    async _fetchAll() {
+        await this._getItemData()
+    }
 
-    updated(changedProperties) {
-        if ((changedProperties.has('item') || changedProperties.has('selectedServer')) && this.selectedServer != null && this.item != null) {
-            this.loading = true
-            this._getItemData()
+    async updated(changedProperties) {
+        const needFetch = (changedProperties.has('item') || changedProperties.has('selectedServer') && this.item != null && this.selectedServer != null)
+        const needPendingCheck = (changedProperties.has('user') && this.selectedServer != null && this.item != null && (this.user?.role === 'staff' || this.user?.role === 'admin'))
+
+        if (!needFetch && !needPendingCheck) return;
+    
+        this.loading = true;
+    if (needFetch) {
+        await this._fetchAll()
+    }
+    if (needPendingCheck) {
+        await this._getPending()
+    }
+    this.loading = false;
+}
+
+    async _getPending() {
+        if (this.selectedServer == null || this.item == null) return;
+        const url = `/api/checkpending/${this.selectedServer}/${this.item}`
+        
+        try {
+            const response = await fetch(url, {
+                method: "GET",
+                credentials: "include"
+            })
+            if (!response.ok) throw new Error("getPending: bad response")
+
+            const result = await response.json()
+            this.hasPending = result.isPending
+        } catch(e) {
+            window.alert("An error occurred while fetching pending prices.")
+            throw new Error(e)
         }
     }
 
     async _getItemData() {
-        if (this.selectedServer == null || this.item == null) {
-            return
-        }
+        if (this.selectedServer == null || this.item == null) return;
 
         const toSendUrl = "/api/item/" + this.selectedServer + "/" + this.item
 
@@ -233,7 +264,7 @@ export class ItemView extends LitElement {
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
 
-    if (this.loading) return html`Please wait...`
+    if (this.loading || !this.itemData) return html`Please wait...`
 
     if (!this.itemData.recom_timestamp || !this.itemData.username) {
         this.properPricing = false;
@@ -265,7 +296,10 @@ export class ItemView extends LitElement {
     <div class="box nogrow full">
     <span class="priceAdd">${servers[this.selectedServer]} Price${this.itemData.is_range ? " Range" : ''}: </span><br><span class="price priceAdd">$${this.properPricing ? `${this._formatPrice(this.itemData.price)}${this.itemData.is_range ? ` to $${this._formatPrice(this.itemData.max_price)}` : ""}` : "-"}</span><br>
     <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
-    ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ? html`<br><br><wa-button pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price</wa-button>` : ""}
+    ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ?
+        html`<br><br>${this.hasPending ?
+            html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>You already have a pending recommendation</strong><br>Only submit another if you need to submit a different price.</wa-callout><br>` 
+            : ``}<wa-button pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price</wa-button>` : ""}
 </div>
 <div class="box nogrow  ">
     <span class="boxheader priceAdd">Price Graph</span><br>

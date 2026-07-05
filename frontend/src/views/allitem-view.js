@@ -34,7 +34,10 @@ export class AllItemView extends LitElement {
   _getSelectedPage() {
     const params = new URLSearchParams(window.location.search)
     const selectedPage = Number(params.get('page'))
-    if (isNaN(selectedPage) || Math.round(selectedPage) != selectedPage || selectedPage > this.maxPages || this.selectedPage < 1) return this.page = 1;
+    if (isNaN(selectedPage) || Math.round(selectedPage) != selectedPage || selectedPage > this.maxPages || selectedPage < 1) {
+      this.page = 1;
+      return
+    }
     this.page = selectedPage;
   }
 
@@ -78,7 +81,7 @@ export class AllItemView extends LitElement {
   }
 
   updated(changedProperties) {
-  if (changedProperties.has('selectedServer')) {
+  if (changedProperties.has('selectedServer') && this.page) {
     this._fetchItems()
   }
 }

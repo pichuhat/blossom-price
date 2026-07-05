@@ -19,6 +19,7 @@ import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/spinner/spinner.
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/icon/icon.js'
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/switch/switch.js'
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button-group/button-group.js'
+import 'https://ka-f.webawesome.com/webawesome@3.10.0/components/callout/callout.js';
 
 import { sharedStyles } from './styles.js';
 import { LitElement, html, css } from 'https://esm.sh/lit@3';

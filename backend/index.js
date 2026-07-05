@@ -12,18 +12,7 @@ const { Pool } = require("pg")
 const cors = require('cors');
 const { rejects } = require("assert")
 const { getPackedSettings } = require("http2")
-
-app.set('trust proxy', 1);
-
-// 2. Configure strict, credential-safe CORS
-app.use(cors({
-    origin: ['https://bc-pricer.onrender.com', process.env.DEV_URL], 
-    
-    credentials: true,
-    
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie']
-}));
+const { rawListeners } = require("cluster")
 
 app.use(
     '/src', 
@@ -113,6 +102,8 @@ async function getTags() {
         const response = await fetch(fetchURL)
         const result = await response.json()
         result.push('spawner', 'currency')
+        const index = result.indexOf('Repeat Appearance')
+        if (index > -1) result.splice(index, 1)
         return result
     } catch(e) {
         console.log(`ERROR: tag fetch failed: ${e}`)
@@ -124,17 +115,17 @@ const isProduction = process.env.IS_DEV === 'production'
 app.use(session({
     // Tell express-session to use PostgreSQL instead of server RAM
     store: new pgSession({
-        pool : pgPool,                // Links to your Supabase connection pool
-        tableName : 'user_sessions'   // The name of the table inside Supabase
+        pool : pgPool,
+        tableName : 'user_sessions'
     }),
-    secret: process.env.SESSION_SECRET, // A long, random string inside your local .env
-    resave: false,                      // Saves session only if modified (saves DB performance)
-    saveUninitialized: false,           // Don't create empty sessions for guests
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-        maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie lasts for 30 days (in milliseconds)
+        maxAge: 30 * 24 * 60 * 60 * 1000,
         secure: isProduction,
-        httpOnly: true,                   // Protects cookie against malicious frontend scripts
-        sameSite: isProduction ? 'none' : 'lax'                   // Essential for cross-site cookie security
+        httpOnly: true,
+        sameSite: isProduction ? 'none' : 'lax'
     }
 }));
 
@@ -170,7 +161,6 @@ app.get('/api/auth/callback', async (req, res) => {
         console.log("reached check step A")
         checkA = true;
 
-        // 2. Ask Discord for the user's specific profile INSIDE your server
         const guildMemberResponse = await axios.get(
             `https://discord.com/api/users/@me/guilds/${process.env.MINECRAFT_GUILD_ID}/member`,
             { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -417,8 +407,13 @@ app.get('/api/allitems', async (req, res) => {
         }
     })
 
-    app.get('/api/listrecoms', async (req, res) => {
+    app.get('/api/myrecoms/listrecoms/:page', async (req, res) => {
         if (req.session.user.role == 'staff' || req.session.user.role == 'admin') {
+            const type = req.query.type
+            const page = Number(req.params.page)
+            if (type && !['accepted', 'denied', 'pending'].includes(type) || isNaN(page)) return res.status(400).json({success: false, message: "Invalid input"})
+            const limit = 100
+            const offset = (page-1)*limit;
             const sqlQuery = `
             SELECT
             i.*,
@@ -435,9 +430,12 @@ app.get('/api/allitems', async (req, res) => {
             LEFT JOIN price_submissions p ON i.id = p.item_id
             LEFT JOIN users u ON p.submitted_by = u.discord_id
             WHERE p.submitted_by = $1
-            ORDER BY timestamp DESC;
+            ${type ? `AND status = $4` : ''}
+            ORDER BY timestamp DESC
+            LIMIT $2 OFFSET $3;
             `
-            const data = [req.session.user.id]
+            const data = [req.session.user.id, limit, offset]
+            if (type) data.push(type)
 
             try {
                 const result = await pgPool.query(sqlQuery, data)
@@ -450,7 +448,32 @@ app.get('/api/allitems', async (req, res) => {
         }
     })
 
-    app.get('/api/adminpanel/recoms', async (req, res) => {
+    app.get('/api/myrecoms/pagecount', async (req, res) => {
+        if (req.session?.user?.role !== 'admin' && req.session?.user?.role !== 'staff') return res.status(403).json({success: false, message: "Unauthorized"})
+        const type = req.query.type
+        if (type && !['accepted', 'denied', 'pending'].includes(type)) return res.status(400).json({success: false, message: "Invalid status type"})
+        const sqlQuery = `
+        SELECT COUNT(*) AS recommendations
+        FROM price_submissions
+        AND submitted_by = $1
+        ${type ? `AND status = $2` : ''}
+        `
+        const values = [String(req.session.user.id)]
+        if (type) values.push(type)
+        try {
+            const result = await pgPool.query(sqlQuery, values)
+            res.status(200).json({success: true, count: Math.ceil(Number(result.rows[0].recommendations/100))})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/adminpanel/recoms/:page', async (req, res) => {
+        const page = Number(req.params.page)
+        const type = req.query.type || false
+        if ((type && !['accepted', 'pending', 'denied'].includes(type)) || isNaN(page)) return res.status(400).json({success: false, message: "Invalid input"})
+        const limit = 100
+        const offset = (page-1)*limit;
         if (req.session.user.role == 'admin') {
             const sqlQuery = `
             SELECT
@@ -467,17 +490,40 @@ app.get('/api/allitems', async (req, res) => {
             FROM price_submissions p
             LEFT JOIN items i ON i.id = p.item_id
             LEFT JOIN users u ON p.submitted_by = u.discord_id
-            ORDER BY timestamp DESC;
+            ${type ? `WHERE status = $3` : ''}
+            ORDER BY timestamp DESC
+            LIMIT $1 OFFSET $2;
             `
+            const values = [limit, offset]
+            if (type) values.push(type)
 
             try {
-                const result = await pgPool.query(sqlQuery)
+                const result = await pgPool.query(sqlQuery, values)
                 res.status(200).json({success: true, history: result.rows})
             } catch(err) {
                 res.status(500).json({success: false, message: `ERROR: ${err}`, history: null})
             }
         } else {
             res.status(403).json({success: false, message: "Role required: admin"})
+        }
+    })
+
+    app.get('/api/adminpanel/pagecount', async (req, res) => {
+        if (req.session?.user?.role !== 'admin') return res.status(403).json({success: false, message: "You aren't an admin buckaroo"})
+        const type = req.query.type
+        if (type && !['accepted', 'denied', 'pending'].includes(type)) return res.status(400).json({success: false, message: "Invalid status type"})
+        const sqlQuery = `
+        SELECT COUNT(*) AS recommendations
+        FROM price_submissions
+        ${type ? `WHERE status = $1` : ''}
+        `
+        const values = []
+        if (type) values.push(type)
+        try {
+            const result = await pgPool.query(sqlQuery, values)
+            res.status(200).json({success: true, count: Math.ceil(Number(result.rows[0].recommendations/100))})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
         }
     })
 
@@ -738,6 +784,28 @@ ORDER BY i.id ASC
             res.status(200).json({success: true, result: result.rows})
         } catch(e) {
             res.status(500).json({success: false, result: null})
+        }
+    })
+
+    app.get('/api/checkpending/:serverid/:itemid', async (req, res) => {
+        if (req.session?.user?.role !== 'staff' && req.session?.user?.role !== 'admin') return res.status(401).json({success: false, message: "Role required: staff"})
+        const server = Number(req.params.serverid)
+        const item = Number(req.params.itemid)
+        if (isNaN(server) || isNaN(item)) return res.status(400).json({success: false, message: "Server ID and Item ID must be numbers."})
+        const sqlQuery = `
+        SELECT COUNT(*) AS pending
+        FROM price_submissions
+        WHERE submitted_by = $1
+        AND server_id = $2
+        AND item_id = $3
+        AND status = 'pending'
+        `
+        const values = [req.session.user.id, server, item]
+        try {
+        const result = await pgPool.query(sqlQuery, values)
+        res.status(200).json({success: true, isPending: parseInt(result.rows[0].pending, 10) > 0})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error."})
         }
     })
 
