@@ -177,7 +177,7 @@ app.get('/api/auth/callback', async (req, res) => {
         const discordId = memberData.user.id;
         const roles = memberData.roles
 
-        if (!roles.includes("822640342335356980")) return res.redirect(frontendHost + "/?linkPopup=1")
+        if (!roles.includes("822640342335356980")) return res.redirect("/?linkPopup=1")
 
         const dbresult = await pgPool.query(
             `INSERT INTO users (discord_id, username) 
@@ -196,13 +196,15 @@ app.get('/api/auth/callback', async (req, res) => {
             role: confirmationUser.role
         };
 
-        req.session.save((err) => {
-            if (err) {
-                console.error('Session save error:', err);
-                return res.status(500).send('Error saving session.');
-            }
+        try {
+            await new Promise((resolve, reject) => {
+                req.session.save((err) => (err ? reject(err) : resolve()));
+            });
             console.log(`Saved session for ${minecraftUsername}`);
-        })
+        } catch (err) {
+            console.error('Session save error:', err);
+            return res.status(500).send('Error saving session.');
+        }
 
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
         
@@ -239,6 +241,8 @@ app.get('/api/allitems', async (req, res) => {
     const limit = 20
     const offset = (page-1)*limit;
 
+    if (req.query.selectedServer && ![0, 1, 2, 3].includes(Number(req.query.selectedServer))) return res.status(400).json({success: false, message: "invalid subserver ID"})
+
     const sqlQuery = `${req.query.selectedServer ? `
     SELECT DISTINCT ON (i.id)
     i.*,
@@ -253,7 +257,7 @@ app.get('/api/allitems', async (req, res) => {
     FROM items i
     LEFT JOIN price_submissions p ON i.id = p.item_id
     AND p.status='accepted'
-    AND p.server_id = ${req.query.selectedServer}
+    AND p.server_id = $3
     LEFT JOIN users u ON p.submitted_by = u.discord_id
     ORDER BY i.id, p.timestamp DESC
     LIMIT $1 OFFSET $2
@@ -264,7 +268,9 @@ app.get('/api/allitems', async (req, res) => {
     LIMIT $1 OFFSET $2
     `}
     `
-    const result = await pgPool.query(sqlQuery, [limit, offset])
+    const values = [limit, offset]
+    if (req.query.selectedServer) values.push(req.query.selectedServer)
+    const result = await pgPool.query(sqlQuery, values)
 
     res.json({success: true, items: result.rows})
     } catch(error) {
@@ -372,7 +378,7 @@ app.get('/api/allitems', async (req, res) => {
 
     app.post('/api/recommend', async (req, res) => {
         const input = req.body
-        if (req.session.user.role == 'staff' || req.session.user.role == 'admin') {
+        if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
             if (!req.body.item_id || !req.body.server_id || !req.session.user.id || !req.body.price || (req.body.is_range && !req.body.max_price)) return res.status(400).json("Missing, mismatched, or invalid params")
             const sqlQuery = req.body.is_range ? `
             INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price)
@@ -410,7 +416,7 @@ app.get('/api/allitems', async (req, res) => {
     })
 
     app.get('/api/myrecoms/listrecoms/:page', async (req, res) => {
-        if (req.session.user.role == 'staff' || req.session.user.role == 'admin') {
+        if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
             const type = req.query.type
             const page = Number(req.params.page)
             if (type && !['accepted', 'denied', 'pending'].includes(type) || isNaN(page)) return res.status(400).json({success: false, message: "Invalid input"})
@@ -457,7 +463,7 @@ app.get('/api/allitems', async (req, res) => {
         const sqlQuery = `
         SELECT COUNT(*) AS recommendations
         FROM price_submissions
-        AND submitted_by = $1
+        WHERE submitted_by = $1
         ${type ? `AND status = $2` : ''}
         `
         const values = [String(req.session.user.id)]
@@ -476,7 +482,7 @@ app.get('/api/allitems', async (req, res) => {
         if ((type && !['accepted', 'pending', 'denied'].includes(type)) || isNaN(page)) return res.status(400).json({success: false, message: "Invalid input"})
         const limit = 100
         const offset = (page-1)*limit;
-        if (req.session.user.role == 'admin') {
+        if (req.session?.user?.role == 'admin') {
             const sqlQuery = `
             SELECT
             i.*,
@@ -530,7 +536,7 @@ app.get('/api/allitems', async (req, res) => {
     })
 
     app.post('/api/adminpanel/updatestatus', async (req, res) => {
-        if (req.session.user.role == 'admin') {
+        if (req.session?.user?.role == 'admin') {
             const input = req.body
             if (!input.type || !input.submission_id || !['accepted', 'denied', 'pending'].includes(input.type)) return res.status(400).json({success: false, message: "Missing or invalid arguments"})
             const sqlQuery = `
@@ -608,7 +614,7 @@ app.get('/api/allitems', async (req, res) => {
             FROM items i
             LEFT JOIN price_submissions p ON i.id = p.item_id
             AND p.status='accepted'
-            ${server ? `AND p.server_id = ${Number(server)}` : ""}
+            ${server ? `AND p.server_id = $2` : ""}
             LEFT JOIN users u ON p.submitted_by = u.discord_id
             WHERE 
                 to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
@@ -625,7 +631,9 @@ app.get('/api/allitems', async (req, res) => {
         `
 
         try {
-            const result = await pgPool.query(sqlQuery, [input])
+            const values = [input]
+            if (server) values.push(server)
+            const result = await pgPool.query(sqlQuery, values)
             const truncated = result.rows.length > 150
             res.status(200).json({success: true, result: result.rows, truncated: truncated})
         } catch(err) {

@@ -2,6 +2,8 @@ import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
 import { sharedStyles } from '../styles.js';
 
+import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
+
 export class BoxView extends LitElement {
     static properties = {
         selectedServer: {type: Number},
@@ -25,6 +27,15 @@ export class BoxView extends LitElement {
     connectedCallback() {
       super.connectedCallback()
       this._getLDMStatus()
+
+      DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
+  if (data.attrName === 'style') {
+    const isSafeColor = /^color:\s*#[0-9a-fA-F]{3,8};?\s*$/.test(data.attrValue.trim());
+    if (!isSafeColor) {
+      data.keepAttr = false; // strip it entirely if it doesn't match
+    }
+  }
+  });
     }
 
     _decodeEscapedUnicode(value) {
@@ -34,6 +45,7 @@ export class BoxView extends LitElement {
 
   _routeToItemPage(id) {
     const response = this.servers[this.selectedServer] || window.prompt("Enter a server name:")
+    if (!response) return;
     if (!this.servers.includes(response.toLowerCase())) return window.alert("That server does not exist!")
     this.dispatchEvent(new CustomEvent('nav-requested', {
     bubbles: true,
@@ -65,6 +77,13 @@ _formatPrice(unformatted) {
       this.lowDataMode = JSON.parse(localStorage.getItem('LDM') ?? 'true')
     }
 
+    _sanitizeHTML(input) {
+      return this._decodeEscapedUnicode(DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: ['div', 'span', 'br'],
+        ALLOWED_ATTR: ['class', 'style'],
+      }));
+    }
+
     render() {
         return html`
         <div class="center">
@@ -84,7 +103,7 @@ _formatPrice(unformatted) {
             <div class="give-preview-text-outer">
               <div class="give-preview-text w-100">
                 <div class="give-preview-text-inner text-start" style="text-align: left;">
-                  ${unsafeHTML(this._decodeEscapedUnicode(item.item_html))}
+                  ${unsafeHTML(this._sanitizeHTML(item.item_html))}
                 </div>
               </div>
             </div>  

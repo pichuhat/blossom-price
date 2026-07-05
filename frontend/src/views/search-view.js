@@ -23,8 +23,6 @@ export class SearchView extends LitElement {
 
   connectedCallback() {
     super.connectedCallback()
-    this.searchBox = this.shadowRoot.querySelector('#search')
-    this._fetchItems()
     this._onAppSearch = (e) => {
       // URL is already updated by the navbar; just re-fetch based on window.location.search
       this.loading = true
@@ -36,6 +34,11 @@ export class SearchView extends LitElement {
   disconnectedCallback() {
     window.removeEventListener('app-search', this._onAppSearch)
     super.disconnectedCallback()
+  }
+
+  firstUpdated() {
+    this.searchBox = this.shadowRoot.querySelector('#search')
+    this._fetchItems()
   }
 
   _decodeEscapedUnicode(value) {
@@ -53,7 +56,7 @@ export class SearchView extends LitElement {
   async _fetchItems() {
     const params = new URLSearchParams(window.location.search)
     const query = params.get('query')
-    this.shadowRoot.querySelector("#search").value = query
+    this.searchBox.value = query
     this.loading = true;
     const fetchURL = `/api/search/simple?query=${query}${this.selectedServer != null ? `&selectedServer=${this.selectedServer}` : ""}`
     console.log(fetchURL)
@@ -76,8 +79,8 @@ export class SearchView extends LitElement {
   }
 
   _routeToItemPage(id) {
-    console.log("received")
     const response = this.servers[this.selectedServer] || window.prompt("Enter a server name:")
+    if (!response) return;
     if (!this.servers.includes(response.toLowerCase())) return window.alert("That server does not exist!")
     this.dispatchEvent(new CustomEvent('nav-requested', {
     bubbles: true,
@@ -102,7 +105,7 @@ export class SearchView extends LitElement {
     }
 
     updated(changedProperties) {
-  if (changedProperties.has('selectedServer')) {
+  if (changedProperties.has('selectedServer') && changedProperties.get('selectedServer') !== undefined) {
     this._fetchItems()
   }
 }

@@ -117,8 +117,8 @@ export class AllItemView extends LitElement {
   }
 
   _routeToItemPage(id) {
-    console.log("received")
     const response = this.servers[this.selectedServer] || window.prompt("Enter a server name:")
+    if (!response) return;
     if (!this.servers.includes(response.toLowerCase())) return window.alert("That server does not exist!")
     this.dispatchEvent(new CustomEvent('nav-requested', {
     bubbles: true,
