@@ -13,12 +13,6 @@ jobs:
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@1.5
 
-      - name: Debug PATH
-        run: |
-          echo $PATH
-          which fly || echo "fly not found"
-          which flyctl || echo "flyctl not found"
-
       # Step 2: Pass the token as an environment variable to the restart command
       - name: Restart Fly App
         run: flyctl apps restart blossom-price
