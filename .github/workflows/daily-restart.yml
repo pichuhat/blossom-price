@@ -3,16 +3,18 @@ name: Daily App Restart
 on:
   schedule:
     - cron: '0 3 * * *'
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   restart:
     runs-on: ubuntu-latest
     steps:
+      # Step 1: Cleaned up the installation step
       - name: Setup Flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
-        with:
-          api_token: ${{ secrets.FLY_API_TOKEN }}
 
+      # Step 2: Pass the token as an environment variable to the restart command
       - name: Restart Fly App
         run: fly apps restart blossom-price
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
