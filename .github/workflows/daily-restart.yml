@@ -11,7 +11,7 @@ jobs:
     steps:
       # Step 1: Cleaned up the installation step
       - name: Setup Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@v1.5
+        uses: superfly/flyctl-actions/setup-flyctl@1.5
 
       # Step 2: Pass the token as an environment variable to the restart command
       - name: Restart Fly App
