@@ -21,6 +21,6 @@ jobs:
 
       # Step 2: Pass the token as an environment variable to the restart command
       - name: Restart Fly App
-        run: fly apps restart blossom-price
+        run: flyctl apps restart blossom-price
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
