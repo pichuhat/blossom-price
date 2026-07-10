@@ -377,7 +377,7 @@ app.get('/api/allitems', async (req, res) => {
     app.post('/api/recommend', async (req, res) => {
         const input = req.body
         if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
-            if (!input.item_id || !input.server_id || !req.session.user.id || !input.price || (input.is_range && !input.max_price) || isNaN(Number(input.price)) || isNaN(Number(input.max_price)) || ![0,1,2,3].includes(input.server_id)) return res.status(400).json("Missing, mismatched, or invalid params")
+            if (!input.item_id || !req.session.user.id || !input.price || (input.is_range && !input.max_price) || isNaN(Number(input.price)) || isNaN(Number(input.max_price)) || ![0,1,2,3].includes(input.server_id)) return res.status(400).json("Missing, mismatched, or invalid params")
             input.price = Number(input.price)
             input.max_price = Number(input.max_price)
             const sqlQuery = input.is_range ? `
