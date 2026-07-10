@@ -21,7 +21,7 @@ app.use(
 
 app.use(express.json())
 
-app.set('trust proxy', 1)
+app.set('trust proxy', true)
 
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -147,20 +147,20 @@ app.get('/api/auth/callback', async (req, res) => {
     let checkA = false
 
     try {
+        const redirect = `${req.protocol}://${req.get('X-Forwarded-Host') || req.get('host')}/api/auth/callback`
         // 1. Exchange the temporary code for a permanent Access Token
         const tokenResponse = await axios.post('https://discord.com/api/oauth2/token', new URLSearchParams({
             client_id: process.env.DISCORD_CLIENT_ID,
             client_secret: process.env.DISCORD_CLIENT_SECRET,
             grant_type: 'authorization_code',
             code: code,
-            redirect_uri: `${req.protocol}://${req.get('host')}/api/auth/callback`,
+            redirect_uri: redirect,
         }), {
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
         });
 
         const accessToken = tokenResponse.data.access_token;
 
-        console.log("reached check step A")
         checkA = true;
 
         const guildMemberResponse = await axios.get(
@@ -168,7 +168,6 @@ app.get('/api/auth/callback', async (req, res) => {
             { headers: { Authorization: `Bearer ${accessToken}` } }
         );
 
-        console.log("reached check step B")
         checkA = false;
 
         // Extract their verified info
@@ -281,7 +280,6 @@ app.get('/api/allitems', async (req, res) => {
 
     app.get('/api/forceupdate', async (req, res) => {
         if (req.session && req.session.user) {
-            console.log(req.session.user.role)
             if (req.session.user.role == "admin") {
                 console.log("Forced sync starting...")
                 try {
@@ -379,8 +377,10 @@ app.get('/api/allitems', async (req, res) => {
     app.post('/api/recommend', async (req, res) => {
         const input = req.body
         if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
-            if (!req.body.item_id || !req.body.server_id || !req.session.user.id || !req.body.price || (req.body.is_range && !req.body.max_price)) return res.status(400).json("Missing, mismatched, or invalid params")
-            const sqlQuery = req.body.is_range ? `
+            if (!input.item_id || !input.server_id || !req.session.user.id || !input.price || (input.is_range && !input.max_price) || isNaN(Number(input.price)) || isNaN(Number(input.max_price)) || ![0,1,2,3].includes(input.server_id)) return res.status(400).json("Missing, mismatched, or invalid params")
+            input.price = Number(input.price)
+            input.max_price = Number(input.max_price)
+            const sqlQuery = input.is_range ? `
             INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
@@ -389,14 +389,14 @@ app.get('/api/allitems', async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING *
             `
-             if (req.body.is_range && req.body.price == req.body.max_price) return res.status(400).json({success: false, message: "min and max prices must be different"})
-            if (req.body.is_range && req.body.price > req.body.max_price) {
-                [req.body.price, req.body.max_price] = [req.body.max_price, req.body.price]
+             if (input.is_range && input.price == input.max_price) return res.status(400).json({success: false, message: "min and max prices must be different"})
+            if (input.is_range && input.price > input.max_price) {
+                [input.price, input.max_price] = [input.max_price, input.price]
             }
 
-            const values = [req.body.item_id, req.body.server_id, req.session.user.id, req.body.price, 'pending']
+            const values = [input.item_id, input.server_id, req.session.user.id, input.price, 'pending']
             if (req.body.is_range) {
-                values.push(true, req.body.max_price)
+                values.push(true, input.max_price)
             } else {
                 values.push(false)
             }
@@ -591,7 +591,6 @@ app.get('/api/allitems', async (req, res) => {
     })
 
     app.get('/api/search/simple', async (req, res) => {
-        console.log(req.query)
         const input = req.query.query
         const server = req.query.selectedServer
         if (!input || (server && isNaN(Number(server)))) return res.status(400).json({success: false, message: "Missing or invalid search param", result: null})
@@ -645,7 +644,7 @@ app.get('/api/allitems', async (req, res) => {
         const sqlQuery = `
         SELECT id, "CrateName"
         FROM crates
-        ORDER BY id ASC
+        ORDER BY id DESC
         `
         try {
             const result = await pgPool.query(sqlQuery)

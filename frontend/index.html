@@ -8,6 +8,9 @@
 <script type="module">
     if (localStorage.getItem('theme') == 'dark') {
         document.documentElement.classList.add('wa-dark')
+    } else if (localStorage.getItem('theme') === null) {
+        localStorage.setItem('theme', 'dark')
+        document.documentElement.classList.add('wa-dark')
     }
 
   const style = document.createElement('style');
