@@ -11,10 +11,16 @@ jobs:
     steps:
       # Step 1: Cleaned up the installation step
       - name: Setup Flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
+        uses: superfly/flyctl-actions/setup-flyctl@v1.5
 
       # Step 2: Pass the token as an environment variable to the restart command
       - name: Restart Fly App
         run: fly apps restart blossom-price
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Debug PATH
+        run: |
+          echo $PATH
+          which fly || echo "fly not found"
+          which flyctl || echo "flyctl not found"
