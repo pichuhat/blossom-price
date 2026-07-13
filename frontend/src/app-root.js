@@ -21,9 +21,16 @@ import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/switch/switch.js
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button-group/button-group.js'
 import 'https://ka-f.webawesome.com/webawesome@3.10.0/components/callout/callout.js';
 
+//Polyfill for old Apple devices
+import { URLPattern } from 'https://esm.sh/urlpattern-polyfill@10';
+
 import { sharedStyles } from './styles.js';
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
+
+if (!globalThis.URLPattern) {
+    globalThis.URLPattern = URLPattern
+}
 
 export class AppView extends LitElement {
     static properties = {
