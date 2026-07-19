@@ -234,39 +234,52 @@ export class ItemView extends LitElement {
         this.requestUpdate()
     }
 
-    _back() {
-        this.dispatchEvent(new CustomEvent('nav-requested', {
-        bubbles: true,
-        composed: true,
-        detail: { path: `/~/server/${this.selectedServer}/item/${Number(this.item) - 1}` }
-  }));
+    async _getNextItem(isPrevious) {
+        const fetchURL = `/api/itemorder/${isPrevious ? 'previous' : 'next'}?id=${this.item}`
+        try {
+        const response = await fetch(fetchURL, {
+            method: "GET",
+            credentials: "include"
+        })
+        if (!response.ok) return false
+        const result = await response.json()
+        return Number(result.id)
+    } catch(e) {
+        console.error(e)
+        return false;
+    }
     }
 
-    _next() {
+    async _back() {
+        this.loading = true;
+        const id = await this._getNextItem(true)
+        if (!id) return this.loading = false;
         this.dispatchEvent(new CustomEvent('nav-requested', {
         bubbles: true,
         composed: true,
-        detail: { path: `/~/server/${this.selectedServer}/item/${Number(this.item) + 1}` }
+        detail: { path: `/~/server/${this.selectedServer}/item/${id}` }
   }));
+        this.loading = false;
     }
 
-    _select() {
-        const ask = window.prompt(`Enter Spawner ID 1-65:`)
-        if (!ask) return;
-        if (isNaN(ask) || Number(ask) > 65 || Number(ask) < 1) return window.alert("Invalid input")
+    async _next() {
+        this.loading = true;
+        const id = await this._getNextItem(false)
+        if (!id) return this.loading = false;
         this.dispatchEvent(new CustomEvent('nav-requested', {
         bubbles: true,
         composed: true,
-        detail: { path: `/~/server/${this.selectedServer}/item/${999000 + Number(ask)}` }
+        detail: { path: `/~/server/${this.selectedServer}/item/${id}` }
   }));
+        this.loading = false;
     }
 
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
 
-    if (this.loading || !this.itemData) return html`Please wait...`
+    if (this.loading || !this.itemData) return html`<div class="center forceGap big-spinner"><wa-spinner></wa-spinner></div>`
 
-    if (!this.itemData.recom_timestamp || !this.itemData.username) {
+    if (!this.itemData?.recom_timestamp || !this.itemData?.username) {
         this.properPricing = false;
     } else {
         this.properPricing = true;
@@ -279,7 +292,7 @@ export class ItemView extends LitElement {
     <div class="dashboard">
 <div class="profile-column">
     <div class="box">
-    ${this.itemData.tags.includes('spawner') && this.user && (this.user.role == 'staff' || this.user.role == 'admin') ? html`<button @click=${this._back} ?disabled=${this.loading || this.item == 999001}>Previous Spawner (beta)</button><button @click=${this._select}>...</button><button @click=${this._next} ?disabled=${this.loading || this.item == 999065}>Next Spawner (beta)</button>` : ""}
+    <wa-button-group orientation="horizontal"><wa-button size="s" variant="brand" ?disabled=${this.item === 1 || this.loading} @click=${this._back}><wa-icon name="angles-left"></wa-icon></wa-button><wa-button size="s" variant="brand" ?disabled=${this.item === 999065 || this.loading} @click=${this._next}><wa-icon name="angles-right"></wa-icon></wa-button></wa-button-group>
     <h1 class="center">${this.itemData.item_name}</h1>
     <div class="tagbox">
         ${this.itemData.tags ? this.itemData.tags.map(tag => {
@@ -294,12 +307,13 @@ export class ItemView extends LitElement {
 </div>
 <div class="market-column">
     <div class="box nogrow full">
-    <span class="priceAdd">${servers[this.selectedServer]} Price${this.itemData.is_range ? " Range" : ''}: </span><br><span class="price priceAdd">$${this.properPricing ? `${this._formatPrice(this.itemData.price)}${this.itemData.is_range ? ` to $${this._formatPrice(this.itemData.max_price)}` : ""}` : "-"}</span><br>
+    <span class="priceAdd">${servers[this.selectedServer]} Price${this.itemData?.is_range ? " Range" : ''}: </span><br><span class="price priceAdd">$${this.properPricing ? `${this._formatPrice(this.itemData.price)}${this.itemData.is_range ? ` to $${this._formatPrice(this.itemData.max_price)}` : ""}` : "-"}</span><br>
     <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ?
         html`<br><br>${this.hasPending ?
             html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>You already have a pending recommendation</strong><br>Only submit another if you need to submit a different price.</wa-callout><br>` 
-            : ``}<wa-button pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price</wa-button>` : ""}
+            : ``}<wa-button ?disabled=${this.loading} pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price</wa-button>` : ""}
+
 </div>
 <div class="box nogrow  ">
     <span class="boxheader priceAdd">Price Graph</span><br>

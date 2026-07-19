@@ -75,7 +75,7 @@ export class NewPrice extends LitElement {
     color: var(--color-text);
     transition: color 0.4s ease;
     }
-    #priceDisplay.red, #maxPriceDisplay.red {
+   #priceDisplay.red, #minPriceDisplay.red, #maxPriceDisplay.red {
     color: red;
     }
 

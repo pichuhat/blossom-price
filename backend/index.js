@@ -415,6 +415,66 @@ app.get('/api/allitems', async (req, res) => {
         }
     })
 
+    app.post('/api/group-recommend', async (req, res) => {
+        const input = req.body
+        if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
+            if (typeof input.item_id !== 'object' || input.item_id.length < 1 || !req.session.user.id || (input.is_range && isNaN(Number(input.max_price))) || isNaN(Number(input.price)) || ![0,1,2,3].includes(input.server_id)) return res.status(400).json("Missing, mismatched, or invalid params")
+            input.price = Number(input.price)
+            input.max_price = Number(input.max_price)
+            input.item_id = input.item_id.map(String)
+            const sqlQuery = input.is_range ? `
+            INSERT INTO group_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING *
+            ` : `
+            INSERT INTO group_submissions (item_id, server_id, submitted_by, price, status, is_range)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING *
+            `
+
+            const secondQuery = `
+            INSERT INTO price_submissions (group_id, item_id, server_id, submitted_by, price, status, is_range${input.is_range ? `, max_price` : ""})
+            SELECT
+              gs.group_id,
+              i.id,
+              gs.server_id,
+              gs.submitted_by,
+              gs.price,
+              gs.status,
+              gs.is_range${input.is_range ? `, gs.max_price` : ''}
+            FROM group_submissions gs
+            CROSS JOIN LATERAL unnest(gs.item_id::INT[]) AS joined_item_id
+            JOIN items i ON i.id = joined_item_id
+            WHERE gs.group_id = $1
+            `
+             if (input.is_range && input.price == input.max_price) return res.status(400).json({success: false, message: "min and max prices must be different"})
+            if (input.is_range && input.price > input.max_price) {
+                [input.price, input.max_price] = [input.max_price, input.price]
+            }
+
+            const values = [input.item_id, input.server_id, req.session.user.id, input.price, 'pending']
+            if (req.body.is_range) {
+                values.push(true, input.max_price)
+            } else {
+                values.push(false)
+            }
+
+            try {
+
+            const result = await pgPool.query(sqlQuery, values)
+            const secondResult = await pgPool.query(secondQuery, [result.rows[0].group_id])
+            res.status(200).json({success: true, message: "Uploaded"})
+
+            } catch(err) {
+                console.log(err)
+                res.status(500).json({success: false, message: "Upload error"})
+            }
+
+        } else {
+            res.status(403).json({success: false, message: "Role required: staff"})
+        }
+    })
+
     app.get('/api/myrecoms/listrecoms/:page', async (req, res) => {
         if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
             const type = req.query.type
@@ -438,6 +498,7 @@ app.get('/api/allitems', async (req, res) => {
             LEFT JOIN price_submissions p ON i.id = p.item_id
             LEFT JOIN users u ON p.submitted_by = u.discord_id
             WHERE p.submitted_by = $1
+            AND p.group_id IS NULL
             ${type ? `AND status = $4` : ''}
             ORDER BY timestamp DESC
             LIMIT $2 OFFSET $3;
@@ -464,6 +525,7 @@ app.get('/api/allitems', async (req, res) => {
         SELECT COUNT(*) AS recommendations
         FROM price_submissions
         WHERE submitted_by = $1
+        AND group_id IS NULL
         ${type ? `AND status = $2` : ''}
         `
         const values = [String(req.session.user.id)]
@@ -498,7 +560,8 @@ app.get('/api/allitems', async (req, res) => {
             FROM price_submissions p
             LEFT JOIN items i ON i.id = p.item_id
             LEFT JOIN users u ON p.submitted_by = u.discord_id
-            ${type ? `WHERE status = $3` : ''}
+            WHERE p.group_id IS NULL
+            ${type ? `AND status = $3` : ''}
             ORDER BY timestamp DESC
             LIMIT $1 OFFSET $2;
             `
@@ -523,7 +586,8 @@ app.get('/api/allitems', async (req, res) => {
         const sqlQuery = `
         SELECT COUNT(*) AS recommendations
         FROM price_submissions
-        ${type ? `WHERE status = $1` : ''}
+        WHERE group_id IS NULL
+        ${type ? `AND status = $1` : ''}
         `
         const values = []
         if (type) values.push(type)
@@ -738,7 +802,7 @@ SELECT DISTINCT ON (i.id)
 FROM items i
 ${serverCondition}
 WHERE i.id = i.id${crateCondition}${tagCondition}
-ORDER BY i.id ASC
+ORDER BY i.id${serverCondition ? `, p.timestamp DESC` : ""}
 LIMIT 151;
 `;
 
@@ -821,6 +885,132 @@ LIMIT 151;
         res.status(200).json({success: true, isPending: parseInt(result.rows[0].pending, 10) > 0})
         } catch(e) {
             res.status(500).json({success: false, message: "Internal server error."})
+        }
+    })
+
+    app.get('/api/groups/:page', async (req, res) => {
+        if (req.session?.user?.role !== 'staff' && req.session?.user?.role !== 'admin') return res.status(401).json({success: false, message: "Role required: staff"})
+        const adminview = !!JSON.parse(req.query.do_manage)
+        if (adminview && req.session?.user?.role !== 'admin') return res.status(403).json({success: false, message: "Admin role required for management access"})
+        let page = Number(req.params.page) || 1
+        if (page > 100 || page < 1) page = 1;
+        const limit = 100
+        const offset = (page-1)*limit
+        const sqlQuery = `
+        SELECT
+        gs.*,
+        u.username AS username
+        FROM group_submissions gs
+        LEFT JOIN users u ON gs.submitted_by = u.discord_id
+        ${adminview ? '' : `WHERE gs.submitted_by = $3`}
+        LIMIT $1 OFFSET $2
+        `
+        const values = [limit, offset]
+        if (!adminview) values.push(req.session.user.id)
+        
+        try {
+            const result = await pgPool.query(sqlQuery, values)
+            res.status(200).json({success: true, result: result.rows})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/pagecount/groups', async (req, res) => {
+        if (req.session?.user?.role !== 'staff' && req.session?.user?.role !== 'admin') return res.status(401).json({success: false, message: "Role required: staff"})
+        const adminview = req.query.do_manage ? !!JSON.parse(req.query.do_manage) : false
+        if (adminview && req.session?.user?.role !== 'admin') return res.status(403).json({success: false, message: "Admin role required for management access"})
+        const sqlQuery = `
+        SELECT COUNT(*) AS groups
+        FROM group_submissions
+        ${adminview ? '' : `WHERE submitted_by = $1`}    
+        `
+        const values = []
+        if (!adminview) values.push(req.session.user.id)
+
+        try {
+            const result = await pgPool.query(sqlQuery, values)
+            res.status(200).json({success: true, count: Math.ceil(result.rows[0].groups/100)})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/viewgroup/:id', async (req, res) => {
+        const group_id = Number(req.params.id)
+        if (req.session?.user?.role !== 'staff' && req.session?.user?.role !== 'admin') return res.status(401).json({success: false, message: "Role required: staff"})
+        if (isNaN(group_id)) return res.status(400).json({success: false, message: "Invalid group id"})
+        const sqlQuery = `
+        SELECT
+        i.id,
+        i.item_name,
+        i.tags,
+        i.updated_at,
+        i.crate_id,
+        i.win_chance,
+        i.rarity_human,
+        c."CrateName" AS crate_name
+        FROM group_submissions gs
+        CROSS JOIN LATERAL unnest(gs.item_id::INT[]) WITH ORDINALITY AS u(id, ord)
+        JOIN items i ON i.id = u.id
+        LEFT JOIN crates c ON i.crate_id = c.id
+        WHERE gs.group_id = $1
+        ORDER BY u.ord
+        `
+
+        try {
+            const result = await pgPool.query(sqlQuery, [group_id])
+            res.status(200).json({success: true, result: result.rows})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.post('/api/updatestatus/groups', async (req, res) => {
+        if (req.session?.user?.role == 'admin') {
+            const input = req.body
+            if (!input.type || !input.submission_id || !['accepted', 'denied', 'pending'].includes(input.type)) return res.status(400).json({success: false, message: "Missing or invalid arguments"})
+            const sqlQuery = `
+            UPDATE group_submissions
+            SET status = $1
+            WHERE group_id = $2
+            `
+            const secondQuery = `
+            UPDATE price_submissions
+            SET status = $1
+            WHERE group_id = $2
+            `
+            const data = [input.type, input.submission_id]
+
+            try {
+                const result = await pgPool.query(sqlQuery, data)
+                const second = await pgPool.query(secondQuery, data)
+                res.status(200).json({success: true, message: "Updated"})
+            } catch(error) {
+                res.status(500).json({success: false, message: `ERROR: ${error}`})
+            }
+        } else {
+            res.status(403).json({success: false, message: "Role required: admin"})
+        }
+    })
+
+    app.get('/api/itemorder/:direction', async (req, res) => {
+        const direction = req.params.direction
+        const id = req.query.id
+        if (!['next', 'previous'].includes(direction)) return res.status(400).json({success: false, message: "Invalid direction"})
+        if (!id || isNaN(id) || id < 1) return res.status(400).json({success: false, message: "Invalid item id"})
+        const sqlQuery = `
+        SELECT id
+        FROM items
+        WHERE id ${direction == 'next' ? '>' : '<'} $1
+        ORDER BY id ${direction == 'next' ? 'ASC' : 'DESC'}
+        LIMIT 1
+        `
+        try {
+            const result = await pgPool.query(sqlQuery, [id])
+            res.status(200).json({success: true, id: result.rows[0].id})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
         }
     })
 

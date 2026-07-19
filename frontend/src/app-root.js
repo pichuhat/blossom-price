@@ -9,6 +9,8 @@ import "./views/admin-view.js"
 import "./views/spawner-view.js"
 import "./views/search-view.js"
 import "./views/advanced-search.js"
+import "./views/group-pricing.js"
+import "./views/gp-view.js"
 
 import "https://ka-f.webawesome.com/webawesome@3.9.0/webawesome.loader.js"
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/select/select.js';
@@ -75,8 +77,6 @@ export class AppView extends LitElement {
           const serverId = parseInt(params.id, 10)
           const itemId = parseInt(params.itemid, 10)
           this.selectedServer = isNaN(serverId) ? undefined : serverId
-          console.log(this.selectedServer)
-          console.log(itemId)
           this.requestUpdate()
           return html`<item-view .selectedServer=${this.selectedServer} .item=${itemId} .user=${this.user}></item-view>`
         }
@@ -110,6 +110,24 @@ export class AppView extends LitElement {
       {
         path: '/~/advancedsearch{/}?',
         render: () => html`<advanced-search-view .selectedServer=${this.selectedServer}></advanced-search-view>`
+      },
+      {
+        path: '/~/grouppricing{/}?',
+        render: () => {
+          if (this.user && (this.user.role == 'staff' || this.user.role == 'admin')) {
+          return html`<group-price-view .selectedServer=${this.selectedServer}></group-price-view>`
+          } else {
+            return html``
+          }
+        }
+      },
+      {
+        path: '/~/viewgroups{/}?',
+        render: () => {
+          if (this.user && (this.user.role == 'staff' || this.user.role == 'admin')) {
+            return html`<manage-gp .user=${this.user}></manage-gp>`
+          }
+        }
       }
     ]);
     }
@@ -210,7 +228,6 @@ export class AppView extends LitElement {
 
     return html`
       <top-navbar .user=${this.user} .selectedServer=${this.selectedServer}></top-navbar>
-      ${this.user ? "" : html`<guest-view></guest-view>`}
       ${this.router.outlet()}
     `;
   }

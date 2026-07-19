@@ -43,6 +43,10 @@ text-align: center;
   margin-left: 20px;
 }
 
+.forceLeft.noGap {
+margin-left: 0;
+}
+
 :host {
   --wa-color-brand-fill-loud: #bc4bc2;   /* solid buttons/backgrounds */
   --wa-color-brand-fill-normal: #f3d7f7; /* lighter fill */
@@ -286,4 +290,35 @@ table, th, td {
         width: 100%;
         color: var(--color-text);
     }
+
+.modal-overlay {
+  position: fixed;
+  display: block;
+  z-index: 1001;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-content {
+  background-color: var(--color-surface-raised);
+  margin: 15% auto;
+  padding: 20px;
+  border: 2px solid var(--color-border);
+  width: 80%;
+  max-width: 500px;
+  border-radius: 8px;
+  position: relative;
+}
+
+.big-spinner wa-spinner {
+font-size: 3rem;
+--track-width: 5px;
+}
 `

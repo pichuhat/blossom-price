@@ -62,7 +62,6 @@ export class PriceHistory extends LitElement {
 
     _formatDate(unformatted) {
         const date = new Date(unformatted)
-        console.log(date)
         return this.formatter.format(date)
     }
 
@@ -85,7 +84,6 @@ export class PriceHistory extends LitElement {
         </thead>
         <tbody>
             ${this.history.map(row => {
-                console.log(row)
                 return html`<tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${row.username}</td><td>$${this._formatPrice(row.price)}${row.is_range ? html` to $${this._formatPrice(row.max_price)}` : ""}</td></tr>`
             })}
         </tbody>

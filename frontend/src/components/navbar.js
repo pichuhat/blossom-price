@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { sharedStyles } from '../styles.js';
+import { communicator } from '../cross-communicator.js'
 
 import "./login-button.js"
 
@@ -8,13 +9,37 @@ export class Navbar extends LitElement {
       user: {type: Object},
       selectedServer: {type: Number},
       servers: {type: Array},
-      openDropdown: {type: String}
+      openDropdown: {type: String},
+      submitVisible: {type: Boolean},
+      submitCount: {type: Number}
     }
 
     constructor() {
       super()
       this.servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
       this.openDropdown = ''
+      this.submitVisible = false;
+      this.submitCount = 0
+      this._updateButton = this._updateButton.bind(this)
+    }
+
+    connectedCallback() {
+      super.connectedCallback()
+
+      communicator.addEventListener('set-status', this._updateButton)
+    }
+
+    disconnectedCallback() {
+      super.disconnectedCallback()
+
+      communicator.removeEventListener('set-status', this._updateButton)
+    }
+
+    _updateButton(e) {
+      if (typeof e.detail?.visible !== 'boolean') return
+      this.submitCount = typeof e.detail?.count === 'number' ? e.detail.count : this.submitCount
+      this.submitVisible = e.detail.visible
+      console.log(this.submitCount, this.submitVisible)
     }
   
   static styles = [sharedStyles, css`
@@ -27,7 +52,10 @@ export class Navbar extends LitElement {
       top: 0;
       margin: 0;
       padding: 0;
-      border-bottom: 3px solid var(--color-navbar-accent)
+    }
+
+    .navbar-content {
+    border-bottom: 3px solid var(--color-navbar-accent);
     }
 
     .discord-btn {
@@ -108,6 +136,16 @@ ul li a:hover, ul li.searchContainer:hover {
 .dropdown:hover .dropdown-content {
   display: block; 
 }
+
+.submit-box {
+text-align: center;
+width: 100%;
+border-bottom: 2px solid var(--color-navbar-accent)
+}
+
+.submit-box wa-button {
+padding: 10px 0px;
+}
   `]
 
   _navigateTo(path, event) {
@@ -117,6 +155,10 @@ ul li a:hover, ul li.searchContainer:hover {
       bubbles: true,
       composed: true
     }));
+  }
+
+  _dispatchModal() {
+    communicator.dispatchEvent(new CustomEvent('open-modal'))
   }
 
   _search() {
@@ -163,6 +205,9 @@ ul li a:hover, ul li.searchContainer:hover {
     if (hasChanged.has("selectedServer")) {
       this.requestUpdate()
     }
+    if (hasChanged.has("user")) {
+      console.log(this.user)
+    }
   }
 
   _handleEnter(e) {
@@ -180,7 +225,6 @@ ul li a:hover, ul li.searchContainer:hover {
   }
 
   render() {
-    console.log(this.user)
 
     const isDark = localStorage.getItem('theme') == "dark"
 
@@ -188,11 +232,13 @@ ul li a:hover, ul li.searchContainer:hover {
 
     return html`
       <header class="navbar">
+      <div class="navbar-content">
       <ul><li style="font-size: 150%"><a href='/~/' @click=${(e) => this._navigateTo('/~/', e)}>BCPricer</a></li>
       <li><a href="/~/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
       <li><a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a></li>
       <li><a href="/~/advancedsearch" @click=${(e) => this._navigateTo('/~/advancedsearch', e)}>Advanced Search</a></li>
-      <li class="searchContainer"><wa-input pill autocomplete="off" id="search" @keydown=${(e) => this._handleEnter(e)} placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input></div></li>
+      ${!this.loading && this.user && (this.user.role === 'staff' || this.user.role == 'admin') ? html`<li><a href="/~/grouppricing" @click=${(e) => this._navigateTo('/~/grouppricing', e)}>Group Pricing</a></li>` : ""}
+      <li class="searchContainer"><wa-input pill autocomplete="off" id="search" @keydown=${(e) => this._handleEnter(e)} placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input></li>
       <li class="rightside"><a href="#" class="forceAlign" @click=${this._toggleDark}><wa-icon name=${isDark ? 'moon' : 'sun'}></wa-icon></a></li>
       <li class="dropdown">
       <a href="#">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a>
@@ -204,9 +250,14 @@ ul li a:hover, ul li.searchContainer:hover {
       <div class="dropdown-content right-dropdown">
       <a href="/~/settings/" @click=${(e) => this._navigateTo('/~/settings/')}>Settings</a>
       ${!this.loading && this.user && (this.user.role == 'staff' || this.user.role == 'admin') ? html`<a href="/~/myrecoms" @click=${(e) => this._navigateTo('/~/myrecoms')}>My Recommendations</a>` : ""}
+      ${!this.loading && this.user && (this.user.role == 'admin' || this.user.role == 'staff') ? html`<a href="/~/viewgroups" @click=${(e) => this._navigateTo('/~/viewgroups')}>My Group Prices</a>` : ""}
       ${!this.loading && this.user && this.user.role == 'admin' ? html`<a href="/~/adminpanel" @click=${(e) => this._navigateTo('/~/adminpanel')}>Admin Panel</a>` : ""}
       </div>
       ` : html`<discord-login-btn></discord-login-btn>`}</li></ul>
+      </div>
+      <div class="submit-box" ?hidden=${!this.submitVisible || this.submitCount < 1}>
+      <wa-button variant="brand" pill @click=${this._dispatchModal} size="s">Submit ${this.submitCount} Item Price${this.submitCount > 1 ? 's' : ''}</wa-button>
+      </div>
       </header>
     `;
   }
