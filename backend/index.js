@@ -230,6 +230,7 @@ app.get('/api/auth/me', (req, res) => {
             role: req.session.user.role
         })
     } else {
+        console.log("🌸 User with no auth")
         res.status(401).json({loggedIn: false, message: "Improper or nonexistent authentication"})
     }
 })
