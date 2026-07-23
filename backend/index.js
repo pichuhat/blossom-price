@@ -14,6 +14,109 @@ const { rejects } = require("assert")
 const { getPackedSettings } = require("http2")
 const { rawListeners } = require("cluster")
 
+const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
+const { EmbedBuilder } = require('discord.js');
+const { resolveSoa } = require("dns")
+
+const pgPool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // Recommended for Supabase production connections to avoid drops
+  ssl: { rejectUnauthorized: false } 
+});
+
+app.post('/api/discord/interactions', verifyKeyMiddleware(process.env.IS_DEV === 'production' ? process.env.DISCORD_PUBLIC_KEY : process.env.TEST_PUBLIC_KEY), async (req, res) => {
+        const interaction = req.body
+
+        if (interaction.type === InteractionType.PING) {
+            return res.send({type: InteractionResponseType.PONG})
+        }
+
+        if (interaction.type === InteractionType.APPLICATION_COMMAND) {
+            const { name } = interaction.data;
+
+            switch (name) {
+                case 'ping': 
+                return res.send({
+                    type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                    data: { content: 'Guh' }
+                })
+
+                case 'greet': {
+                    const userOption = interaction.data.options?.find(opt => opt.name === 'user');
+                    const userId = userOption?.value;
+
+                    return res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: { content: `guh <@${userId}>` }
+                    })
+                }
+
+                case 'get-item':
+                case 'lookup': {
+                    const itemOption = interaction.data.options?.find(opt => opt.name === 'item')
+                    const itemId = itemOption?.value
+
+                    const serverOption = interaction.data.options?.find(opt => opt.name === 'server')
+                    const serverId = serverOption?.value
+
+                    const itemData = await getItemData(itemId, serverId)
+
+                    if (!itemData) return res.send({type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE, data: {content: `Couldn't find that item.`}})
+
+                    const unixSeconds = itemData.recom_timestamp ? Math.floor(itemData.recom_timestamp.getTime() / 1000) : 0
+                    
+                    const servers = ['Cherry', 'Spirit', 'Lotus', 'Tulip']
+
+                    const embed = new EmbedBuilder()
+                        .setColor(0xbc2bc4)
+                        .setImage(`https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${itemId}.png`)
+                        .setFooter({ text: `Data from BlossomPricer by pichuhat.\nItem descriptions are from the Blossom Item Catalog.`})
+
+                    if (itemData.price) {
+                        embed.setDescription(`# [${itemData.item_name}](https://bc.pichuhat.dev/~/server/${serverId}/item/${itemId})\n${servers[Number(serverId)]} Price${itemData.is_range ? ` Range` : ''}: **$${Number(itemData.price).toLocaleString()}${itemData.is_range ? ` to $${Number(itemData.max_price).toLocaleString()}` : ''} **\nSubmitted: **<t:${unixSeconds}:f>**`)
+
+                        if (itemData.avatar_hash) {
+                        const avatarURL = `https://cdn.discordapp.com/avatars/${itemData.author_id}/${itemData.avatar_hash}.${itemData.avatar_hash.startsWith('a_') ? `gif` : `png`}`
+                        console.log(avatarURL)
+                        embed.setAuthor({name: `${itemData.username} (via BlossomPricer)`, iconURL: avatarURL})
+                    } else {
+                        embed.setAuthor({name: `${itemData.username} (via BlossomPricer)`})
+                    }
+                    
+                } else {
+                    embed.setDescription(`# [${itemData.item_name}](https://bc.pichuhat.dev/~/server/${serverId}/item/${itemId})\n**Couldn't find a price for this item.**`)
+                }
+
+                    return res.send({
+                        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+                        data: { embeds: [embed] }
+                    })
+                }
+            }
+        }
+
+        if (interaction.type === InteractionType.APPLICATION_COMMAND_AUTOCOMPLETE) {
+            const focusedOption = interaction.data.options.find(opt => opt.focused);
+            const searchTerm = focusedOption?.value ?? '';
+            if (interaction.data.name !== 'lookup' || focusedOption?.name !== 'item') return res.send({
+                type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+                data: { choices: [] }
+            })
+
+            const results = await pgPool.query(`SELECT id, item_name FROM items WHERE item_name ILIKE $1 ORDER BY id LIMIT 25`, [`%${searchTerm}%`])
+
+            return res.send({
+                type: InteractionResponseType.APPLICATION_COMMAND_AUTOCOMPLETE_RESULT,
+                data: {
+                    choices: results.rows.map(row => ({
+                        name: row.item_name,
+                        value: String(row.id)
+                    }))
+                }
+            })
+        }
+    })
+
 app.use(
     '/src', 
     express.static(path.join(__dirname, "..", "frontend", "src"))
@@ -22,12 +125,6 @@ app.use(
 app.use(express.json())
 
 app.set('trust proxy', true)
-
-const pgPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // Recommended for Supabase production connections to avoid drops
-  ssl: { rejectUnauthorized: false } 
-});
 
 async function syncItems() {
     try {
@@ -39,7 +136,7 @@ async function syncItems() {
         const response = await fetch(endpointURL, {
   method: "GET",
   headers: {
-    "I-INCLUDED-INFO": "id;CrateID;TagPrimary;TagSecondary;TagTertiary;TagQuaternary;TagQuinary;TagSenary;TagSeptenary;WinPercentage;RarityHuman;ItemName;ItemHTML;ConnectedItems;ItemHuman",
+    "I-INCLUDED-INFO": "id;CrateID;TagPrimary;TagSecondary;TagTertiary;TagQuaternary;TagQuinary;TagSenary;TagSeptenary;WinPercentage;RarityHuman;ItemName;ItemHTML;ConnectedItems;ItemHuman;ItemNameHTML",
         }
     })
     const result = await response.json()
@@ -49,7 +146,7 @@ async function syncItems() {
 
     const sqlQuery = `
     INSERT INTO items (
-        id, crate_id, item_name, item_html, rarity_human, win_chance, tags, updated_at, item_human
+        id, crate_id, item_name, item_html, rarity_human, win_chance, tags, updated_at, item_human, item_name_html
     )
     SELECT * FROM (
         SELECT 
@@ -72,7 +169,8 @@ async function syncItems() {
                 NULL
             ) AS generated_tags,
             NOW() AS updated_at,
-            obj->>'ItemHuman' AS item_human
+            obj->>'ItemHuman' AS item_human,
+            obj->>'ItemNameHTML' AS item_name_html
         FROM jsonb_array_elements($1::jsonb) AS obj
     ) subquery
     WHERE NOT ('Repeat Appearance' = ANY(subquery.generated_tags))
@@ -85,7 +183,8 @@ async function syncItems() {
         win_chance = EXCLUDED.win_chance,
         tags = EXCLUDED.tags,
         updated_at = EXCLUDED.updated_at,
-        item_human = EXCLUDED.item_human;
+        item_human = EXCLUDED.item_human,
+        item_name_html = EXCLUDED.item_name_html;
 `;
 
         await pgPool.query(sqlQuery, [JSON.stringify(final)])
@@ -95,6 +194,39 @@ async function syncItems() {
         console.error("FAILED: " + error)
     } finally {
         console.log("Function complete")
+    }
+}
+
+async function getItemData(id, server) {
+    if (![0,1,2,3].includes(Number(server)) || isNaN(Number(id))) return false
+
+    const sqlQuery = `
+            SELECT DISTINCT ON (i.id)
+            i.*,
+            p.price AS price,
+            p.timestamp AS recom_timestamp,
+            p.submission_id AS recommendation_id,
+            p.submitted_by AS author_id,
+            p.server_id AS server,
+            p.is_range AS is_range,
+            p.max_price AS max_price,
+            u.username AS username,
+            u.discord_avatar_hash AS avatar_hash
+            FROM items i
+            LEFT JOIN price_submissions p ON i.id = p.item_id
+            AND p.status='accepted'
+            AND p.server_id = $1
+            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            WHERE i.id = $2
+            ORDER BY i.id, p.timestamp DESC;
+        `
+
+        try {
+            const result = await pgPool.query(sqlQuery, [server, id])
+            return result.rows[0]
+    } catch(err) {
+        console.error(err)
+        return false
     }
 }
 
@@ -315,32 +447,15 @@ app.get('/api/allitems', async (req, res) => {
     app.get("/api/item/:serverid/:itemid", async (req, res) => {
         const serverToGet = req.params.serverid
         const idToGet = req.params.itemid
-        const sqlQuery = `
-            SELECT DISTINCT ON (i.id)
-            i.*,
-            p.price AS price,
-            p.timestamp AS recom_timestamp,
-            p.submission_id AS recommendation_id,
-            p.submitted_by AS author_id,
-            p.server_id AS server,
-            p.is_range AS is_range,
-            p.max_price AS max_price,
-            u.username AS username
-            FROM items i
-            LEFT JOIN price_submissions p ON i.id = p.item_id
-            AND p.status='accepted'
-            AND p.server_id = $1
-            LEFT JOIN users u ON p.submitted_by = u.discord_id
-            WHERE i.id = $2
-            ORDER BY i.id, p.timestamp DESC;
-        `
+        if (![0,1,2,3].includes(Number(serverToGet)) || isNaN(Number(idToGet))) return res.status(400).json({success: false, message: "Bad input"})
 
-        try {
-    const result = await pgPool.query(sqlQuery, [serverToGet, idToGet])
-    res.status(200).json({success: true, item: result.rows[0]})
-    } catch(err) {
-        res.status(500).json({success: false, message: "query error: " + err, item: null})
-    }
+        const data = await getItemData(idToGet, serverToGet)
+
+        if (data) {
+            return res.status(200).json({success: true, item: data})
+        } else {
+            return res.status(500).json({success: true, message: "internal server error"})
+        }
     })
 
     app.get('/api/itemhistory/:serverid/:itemid', async (req, res) => {
