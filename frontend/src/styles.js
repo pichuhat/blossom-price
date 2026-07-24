@@ -140,6 +140,9 @@ vertical-align: middle;
     box-shadow: 0 0 0 1px var(--color-border-alt), 0 4px 16px var(--color-glow);
     min-width: 50%;
     }
+    .fullcard.lock-width {
+    width: 50%;
+    }
     .priceAdd {
         font-size: 100%;
     }

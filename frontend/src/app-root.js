@@ -11,6 +11,7 @@ import "./views/search-view.js"
 import "./views/advanced-search.js"
 import "./views/group-pricing.js"
 import "./views/gp-view.js"
+import "./views/updates.js"
 
 import "https://ka-f.webawesome.com/webawesome@3.9.0/webawesome.loader.js"
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/select/select.js';
@@ -128,6 +129,10 @@ export class AppView extends LitElement {
             return html`<manage-gp .user=${this.user}></manage-gp>`
           }
         }
+      },
+      {
+        path: '/~/updates/:post{/}?',
+        render: ({post}) => html`<site-updates .post=${post}></site-updates>`
       }
     ]);
     }
