@@ -1019,6 +1019,7 @@ LIMIT 151;
         FROM group_submissions gs
         LEFT JOIN users u ON gs.submitted_by = u.discord_id
         ${adminview ? '' : `WHERE gs.submitted_by = $3`}
+        ORDER BY gs.timestamp DESC
         LIMIT $1 OFFSET $2
         `
         const values = [limit, offset]
