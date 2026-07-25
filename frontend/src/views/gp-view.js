@@ -10,7 +10,8 @@ export class GroupPriceView extends LitElement {
         showAdmin: {type: Boolean},
         user: {type: Object},
         openModal: {type: Boolean},
-        viewData: {type: Array}
+        viewData: {type: Array},
+        modal_loading: {type: Boolean}
     }
 
     constructor() {
@@ -26,6 +27,7 @@ export class GroupPriceView extends LitElement {
         this.showAdmin = false;
         this.openModal = false;
         this.viewData = []
+        this.modal_loading = false;
     }
 
     connectedCallback() {
@@ -135,7 +137,7 @@ export class GroupPriceView extends LitElement {
 
     async _viewItems(e, id) {
         this.viewData = {}
-        this.loading = true;
+        this.modal_loading = true;
         this.openModal = true;
         e.preventDefault()
         if (!id || isNaN(Number(id))) return window.alert("an error occurred.")
@@ -155,7 +157,7 @@ export class GroupPriceView extends LitElement {
             window.alert("An error occurred.")
             console.error(e)
         } finally {
-            this.loading = false;
+            this.modal_loading = false;
             this.requestUpdate()
         }
     }
@@ -198,11 +200,11 @@ export class GroupPriceView extends LitElement {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-     async _nextPage() {
+  _nextPage() {
     this.page++
   }
 
-  async _previousPage() {
+  _previousPage() {
     this.page--
   }
 
@@ -217,16 +219,18 @@ export class GroupPriceView extends LitElement {
 }
   }
 
+
+
   render() {
     const servers = ['Cherry', 'Spirit', 'Lotus', 'Tulip']
     const previousDisabled = this.page == 1 ? true : false
     const nextDisabled = this.page == this.maxPages ? true : false
 
     return html`
-    <div ?hidden=${!this.openModal} class="modal-overlay" @click=${(e) => {this.loading ? true : this.openModal = false}}>
+    <div ?hidden=${!this.openModal} class="modal-overlay" @click=${(e) => {this.loading || this.modal_loading ? true : this.openModal = false}}>
       <div class="modal-content center" @click=${(e) => e.stopPropagation()}>
-      <div class="forceLeft noGap"><wa-button pill size="xs" class="leftbutton" @click=${(e) => this.openModal = false} ?disabled=${this.loading} variant="brand"><wa-icon name="times"></wa-icon></wa-button></div>
-      ${this.loading ? html`<wa-spinner></wa-spinner>` : html`
+      <div class="forceLeft noGap"><wa-button pill size="xs" class="leftbutton" @click=${(e) => this.openModal = false} ?disabled=${this.loading || this.modal_loading} variant="brand"><wa-icon name="times"></wa-icon></wa-button></div>
+      ${this.loading || this.modal_loading ? html`<wa-spinner></wa-spinner>` : html`
         <table>
         <thead>
         <tr>
@@ -250,7 +254,10 @@ export class GroupPriceView extends LitElement {
 
     <div class="dashboard">
     <div class="fullcard">
-    ${this.user?.role === "admin" ? html`<div class="forceLeft noGap"><wa-button variant="brand" pill appearance="filled" @click=${() => {this.showAdmin = !this.showAdmin; this._fetchAll()}} ?disabled=${this.loading}><wa-icon name="right-left"></wa-icon></wa-button></div>` : ""}
+    <div class="forceLeft noGap">
+    ${this.user?.role === "admin" ? html`<wa-button variant="brand" pill appearance="filled" @click=${() => {this.showAdmin = !this.showAdmin; this._fetchAll()}} ?disabled=${this.loading}><wa-icon name="right-left"></wa-icon></wa-button>` : ""}
+    <wa-button style="margin-left: 20px;" variant="brand" pill appearance="filled" @click=${() => {this.toShow === 'all' ? this.toShow = 'pending' : this.toShow = 'all'; this.requestUpdate()}} ?disabled=${this.loading}>Show ${this.toShow === 'all' ? 'Pending Only' : 'All'}</wa-button>
+    </div>
     <h1>${this.showAdmin ? `Manage` : `My`} Group Prices</h1>
     ${this.maxPages > 0 ? html`<span>Page ${this.loading ? html`<wa-spinner></wa-spinner>` : `${this.page}/${this.maxPages}`}</span>
     ${this.maxPages > 1 ? html`<br><wa-button-group size="xxs" orientation="horizontal"><wa-button @click=${this._previousPage} ?disabled=${previousDisabled || this.loading} variant="brand"><<<</wa-button><wa-button @click=${this._customPage} ?disabled=${this.loading} variant="brand">...</wa-button><wa-button @click=${this._nextPage} ?disabled=${nextDisabled || this.loading} variant="brand">>>></wa-button></wa-button-group>` : ""}` : ''}
@@ -270,6 +277,7 @@ export class GroupPriceView extends LitElement {
         </thead>
         <tbody>
         ${this.data.map(row => {
+             if (this.toShow !== 'all' && row.status !== this.toShow) return html``
             return html`
             <tr><td>${this._formatDate(row.timestamp)}</td><td>${servers[row.server_id]}</td><td><wa-button pill size="xs" variant="brand" @click=${(e) => this._viewItems(e, row.group_id)}>View ${row.item_id.length} Items</wa-button></td>${this.showAdmin ? html`<td>${row.username}</td>` : ""}<td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}</td><td>${this._formatStr(row.status)}</td>${this.showAdmin ? html`<td><wa-button-group orientation="horizontal"><wa-button @click=${() => this._updateStatus(row.group_id, 'accepted')} ?disabled=${row.status == 'accepted' || this.disabledList.includes(row.group_id)} size="xs" variant="brand">Approve</wa-button><wa-button @click=${() => this._updateStatus(row.group_id, 'denied')} ?disabled=${row.status == 'denied' || this.disabledList.includes(row.group_id)} size="xs" variant="brand">Deny</wa-button></wa-button-group></td>` : ""}</tr>
             `
