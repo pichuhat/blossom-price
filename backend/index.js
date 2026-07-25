@@ -563,6 +563,12 @@ app.get('/api/allitems', async (req, res) => {
             JOIN items i ON i.id = joined_item_id
             WHERE gs.group_id = $1
             `
+
+            const altQuery = `
+            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range${input.is_range ? `, max_price` : ""})
+            VALUES ($1, $2, $3, $4, $5, $6${input.is_range ? `, $7` : ''})
+            RETURNING *
+            `
              if (input.is_range && input.price == input.max_price) return res.status(400).json({success: false, message: "min and max prices must be different"})
             if (input.is_range && input.price > input.max_price) {
                 [input.price, input.max_price] = [input.max_price, input.price]
@@ -577,8 +583,14 @@ app.get('/api/allitems', async (req, res) => {
 
             try {
 
+            if (input.item_id.length > 1) {
             const result = await pgPool.query(sqlQuery, values)
             const secondResult = await pgPool.query(secondQuery, [result.rows[0].group_id])
+            } else {
+            console.log("Detected single item group, submitting individual price instead")
+            values[0] = values[0][0]
+            const result = await pgPool.query(altQuery, values)
+            }
             res.status(200).json({success: true, message: "Uploaded"})
 
             } catch(err) {
