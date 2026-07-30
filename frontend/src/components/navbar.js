@@ -7,7 +7,6 @@ import "./login-button.js"
 export class Navbar extends LitElement {
     static properties = {
       user: {type: Object},
-      selectedServer: {type: Number},
       servers: {type: Array},
       openDropdown: {type: String},
       submitVisible: {type: Boolean},
@@ -21,18 +20,29 @@ export class Navbar extends LitElement {
       this.submitVisible = false;
       this.submitCount = 0
       this._updateButton = this._updateButton.bind(this)
+      this._handleThemeChange = this._handleThemeChange.bind(this)
+    }
+
+    get selectedServer() {
+      return localStorage.getItem('selectedServer') === null || isNaN(Number(localStorage.getItem('selectedServer'))) ? undefined : Number(localStorage.getItem('selectedServer'))
     }
 
     connectedCallback() {
       super.connectedCallback()
 
       communicator.addEventListener('set-status', this._updateButton)
+      communicator.addEventListener('navbar-change', this._handleThemeChange)
     }
 
     disconnectedCallback() {
       super.disconnectedCallback()
 
       communicator.removeEventListener('set-status', this._updateButton)
+      communicator.removeEventListener('navbar-change', this._handleThemeChange)
+    }
+
+    _handleThemeChange() {
+      this.requestUpdate()
     }
 
     _updateButton(e) {
@@ -101,42 +111,6 @@ ul li a:hover, ul li.searchContainer:hover {
   background-color: var(--color-navbar-hover);
 }
 
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: var(--color-dropdown-bg);
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  padding: 12px 16px;
-  z-index: 1001;
-  top: 100%;
-  right: 0;
-  left: auto;
-}
-
-.dropdown-content a {
-  display: inline-block;
-  color: white;
-  padding: 8px 0;
-  text-decoration: none;
-  text-align: center;
-  width: 100%;
-  transition: background-color 0s ease;
-}
-
-.dropdown-content a:hover {
-  background-color: var(--color-dropdown-hover);
-}
-
-.dropdown:hover .dropdown-content {
-  display: block; 
-}
-
 .submit-box {
 text-align: center;
 width: 100%;
@@ -189,7 +163,7 @@ padding: 10px 0px;
       event.preventDefault();
       if (![0, 1, 2, 3].includes(id)) return window.alert("An error occurred.")
         const path = window.location.href.replace(window.location.origin, '');
-      document.cookie = `selected_server=${id}; path=/;`
+      localStorage.setItem('selectedServer', String(id))
       if (path.startsWith('/~/server/')) {
         const parts = path.slice(1).split('/')
         parts[2] = id.toString()
@@ -221,6 +195,7 @@ padding: 10px 0px;
     const isDark = localStorage.getItem('theme') == 'dark'
     localStorage.setItem('theme', isDark ? 'light' : 'dark')
     document.documentElement.classList.toggle('wa-dark')
+    communicator.dispatchEvent(new CustomEvent('setting-changed'))
     this.requestUpdate()
   }
 
@@ -240,6 +215,7 @@ padding: 10px 0px;
       ${!this.loading && this.user && (this.user.role === 'staff' || this.user.role == 'admin') ? html`<li><a href="/~/grouppricing" @click=${(e) => this._navigateTo('/~/grouppricing', e)}>Group Pricing</a></li>` : ""}
       <li class="searchContainer"><wa-input pill autocomplete="off" id="search" @keydown=${(e) => this._handleEnter(e)} placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input></li>
       <li class="rightside"><a href="#" class="forceAlign" @click=${this._toggleDark}><wa-icon name=${isDark ? 'moon' : 'sun'}></wa-icon></a></li>
+      ${!this.user ? html`<li><a href="#" class="forceAlign" @click=${(e) => this._navigateTo('/~/settings')}><wa-icon name="gear"></wa-icon></a></li>` : ``}
       <li class="dropdown">
       <a href="#">${this.selectedServer !== undefined ? this.servers[this.selectedServer] : "Select Server"}</a>
       <div class="dropdown-content">

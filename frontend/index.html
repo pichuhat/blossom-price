@@ -13,6 +13,9 @@
         document.documentElement.classList.add('wa-dark')
     }
 
+    if (localStorage.getItem('LDM') === null) localStorage.setItem('LDM', 'true')
+    if (localStorage.getItem('viewType') === null) localStorage.setItem('viewType', 'standard')
+
   const style = document.createElement('style');
   style.textContent = `@font-face {
     font-family: 'Mozart NBP';

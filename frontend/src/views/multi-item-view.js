@@ -28,6 +28,10 @@ export class BoxView extends LitElement {
 
         `]
 
+    get viewType() {
+      return localStorage.getItem('viewType') === null ? 'standard' : localStorage.getItem('viewType')
+    }
+
     connectedCallback() {
       super.connectedCallback()
       this._getLDMStatus()
@@ -102,10 +106,29 @@ _formatPrice(unformatted) {
       }));
     }
 
+    _checkDropdownPosition(e) {
+      console.log("Ran")
+  const dropdown = e.currentTarget;
+  const content = dropdown.querySelector('.dropdown-content');
+  if (!content) return;
+
+  dropdown.classList.remove('flip-up');
+
+  const dropdownRect = dropdown.getBoundingClientRect();
+  const contentHeight = content.offsetHeight;
+  const spaceBelow = window.innerHeight - dropdownRect.bottom;
+
+  if (spaceBelow < contentHeight) {
+    content.classList.add('flip-up');
+    console.log("Flipped")
+  }
+}
+
     render() {
         return html`
         <div class="center">
         <div class="forceGap"><wa-switch ?checked=${this.lowDataMode} id="LDMtoggle" @change=${this._handleLDM}>Low Data Mode</wa-switch></div>
+        ${this.viewType === 'standard' ? html`
         <div class="grid">${this.items.map(item => html`
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
@@ -132,7 +155,58 @@ _formatPrice(unformatted) {
             />
             `}
           </div>
-        `)}</div></div>`
+        `)}</div>`
+        : html`
+        <div class="dashboard"><div class="fullcard">
+        <sub>Table View is a BETA feature! If you're running into issues, disable it in the settings menu.</sub>
+        <table>
+        <thead>
+            <tr>
+            <th scope="col">Item Name</th>
+            <th scope="col">Tags</th>
+            ${this.selectedServer != undefined && this.selectedServer != null ? html`<th scope="col">${this._formatStr(this.servers[this.selectedServer])} Price</th><th scope="col">Extra Info</th>` : ''}
+            </tr>
+        </thead>
+        <tbody>
+        ${this.items.map(item => html`
+          <tr class="itemTable" @click=${() => this._routeToItemPage(item.id)}>
+          <td class="dropdown" @mouseenter=${this._checkDropdownPosition}>
+          <span class="fake-h3">${this._decodeEscapedUnicode(item.item_name)}</span>
+          <div class="dropdown-content">
+          ${this.lowDataMode && !item.tags.includes('spawner') && !item.tags.includes('currency') ? html`
+            <div class="give-preview-text-outer">
+              <div class="give-preview-text w-100">
+                <div class="give-preview-text-inner text-start" style="text-align: left;">
+                  ${unsafeHTML(this._sanitizeHTML(item.item_html))}
+                </div>
+              </div>
+            </div>  
+            ` : html`
+            <img
+            src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
+            alt="${this._decodeEscapedUnicode(item.item_name)}"
+            />
+            `}
+          </div>
+          </td>
+          <td><div class="tags internal">
+              ${item.tags ? item.tags.map(tag => html`
+                <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
+              `) : 'None :('}
+          </div></td>
+          ${this.selectedServer != undefined && this.selectedServer != null ? item.price && item.recom_timestamp && item.username ? html`
+          <td><span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span></td><td><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub></td>
+            ` : html`<td>None :(</td><td>` : ``}
+          
+
+          </tr>
+          `)}
+        </tbody>
+        </table>
+        </div>
+        </div>
+        `}
+        </div>`
     }
 }
 

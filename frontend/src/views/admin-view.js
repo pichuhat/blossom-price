@@ -115,12 +115,6 @@ export class AdminView extends LitElement {
     }
 
   static styles = [sharedStyles, css`
-  .dashboard {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  }
 
     table, th, td {
         border: 1px var(--color-text) solid;

@@ -101,6 +101,10 @@ vertical-align: middle;
     .bold {
     font-weight: bold;
     }
+    .fake-h3 {
+    font-size: 1.17em;
+    font-weight: bold;
+    }
     .card {
       display: flex;
       flex-direction: column;
@@ -130,6 +134,12 @@ vertical-align: middle;
       border-radius: 6px;
       margin-top: 12px;
     }
+    .dashboard {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  } 
     .fullcard {
     background-color: var(--color-surface-raised);
     border: 2px solid var(--color-border);
@@ -157,6 +167,9 @@ vertical-align: middle;
       gap: 5px;
       flex-wrap: wrap;
       justify-content: center;
+    }
+    .tags.internal {
+    margin-top: 0px;
     }
     .tag {
       background-color: #bc4bc2;
@@ -323,5 +336,58 @@ table, th, td {
 .big-spinner wa-spinner {
 font-size: 3rem;
 --track-width: 5px;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+td.dropdown {
+  display: table-cell;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--color-dropdown-bg);
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  padding: 12px 16px;
+  z-index: 1001;
+  top: 100%;
+  right: 0;
+  left: auto;
+}
+
+td.dropdown .dropdown-content {
+pointer-events: none;
+}
+
+td.dropdown .dropdown-content.flip-up {
+    top: auto;
+    bottom: 100%;
+}
+
+.dropdown-content a {
+  display: inline-block;
+  color: white;
+  padding: 8px 0;
+  text-decoration: none;
+  text-align: center;
+  width: 100%;
+  transition: background-color 0s ease;
+}
+
+.dropdown-content a:hover {
+  background-color: var(--color-dropdown-hover);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block; 
+}
+
+.itemTable:hover td {
+    background-color: rgba(0,0,0,.2)
 }
 `

@@ -12,6 +12,7 @@ import "./views/advanced-search.js"
 import "./views/group-pricing.js"
 import "./views/gp-view.js"
 import "./views/updates.js"
+import "./views/settings-view.js"
 
 import "https://ka-f.webawesome.com/webawesome@3.9.0/webawesome.loader.js"
 import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/select/select.js';
@@ -70,7 +71,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/settings{/}?',
-        render: () => html`<h2>User Settings View Coming Soon</h2>`
+        render: () => html`<settings-view></settings-view>`
       },
       {
         path: '/~/server/:id/item/:itemid{/}?',
@@ -176,19 +177,13 @@ export class AppView extends LitElement {
   }
 
   _getSelectedServer() {
-    const cookies = document.cookie
-  ? Object.fromEntries(document.cookie.split('; ').map(c => c.split('=')))
-  : {};
-  if (cookies.selected_server) {
-    this.selectedServer = Number(cookies.selected_server)
-  }
+    this.selectedServer = localStorage.getItem('selectedServer') === null || isNaN(Number(localStorage.getItem('selectedServer'))) ? undefined : Number(localStorage.getItem('selectedServer'))
   }
 
   _syncServerFromURL() {
-    const path = window.location.pathname; // Looks like "/~/server/0"
+    const path = window.location.pathname;
     
     if (path.startsWith('/~/server/')) {
-      // Extract the number at the end of the URL string
       const idStr = path.split('/')[3];
       const serverId = parseInt(idStr, 10);
       
@@ -232,7 +227,7 @@ export class AppView extends LitElement {
     }
 
     return html`
-      <top-navbar .user=${this.user} .selectedServer=${this.selectedServer}></top-navbar>
+      <top-navbar .user=${this.user}></top-navbar>
       ${this.router.outlet()}
     `;
   }
