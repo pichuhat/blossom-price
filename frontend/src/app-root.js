@@ -227,7 +227,7 @@ export class AppView extends LitElement {
     }
 
     return html`
-      <top-navbar .user=${this.user}></top-navbar>
+      <top-navbar .user=${this.user} .rootSelectedServer=${this.selectedServer}></top-navbar>
       ${this.router.outlet()}
     `;
   }
