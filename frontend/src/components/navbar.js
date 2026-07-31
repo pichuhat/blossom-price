@@ -172,7 +172,7 @@ padding: 10px 0px;
       } else {
         this._navigateTo(path, null)
       }
-      this.selectedServer = id
+      this.requestUpdate()
     }
 
     updated(hasChanged) {
