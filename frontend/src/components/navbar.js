@@ -10,7 +10,8 @@ export class Navbar extends LitElement {
       servers: {type: Array},
       openDropdown: {type: String},
       submitVisible: {type: Boolean},
-      submitCount: {type: Number}
+      submitCount: {type: Number},
+        rootSelectedServer: {type: Number}
     }
 
     constructor() {
@@ -176,7 +177,7 @@ padding: 10px 0px;
     }
 
     updated(hasChanged) {
-    if (hasChanged.has("selectedServer")) {
+    if (hasChanged.has("rootSelectedServer")) {
       this.requestUpdate()
     }
     if (hasChanged.has("user")) {
