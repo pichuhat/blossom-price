@@ -793,7 +793,7 @@ app.get('/api/allitems', async (req, res) => {
                 CASE 
                     WHEN to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1) THEN 'exact'
                     ELSE 'fuzzy'
-                END as match_type,
+                END as match_type${server ? `,
             p.price AS price,
             p.timestamp AS recom_timestamp,
             p.submission_id AS recommendation_id,
@@ -802,16 +802,19 @@ app.get('/api/allitems', async (req, res) => {
             p.is_range AS is_range,
             p.max_price AS max_price,
             u.username AS username
+            ` : ``}
             FROM items i
+            ${server ? `
             LEFT JOIN price_submissions p ON i.id = p.item_id
             AND p.status='accepted'
-            ${server ? `AND p.server_id = $2` : ""}
+            AND p.server_id = $2
             LEFT JOIN users u ON p.submitted_by = u.discord_id
+            ` : ``}
             WHERE 
                 to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
                 OR 
                 to_tsvector('english', item_human) @@ plainto_tsquery('english', $1)
-            ORDER BY i.id, p.timestamp DESC
+            ORDER BY i.id${server ? `, p.timestamp DESC` : ``}
         ) as search_results
         ORDER BY 
             CASE 
@@ -828,7 +831,8 @@ app.get('/api/allitems', async (req, res) => {
             const truncated = result.rows.length > 150
             res.status(200).json({success: true, result: result.rows, truncated: truncated})
         } catch(err) {
-            res.status(500).json({success: false, message: `Server ERR: ${err}`, result: null})
+            console.log(err)
+            res.status(500).json({success: false, message: `Server ERR`, result: null})
         }
     })
 

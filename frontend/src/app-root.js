@@ -171,6 +171,7 @@ export class AppView extends LitElement {
 
   _syncFromPathName() {
     const path = window.location.pathname;
+    this._getSelectedServer();
     this._syncServerFromURL();
     this.router.goto(path);
     this.requestUpdate();
