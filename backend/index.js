@@ -16,7 +16,6 @@ const { rawListeners } = require("cluster")
 
 const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
 const { EmbedBuilder } = require('discord.js');
-const { resolveSoa } = require("dns")
 
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -306,17 +305,18 @@ app.get('/api/auth/callback', async (req, res) => {
         const memberData = guildMemberResponse.data;
         const minecraftUsername = memberData.nick;
         const discordId = memberData.user.id;
+        const avatar_hash = memberData.user.avatar;
         const roles = memberData.roles
 
         if (!roles.includes("822640342335356980")) return res.redirect("/?linkPopup=1")
 
         const dbresult = await pgPool.query(
-            `INSERT INTO users (discord_id, username) 
-             VALUES ($1, $2) 
+            `INSERT INTO users (discord_id, username, discord_avatar_hash) 
+             VALUES ($1, $2, $3) 
              ON CONFLICT (discord_id) 
-             DO UPDATE SET username = EXCLUDED.username, updated_at = CURRENT_TIMESTAMP
-             RETURNING discord_id, username, role`,
-            [discordId, minecraftUsername]
+             DO UPDATE SET username = EXCLUDED.username, discord_avatar_hash = EXCLUDED.discord_avatar_hash, updated_at = CURRENT_TIMESTAMP
+             RETURNING *`,
+            [discordId, minecraftUsername, avatar_hash]
         );
 
         const confirmationUser = dbresult.rows[0]
@@ -324,7 +324,8 @@ app.get('/api/auth/callback', async (req, res) => {
         req.session.user = {
             id: discordId,
             username: minecraftUsername,
-            role: confirmationUser.role
+            role: confirmationUser.role,
+            can_receive_notifications: confirmationUser.can_receive_notifications
         };
 
         try {
@@ -742,7 +743,8 @@ app.get('/api/allitems', async (req, res) => {
                 const result = await pgPool.query(sqlQuery, data)
                 res.status(200).json({success: true, message: "Updated"})
             } catch(error) {
-                res.status(500).json({success: false, message: `ERROR: ${error}`})
+                console.error(error)
+                res.status(500).json({success: false, message: `Internal server error`})
             }
         } else {
             res.status(403).json({success: false, message: "Role required: admin"})
