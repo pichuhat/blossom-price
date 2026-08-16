@@ -387,7 +387,26 @@ td.dropdown .dropdown-content.flip-up {
   display: block; 
 }
 
-.itemTable:hover td {
+.itemTable:hover td, .clickTable:hover td {
     background-color: rgba(0,0,0,.2)
+}
+.forcecolor {
+    background-color: #bc2bc4 !important;
+}
+
+.bigIcon {
+    font-size: 500%;
+}
+
+.forceTopRight {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.forceTopLeft {
+  position: absolute;
+  top: 10px;
+  left: 10px;
 }
 `

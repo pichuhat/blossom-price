@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
 import { sharedStyles } from '../styles.js';
 import { communicator } from '../cross-communicator.js'
 
@@ -211,9 +211,15 @@ padding: 10px 0px;
       <div class="navbar-content">
       <ul><li style="font-size: 150%"><a href='/~/' @click=${(e) => this._navigateTo('/~/', e)}>BCPricer</a></li>
       <li><a href="/~/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
-      <li><a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a></li>
       <li><a href="/~/advancedsearch" @click=${(e) => this._navigateTo('/~/advancedsearch', e)}>Advanced Search</a></li>
-      ${!this.loading && this.user && (this.user.role === 'staff' || this.user.role == 'admin') ? html`<li><a href="/~/grouppricing" @click=${(e) => this._navigateTo('/~/grouppricing', e)}>Group Pricing</a></li>` : ""}
+      <li class="dropdown">
+      <a href="#">Extras</a>
+      <div class="dropdown-content right-dropdown">
+      <a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a>
+      ${this.user ? html`<a href="/~/purchaseplan/home" @click=${(e) => this._navigateTo('/~/purchaseplan/home', e)}>Purchase Plans</a>` : nothing}
+      ${this.user && (this.user.role === 'staff' || this.user.role === 'admin') ? html`<a href="/~/grouppricing" @click=${(e) => this._navigateTo('/~/grouppricing', e)}>Group Pricing</a>` : nothing}
+      </div>
+      </li>
       <li class="searchContainer"><wa-input pill autocomplete="off" id="search" @keydown=${(e) => this._handleEnter(e)} placeholder="Search..." ?disabled=${this.loading} value=${new URLSearchParams(window.location.search).get('query')} class="" with-clear size="s"><wa-icon name="search" label="search" slot="end" @click=${this._search}></wa-icon></wa-input></li>
       <li class="rightside"><a href="#" class="forceAlign" @click=${this._toggleDark}><wa-icon name=${isDark ? 'moon' : 'sun'}></wa-icon></a></li>
       ${!this.user ? html`<li><a href="#" class="forceAlign" @click=${(e) => this._navigateTo('/~/settings')}><wa-icon name="gear"></wa-icon></a></li>` : ``}

@@ -13,23 +13,27 @@ import "./views/group-pricing.js"
 import "./views/gp-view.js"
 import "./views/updates.js"
 import "./views/settings-view.js"
+import "./views/new-purchase-plan.js"
+import "./views/view-purchase-plan.js"
+import "./views/my-purchase-plans.js"
 
-import "https://ka-f.webawesome.com/webawesome@3.9.0/webawesome.loader.js"
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/select/select.js';
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/option/option.js';
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/input/input.js'
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button/button.js'
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/spinner/spinner.js'
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/icon/icon.js'
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/switch/switch.js'
-import 'https://ka-f.webawesome.com/webawesome@3.9.0/components/button-group/button-group.js'
-import 'https://ka-f.webawesome.com/webawesome@3.10.0/components/callout/callout.js';
+import "https://ka-f.webawesome.com/webawesome@3.11.0/webawesome.loader.js"
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/select/select.js';
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/option/option.js';
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/input/input.js'
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/button/button.js'
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/spinner/spinner.js'
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/icon/icon.js'
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/switch/switch.js'
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/button-group/button-group.js'
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/callout/callout.js';
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/number-input/number-input.js';
 
 //Polyfill for old Apple devices
 import { URLPattern } from 'https://esm.sh/urlpattern-polyfill@10';
 
 import { sharedStyles } from './styles.js';
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
 import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
 
 if (!globalThis.URLPattern) {
@@ -134,6 +138,22 @@ export class AppView extends LitElement {
       {
         path: '/~/updates/:post{/}?',
         render: ({post}) => html`<site-updates .post=${post}></site-updates>`
+      },
+      {
+        path: '/~/purchaseplan/home{/}?',
+        render: () => {
+          if (this.user) return html`<my-purchase-plans></my-purchase-plans>`
+        }
+      },
+      {
+        path: '/~/purchaseplan/new{/}?',
+        render: () => {
+          if (this.user) return html`<new-purchase-plan .selectedServer=${this.selectedServer}></new-purchase-plan>`
+        }
+      },
+      {
+        path: '/~/purchaseplan/view/:id{/}?',
+        render: (id) => html`<view-purchase-plan .plan_id=${id.id} .user=${this.user} .selectedServer=${this.selectedServer}></view-purchase-plan>`
       }
     ]);
     }

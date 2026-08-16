@@ -17,6 +17,13 @@ const { rawListeners } = require("cluster")
 const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
 const { EmbedBuilder } = require('discord.js');
 
+const { RegExpMatcher, englishDataset, englishRecommendedTransformers } = require('obscenity')
+
+const matcher = new RegExpMatcher({
+	...englishDataset.build(),
+	...englishRecommendedTransformers,
+});
+
 const pgPool = new Pool({
   connectionString: process.env.DATABASE_URL,
   // Recommended for Supabase production connections to avoid drops
@@ -360,7 +367,8 @@ app.get('/api/auth/me', (req, res) => {
         res.json({
             loggedIn: true,
             user: req.session.user.username,
-            role: req.session.user.role
+            role: req.session.user.role,
+            id: req.session.user.id
         })
     } else {
         console.log("🌸 User with no auth")
@@ -1145,6 +1153,189 @@ LIMIT 151;
             const result = await pgPool.query(sqlQuery, [id])
             res.status(200).json({success: true, id: result.rows[0].id})
         } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.post('/api/purchaseplan/new', async (req, res) => {
+        const input = req.body
+        if (!input) return res.status(400).json({success: false, message: "what on earth could you possibly have done to achieve this"})
+        if (!req.session) return res.status(401).json({success: false, message: "Unauthenticated"})
+        if (isNaN(Number(input.server)) || ![0,1,2,3].includes(input.server) || !Array.isArray(input.items) || input.items.length < 1 || !input.name || !/^[\w ]+$/.test(input.name) || input.name.length > 50 || typeof input.is_public !== 'boolean' || input.items.length > 25) return res.status(400).json({success: false, message: "Invalid input"})
+        if (matcher.hasMatch(input.name)) return res.status(418).json({success: false, message: "You can't name your purchase plan that."})
+
+        let uploadItems = []
+        input.items.forEach(item => {
+            if (typeof Number(item.id) !== 'number' || typeof item.count !== 'number' || item.count > 10 || item.count < 1 || Math.round(item.count) !== item.count) return res.status(400).json({success: false, message: "Invalid input (2)"})
+            uploadItems.push(JSON.stringify({id: item.id, count: item.count, obtained: 0}))
+        })
+
+        const sqlQuery = `
+        INSERT INTO purchase_plans (user_id, is_public, is_preset, name, items, server_id)
+        VALUES ($1, $2, FALSE, $3, $4::jsonb[], $5)
+        RETURNING *
+        `
+        const values = [req.session.user.id, input.is_public, input.name, uploadItems, input.server]
+
+        try {
+            const response = await pgPool.query(sqlQuery, values)
+            res.status(200).json({success: true, redirect_id: response.rows[0].id, message: "Uploaded"})
+        } catch(e) {
+            console.error("/purchaseplan/new: " + e)
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/itemset', async (req, res) => {
+        let ids = req.query?.item
+        if (!ids) return res.status(400).json({success: false, message: "You didn't request any items."})
+        if (!Array.isArray(ids)) ids = [ids]
+
+        const finalItems = []
+        for (const item of ids) {
+            const n = Number(item)
+            if (isNaN(n) || Math.round(n) !== Number(item)) return res.status(400).json({success: false, message: "All ids must be valid integers."})
+            finalItems.push(Number(item))
+        }
+
+        const server = Number(req.query.server)
+
+        if (typeof server !== 'number' || ![0,1,2,3].includes(server)) return res.status(400).json({success: false, message: "No valid server detected."})
+
+        const sqlQuery = `
+        SELECT DISTINCT ON (i.id)
+        i.*,
+        p.price AS price,
+        p.timestamp AS recom_timestamp,
+        p.submission_id AS recommendation_id,
+        p.submitted_by AS author_id,
+        p.server_id AS server,
+        p.is_range AS is_range,
+        p.max_price AS max_price,
+        u.username AS username
+        FROM items i
+        LEFT JOIN price_submissions p ON p.item_id = i.id AND p.server_id = $2 AND status = 'accepted'
+        LEFT JOIN users u ON u.discord_id = p.submitted_by
+        WHERE i.id = ANY($1::int[])
+        ORDER BY i.id, p.timestamp DESC;
+        `
+
+        try {
+            const result = await pgPool.query(sqlQuery, [finalItems, server])
+            res.status(200).json({success: true, result: result.rows})
+        } catch(e) {
+            console.error(e)
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/purchaseplan/view/:id', async (req, res) => {
+        const id = Number(req.params.id)
+        if (!id || isNaN(id) || Math.round(id) !== id || id < 1) return res.status(400).json({success: false, message: "Plan ID not present or incorrect"})
+        const sqlQuery = `
+        SELECT plan.*, u.username AS username FROM purchase_plans plan
+        LEFT JOIN users u ON u.discord_id = plan.user_id
+        WHERE plan.id = $1
+        `
+        const secondQuery = `
+        SELECT DISTINCT ON (i.id)
+        i.*,
+        p.price AS price,
+        p.timestamp AS recom_timestamp,
+        p.submission_id AS recommendation_id,
+        p.submitted_by AS author_id,
+        p.server_id AS server,
+        p.is_range AS is_range,
+        p.max_price AS max_price,
+        u.username AS username
+        FROM items i
+        LEFT JOIN price_submissions p ON p.item_id = i.id AND p.server_id = $2 AND p.status = 'accepted'
+        LEFT JOIN users u ON u.discord_id = p.submitted_by
+        WHERE i.id = ANY($1::int[])
+        ORDER BY i.id, p.timestamp DESC;
+        `
+
+        try {
+            const response1 = await pgPool.query(sqlQuery, [id])
+            if (!response1.rows || response1.rows.length < 1) return res.status(404).json({success: false, message: "Couldn't find that plan."})
+            if (!response1.rows[0].is_public && req.session?.user?.id !== response1.rows[0].user_id) return res.status(403).json({success: false, message: "No permission to access this plan"})
+
+            const response2 = await pgPool.query(secondQuery, [response1.rows[0].items.map(item => item.id), response1.rows[0].server_id])
+
+            res.status(200).json({success: true, plan: response1.rows[0], items: response2.rows})
+        } catch(e) {
+            console.error(e)
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.post('/api/purchaseplan/edit/:id', async (req, res) => {
+        const plan_id = req.params.id
+        const input = req.body
+        if (!input || isNaN(input.server) || ![0,1,2,3].includes(input.server) || !Array.isArray(input.items) || input.items.length < 1 || typeof input.is_public !== 'boolean') return res.status(400).json({success: false, message: "Invalid parameters. Hint: Even if you aren't updating all properties, you must still include the items body, public status, and server id."})
+        
+        let uploadItems = []
+        for (const item of input.items) {
+            if (typeof item.id !== 'number' || typeof item.count !== 'number' || typeof item.obtained !== 'number' || item.count > 10 || item.count < 1 || item.obtained < 0 || item.obtained > item.count || !Number.isInteger(item.id) || !Number.isInteger(item.count) || !Number.isInteger(item.obtained)) return res.status(400).json({success: false, message: "Invalid item body"})
+            uploadItems.push(JSON.stringify({id: item.id, count: item.count, obtained: item.obtained}))
+        }
+
+        const sqlQuery = `
+        SELECT id, user_id
+        FROM purchase_plans
+        WHERE id = $1
+        `
+        const secondQuery = `
+        UPDATE purchase_plans
+        SET items = $1::jsonb[], is_public = $2, server_id = $3, updated_at = NOW()
+        WHERE id = $4
+        `
+        try {
+            const result = await pgPool.query(sqlQuery, [plan_id])
+            if (result.rows.length < 1) return res.status(404).json({success: false, message: "Couldn't find that plan."})
+            if (result.rows[0].user_id !== req.session.user?.id) return res.status(403).json({success: false, message: "That isn't your purchase plan."})
+
+            const result2 = await pgPool.query(secondQuery, [uploadItems, input.is_public, input.server, plan_id])
+            res.status(200).json({success: true, message: "Updated"})
+        } catch(e) {
+            console.error('/purchaseplan/edit: ' + e)
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/purchaseplan/my-plans', async (req, res) => {
+        if (!req.session || !req.session.user?.id) return res.status(401).json({success: false, message: "Not logged in"})
+
+        const sqlQuery = `
+        SELECT *
+        FROM purchase_plans
+        WHERE user_id = $1
+        ORDER BY updated_at DESC
+        `
+
+        try {
+            const result = await pgPool.query(sqlQuery, [req.session.user.id])
+            res.status(200).json({success: true, result: result.rows})
+        } catch(e) {
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/purchaseplan/presets', async (req, res) => {
+        const sqlQuery = `
+        SELECT plan.*, u.username
+        FROM purchase_plans plan
+        LEFT JOIN users u ON plan.user_id = u.discord_id
+        WHERE is_preset
+        ORDER BY updated_at DESC
+        LIMIT 5
+        `
+
+        try {
+            const result = await pgPool.query(sqlQuery)
+            res.status(200).json({success: true, result: result.rows})
+        } catch(e) {
+            console.log(e)
             res.status(500).json({success: false, message: "Internal server error"})
         }
     })
