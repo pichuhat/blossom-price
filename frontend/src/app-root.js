@@ -1,5 +1,6 @@
 import "./components/login-button.js"
 import "./components/navbar.js"
+import "./components/footer.js"
 import "./views/guest-view.js"
 import "./views/home-view.js"
 import "./views/allitem-view.js"
@@ -160,7 +161,12 @@ export class AppView extends LitElement {
 
 
   static styles = [sharedStyles, css`
-    
+    .content {
+     min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto; /* header, content, footer */
+  margin: 0;
+    }
   `]
 
   connectedCallback() {
@@ -248,8 +254,11 @@ export class AppView extends LitElement {
     }
 
     return html`
+    <div class="content">
       <top-navbar .user=${this.user} .rootSelectedServer=${this.selectedServer}></top-navbar>
       ${this.router.outlet()}
+      <site-footer></site-footer>
+      </div>
     `;
   }
 }

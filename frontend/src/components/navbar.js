@@ -209,7 +209,7 @@ padding: 10px 0px;
     return html`
       <header class="navbar">
       <div class="navbar-content">
-      <ul><li style="font-size: 150%"><a href='/~/' @click=${(e) => this._navigateTo('/~/', e)}>BCPricer</a></li>
+      <ul><li style="font-size: 150%"><a href='/~/' @click=${(e) => this._navigateTo('/~/', e)}><img src="/src/images/brand/transparent-cropped.png" alt="BlossomPricer" length="40" height="40"></a></li>
       <li><a href="/~/allitems" @click=${(e) => this._navigateTo('/~/allitems', e)}>All Items</a></li>
       <li><a href="/~/advancedsearch" @click=${(e) => this._navigateTo('/~/advancedsearch', e)}>Advanced Search</a></li>
       <li class="dropdown">
