@@ -14,5 +14,5 @@ jobs:
           SESSION_ID: ${{ secrets.PING_SITE_COOKIE  }}
         run: |
           curl -f -X POST "https://bc.pichuhat.dev/api/notify-top-requested" \
-            -b "session_id=$SESSION_ID" \
+            -b "connect.sid=$SESSION_ID" \
             --max-time 30
