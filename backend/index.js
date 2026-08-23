@@ -337,9 +337,13 @@ async function notifyTopRequested(doPing) {
                 content: `${byServer[0].length > 0 ? `<@&1540819591847088270>` : ``}${byServer[1].length > 0 ? `<@&1540819810500481085>` : ``}${byServer[2].length > 0 ? `<@&1540819860186206248>` : ``}${byServer[3].length > 0 ? `<@&1540819906331811930>` : ``}`, embeds})
         })
 
-        if (response.ok) return true
+        if (response.ok) {
+            return true
+        } else {
+            console.log(response)
+        }
     } catch(e) {
-        console.error(e)
+        console.log(e)
         return false
     }
 }
