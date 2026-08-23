@@ -10,6 +10,7 @@ export class SiteFooter extends LitElement {
         background-color: var(--color-navbar);
         padding: 5px 20px;
         color: white;
+        text-align: center;
         }
         
         a {
