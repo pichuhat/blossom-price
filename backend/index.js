@@ -10,9 +10,8 @@ const pgSession = require("connect-pg-simple")(session)
 const { Pool } = require("pg")
 
 const cors = require('cors');
-const { rejects } = require("assert")
-const { getPackedSettings } = require("http2")
-const { rawListeners } = require("cluster")
+
+const cron = require('node-cron')
 
 const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
 const { EmbedBuilder, Embed } = require('discord.js');
@@ -133,6 +132,29 @@ app.use(
 app.use(express.json())
 
 app.set('trust proxy', true)
+
+cron.schedule('0 13 * * *', async () => {
+    const today = new Date().toISOString().slice(0,10)
+
+    const result = await pgPool.query(`
+        INSERT INTO job_log (job_name, run_date)
+        VALUES ('top-requested-notification', $1)
+        ON CONFLICT (job_name, run_date) DO NOTHING
+        RETURNING id
+        `, [today])
+
+    if (result.rowCount === 0) {
+        console.log('Detected job already done today, skipping')
+        return
+    }
+
+    const final = await notifyTopRequested()
+    if (final) {
+        console.log("Successful ping")
+    } else {
+        console.error("Ping may have failed")
+    }
+})
 
 async function syncItems() {
     try {
@@ -1458,9 +1480,21 @@ LIMIT 151;
     })
 
     app.post('/api/notify-top-requested', async (req, res) => {
-        if (!req.session || req.session?.user?.role !== 'cron') return res.status(403).json({success: false, message: "You failed the anti-captcha????"})
+        if (!req.session || req.session?.user?.role !== 'admin') return res.status(403).json({success: false, message: "No permission"})
 
         try {
+            const tryA = await pgPool.query(`
+                INSERT INTO job_log (job_name, run_date)
+                VALUES ('top-requested-notification-manual', $1)
+                ON CONFLICT (job_name, run_date) DO NOTHING
+                RETURNING id
+            `, [today])
+
+            if (tryA.rowCount === 0) {
+                console.log("Did not activate ping as one has already been manually triggered today")
+                return res.status(409).json({success: false, message: "Manual trigger already occurred today"})
+            }
+
             const result = await notifyTopRequested()
 
             if (!result) return res.status(500).json({success: false, message: "Internal server error"})
