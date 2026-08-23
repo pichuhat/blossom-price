@@ -15,7 +15,7 @@ const { getPackedSettings } = require("http2")
 const { rawListeners } = require("cluster")
 
 const { verifyKeyMiddleware, InteractionType, InteractionResponseType } = require('discord-interactions');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, Embed } = require('discord.js');
 
 const { RegExpMatcher, englishDataset, englishRecommendedTransformers } = require('obscenity')
 
@@ -29,6 +29,8 @@ const pgPool = new Pool({
   // Recommended for Supabase production connections to avoid drops
   ssl: { rejectUnauthorized: false } 
 });
+
+const isProduction = process.env.IS_DEV === 'production'
 
 app.post('/api/discord/interactions', verifyKeyMiddleware(process.env.IS_DEV === 'production' ? process.env.DISCORD_PUBLIC_KEY : process.env.TEST_PUBLIC_KEY), async (req, res) => {
         const interaction = req.body
@@ -203,7 +205,7 @@ async function syncItems() {
     }
 }
 
-async function getItemData(id, server) {
+async function getItemData(id, server, user) {
     if (![0,1,2,3].includes(Number(server)) || isNaN(Number(id))) return false
 
     const sqlQuery = `
@@ -217,7 +219,7 @@ async function getItemData(id, server) {
             p.is_range AS is_range,
             p.max_price AS max_price,
             u.username AS username,
-            u.discord_avatar_hash AS avatar_hash
+            u.discord_avatar_hash AS avatar_hash${user ? `, EXISTS (SELECT 1 FROM price_change_requests r WHERE r.item_id = i.id AND r.server_id = $1 AND r.user_id = $3) AS has_price_request`: ``}
             FROM items i
             LEFT JOIN price_submissions p ON i.id = p.item_id
             AND p.status='accepted'
@@ -227,8 +229,11 @@ async function getItemData(id, server) {
             ORDER BY i.id, p.timestamp DESC;
         `
 
+        const values = [server, id]
+        if (user) values.push(user)
+
         try {
-            const result = await pgPool.query(sqlQuery, [server, id])
+            const result = await pgPool.query(sqlQuery, values)
             return result.rows[0]
     } catch(err) {
         console.error(err)
@@ -250,7 +255,72 @@ async function getTags() {
     }
 }
 
-const isProduction = process.env.IS_DEV === 'production'
+async function notifyTopRequested(doPing) {
+    const sqlQuery = `
+        SELECT r.item_id, i.item_name, r.server_id, r.request_count
+        FROM (
+            SELECT
+            item_id,
+            server_id,
+            COUNT(*) AS request_count,
+            ROW_NUMBER() OVER (PARTITION BY server_id ORDER BY COUNT(*) DESC) AS rn
+            FROM price_change_requests
+            GROUP BY item_id, server_id
+        ) r
+        JOIN items i ON i.id = r.item_id
+        WHERE rn <= 5
+        ORDER BY server_id, request_count DESC;`
+
+        const embeds = [
+            new EmbedBuilder().setTitle('Cherry: Top Requested Prices').setAuthor({name: 'BlossomPricer', iconURL: 'https://bc.pichuhat.dev/src/images/brand/main.png'}).setColor(0xD2042D),
+            new EmbedBuilder().setTitle('Spirit: Top Requested Prices').setAuthor({name: 'BlossomPricer', iconURL: 'https://bc.pichuhat.dev/src/images/brand/main.png'}).setColor(0x3498DB),
+            new EmbedBuilder().setTitle('Lotus: Top Requested Prices').setAuthor({name: 'BlossomPricer', iconURL: 'https://bc.pichuhat.dev/src/images/brand/main.png'}).setColor(0x2ECC71),
+            new EmbedBuilder().setTitle('Tulip: Top Requested Prices').setAuthor({name: 'BlossomPricer', iconURL: 'https://bc.pichuhat.dev/src/images/brand/main.png'}).setColor(0xC27C0E)
+        ]
+
+    try {
+        const result = await pgPool.query(sqlQuery)
+        const byServer = [[],[],[],[]]
+
+        for (const row of result.rows) {
+            byServer[row.server_id].push({
+                item_id: row.item_id,
+                name: row.item_name,
+                request_count: row.request_count
+            });
+        }
+        
+        for (let i = 0; i < 4; i++) {
+            if (byServer[i].length > 0) {
+                const numbersToAdd = Array.from({length: byServer[i].length}, (_, i) => i + 1);
+                embeds[i].addFields(
+                    {name: '#', value: numbersToAdd.join('\n'), inline: true},
+                    {name: 'Item', value: byServer[i].map(row => row.name).join('\n'), inline: true},
+                    {name: 'Count', value: byServer[i].map(row => row.request_count).join('\n'), inline: true}
+                )
+            } else {
+                embeds[i].setDescription('No price requests :)')
+            }
+        }
+
+        const url = `https://discord.com/api/v10/channels/${isProduction ? process.env.BOT_NOTIFICATION_CHANNEL_ID : process.env.TEST_NOTIFICATION_CHANNEL_ID}/messages`
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                content: `${byServer[0].length > 0 ? `<@&1540819591847088270>` : ``}${byServer[1].length > 0 ? `<@&1540819810500481085>` : ``}${byServer[2].length > 0 ? `<@&1540819860186206248>` : ``}${byServer[3].length > 0 ? `<@&1540819906331811930>` : ``}`, embeds})
+        })
+
+        if (response.ok) return true
+    } catch(e) {
+        console.error(e)
+        return false
+    }
+}
 
 app.use(session({
     // Tell express-session to use PostgreSQL instead of server RAM
@@ -265,7 +335,7 @@ app.use(session({
         maxAge: 30 * 24 * 60 * 60 * 1000,
         secure: isProduction,
         httpOnly: true,
-        sameSite: isProduction ? 'none' : 'lax'
+        sameSite: 'lax'
     }
 }));
 
@@ -456,9 +526,10 @@ app.get('/api/allitems', async (req, res) => {
     app.get("/api/item/:serverid/:itemid", async (req, res) => {
         const serverToGet = req.params.serverid
         const idToGet = req.params.itemid
+        const user = req.session && req.session?.user?.id ? req.session.user.id : null
         if (![0,1,2,3].includes(Number(serverToGet)) || isNaN(Number(idToGet))) return res.status(400).json({success: false, message: "Bad input"})
 
-        const data = await getItemData(idToGet, serverToGet)
+        const data = await getItemData(idToGet, serverToGet, user)
 
         if (data) {
             return res.status(200).json({success: true, item: data})
@@ -744,14 +815,28 @@ app.get('/api/allitems', async (req, res) => {
             UPDATE price_submissions
             SET status = $1
             WHERE submission_id = $2
+            RETURNING item_id, server_id
+            `
+
+            const secondQuery = `
+            DELETE FROM price_change_requests
+            WHERE item_id = $1
+            AND server_id = $2
             `
             const data = [input.type, input.submission_id]
 
+            let statusPoint = 'begin'
             try {
                 const result = await pgPool.query(sqlQuery, data)
+                if (input.type === 'accepted') {
+                    statusPoint = 'change'
+                    if (result.rows[0]?.item_id) await pgPool.query(secondQuery, [result.rows[0].item_id, result.rows[0].server_id])
+                }
+                statusPoint = 'final'
                 res.status(200).json({success: true, message: "Updated"})
             } catch(error) {
                 console.error(error)
+                console.log(`Status point ${statusPoint}`)
                 res.status(500).json({success: false, message: `Internal server error`})
             }
         } else {
@@ -1014,18 +1099,22 @@ LIMIT 151;
         const item = Number(req.params.itemid)
         if (isNaN(server) || isNaN(item)) return res.status(400).json({success: false, message: "Server ID and Item ID must be numbers."})
         const sqlQuery = `
-        SELECT COUNT(*) AS pending
-        FROM price_submissions
-        WHERE submitted_by = $1
-        AND server_id = $2
-        AND item_id = $3
-        AND status = 'pending'
+        SELECT 
+            EXISTS (
+                SELECT 1 FROM price_submissions
+                WHERE server_id = $1 AND item_id = $2 AND status = 'pending'
+            ) AS has_pending,
+            EXISTS (
+                SELECT 1 FROM price_submissions
+                WHERE server_id = $1 AND item_id = $2 AND status = 'pending' AND submitted_by = $3
+            ) AS has_user_pending
         `
-        const values = [req.session.user.id, server, item]
+        const values = [server, item, req.session.user.id]
         try {
         const result = await pgPool.query(sqlQuery, values)
-        res.status(200).json({success: true, isPending: parseInt(result.rows[0].pending, 10) > 0})
+        res.status(200).json({success: true, isPending: result.rows[0].has_pending, isPersonal: result.rows[0].has_user_pending})
         } catch(e) {
+            console.error(e)
             res.status(500).json({success: false, message: "Internal server error."})
         }
     })
@@ -1336,6 +1425,49 @@ LIMIT 151;
             res.status(200).json({success: true, result: result.rows})
         } catch(e) {
             console.log(e)
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.post('/api/requestprice/:itemid/:serverid', async (req, res) => {
+        if (!req.session || !req.session.user?.id) return res.status(401).json({success: false, message: "Not logged in"})
+
+        const item = Number(req.params.itemid)
+        const server = Number(req.params.serverid)
+
+        if (isNaN(item) || item < 1 || !Number.isInteger(item) || ![0,1,2,3].includes(server)) return res.status(400).json({success: false, message: "Invalid item or server ID"})
+
+        const query = `
+        INSERT INTO price_change_requests (item_id, server_id, user_id)
+        VALUES ($1, $2, $3)
+        `
+
+        try {
+            const result = await pgPool.query(query, [item, server, req.session.user.id])
+
+            res.status(200).json({success: true, message: "Created request"})
+        } catch(e) {
+            if (e.code === '23503') {
+                return res.status(404).json({success: false, message: "Item not found"})
+            }
+            if (e.code === '23505') {
+                return res.status(409).json({ error: 'Already requested' });
+            }
+            res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.post('/api/notify-top-requested', async (req, res) => {
+        if (!req.session || req.session?.user?.role !== 'cron') return res.status(403).json({success: false, message: "You failed the anti-captcha????"})
+
+        try {
+            const result = await notifyTopRequested()
+
+            if (!result) return res.status(500).json({success: false, message: "Internal server error"})
+            return res.status(200).json({success: true, message: "Notified"})
+        } catch(e) {
+            console.error("An error occurred when notifying.")
+            console.error(e)
             res.status(500).json({success: false, message: "Internal server error"})
         }
     })

@@ -11,7 +11,8 @@ export class ItemView extends LitElement {
         user: {type: Object},
         loading: {type: Boolean},
         openPriceRecom: {type: Boolean},
-        hasPending: {type: Boolean}
+        hasPending: {type: Boolean},
+        hasUserPending: {type: Boolean}
     }
 
     constructor() {
@@ -24,6 +25,7 @@ export class ItemView extends LitElement {
         this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
         this.properPricing = true;
         this.hasPending = false;
+        this.hasUserPending = false;
     }
 
     connectedCallback() {
@@ -47,7 +49,7 @@ export class ItemView extends LitElement {
 
     async updated(changedProperties) {
         const needFetch = (changedProperties.has('item') || changedProperties.has('selectedServer') && this.item != null && this.selectedServer != null)
-        const needPendingCheck = (changedProperties.has('user') && this.selectedServer != null && this.item != null && (this.user?.role === 'staff' || this.user?.role === 'admin'))
+        const needPendingCheck = (needFetch || (changedProperties.has('user') && this.selectedServer != null && this.item != null)) && (this.user?.role === 'staff' || this.user?.role === 'admin')
 
         if (!needFetch && !needPendingCheck) return;
     
@@ -74,6 +76,7 @@ export class ItemView extends LitElement {
 
             const result = await response.json()
             this.hasPending = result.isPending
+            this.hasUserPending = result.isPersonal
         } catch(e) {
             window.alert("An error occurred while fetching pending prices.")
             throw new Error(e)
@@ -274,6 +277,30 @@ export class ItemView extends LitElement {
         this.loading = false;
     }
 
+    async _requestNewPrice() {
+        if (this.user.role === 'staff' || this.user.role === 'admin') {
+            const prompt = window.prompt(`You're already a staff member. This tool is intended for general users. If you actually meant to do this, type 'confirm'.`)
+            if (!prompt || prompt.toLowerCase().trim() !== 'confirm') return
+        }
+        const url = `/api/requestprice/${this.item}/${this.selectedServer}`
+        this.loading = true;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                credentials: 'include'
+            })
+
+            if (!response.ok) {console.error(response); return window.alert('An error occurred.')}
+            this.itemData.has_price_request = true;
+        } catch(e) {
+            console.error(e)
+            window.alert("An error occurred.")
+        } finally {
+            this.loading = false;
+        }
+    }
+
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
 
@@ -311,11 +338,14 @@ export class ItemView extends LitElement {
     <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ?
         html`<br><br>${this.hasPending ?
-            html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>You already have a pending recommendation</strong><br>Only submit another if you need to submit a different price.</wa-callout><br>` 
-            : ``}<wa-button ?disabled=${this.loading} pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price</wa-button>` : ""}
+            html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>${this.hasUserPending ? `You already have a pending price submission!` : `Another pending price submission already exists!`}</strong><br>Only submit another if you need to submit a different price.</wa-callout><br>` 
+            : ``}<wa-button ?disabled=${this.loading} pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price (FOR STAFF)</wa-button>` : ""}
+    ${this.user ? html`
+        <br><br><wa-button ?disabled=${this.loading || this.itemData.has_price_request} pill size="xs" variant="brand" @click=${this._requestNewPrice}>${this.itemData.has_price_request ? html`<wa-icon slot="start" name="check"></wa-icon>Price Request Submitted` : html`<wa-icon slot="start" name="hand"></wa-icon>Request Price${this.properPricing ? ` Change`: ` Set`}`}</wa-button>
+        ` : ``}
 
 </div>
-<div class="box nogrow  ">
+<div class="box nogrow">
     <span class="boxheader priceAdd">Price Graph</span><br>
     Coming soon!
 </div>

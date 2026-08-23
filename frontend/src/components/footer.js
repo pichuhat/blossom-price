@@ -6,8 +6,10 @@ export class SiteFooter extends LitElement {
         .footer, footer {
         border-top: 1px solid var(--color-navbar-accent);
         margin: 0;
+        margin-top: 20px;
         background-color: var(--color-navbar);
         padding: 5px 20px;
+        color: white;
         }
         
         a {
