@@ -196,7 +196,7 @@ export class AdminView extends LitElement {
 
     return html`
     <div class="dashboard">
-    <div class="fullcard">
+    <div class="fullcard" style="position: relative;">
     <h1>Manage Recommendations</h1>
     Show: <wa-button-group orientation="horizontal"><wa-button @click=${this._showAll} ?disabled=${this.loading || this.toShow == 'all'} variant="brand" size="xs">All</wa-button><wa-button @click=${this._showAccepted} ?disabled=${this.loading || this.toShow == 'accepted'} variant="brand" size="xs">Accepted</wa-button><wa-button @click=${this._showPending} ?disabled=${this.loading || this.toShow == 'pending'} variant="brand" size="xs">Pending</wa-button><wa-button @click=${this._showDenied} ?disabled=${this.loading || this.toShow == 'denied'} variant="brand" size="xs">Denied</wa-button></wa-button-group>
     ${this.maxPages > 0 ? html`<br><span>Page ${this.loading ? html`<wa-spinner></wa-spinner>` : `${this.page}/${this.maxPages}`}</span>

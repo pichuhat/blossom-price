@@ -1483,6 +1483,8 @@ LIMIT 151;
         if (!req.session || req.session?.user?.role !== 'admin') return res.status(403).json({success: false, message: "No permission"})
 
         try {
+            const today = new Date().toISOString().slice(0,10)
+
             const tryA = await pgPool.query(`
                 INSERT INTO job_log (job_name, run_date)
                 VALUES ('top-requested-notification-manual', $1)
