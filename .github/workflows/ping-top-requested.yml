@@ -12,7 +12,9 @@ jobs:
       - name: Ping notification endpoint
         env:
           SESSION_ID: ${{ secrets.PING_SITE_COOKIE  }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           curl -f -X POST "https://bc.pichuhat.dev/api/notify-top-requested" \
+            -H "X-Cron-Secret: $CRON_SECRET" \
             -b "connect.sid=$SESSION_ID" \
             --max-time 30
