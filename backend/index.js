@@ -570,7 +570,7 @@ app.get('/api/allitems', async (req, res) => {
     }
 })
 
-    app.get('/api/forceupdate', async (req, res) => {
+    app.post('/api/forceupdate', async (req, res) => {
         if (req.session && req.session.user) {
             if (req.session.user.role == "admin") {
                 console.log("Forced sync starting...")
