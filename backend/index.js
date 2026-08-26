@@ -156,6 +156,58 @@ cron.schedule('0 13 * * *', async () => {
     }
 })
 
+cron.schedule('5 13 * * MON,THU', itemSyncHandler)
+
+async function itemSyncHandler(isManual) {
+    const today = new Date().toISOString().slice(0,10)
+
+    const result = await pgPool.query(`
+        INSERT INTO job_log (job_name, run_date)
+        VALUES ('${isManual ? 'item-sync-manual' : 'item-sync'}', $1)
+        ON CONFLICT (job_name, run_date) DO NOTHING
+        RETURNING id
+        `, [today])
+
+    if (result.rowCount === 0) {
+        console.log('Detected sync already done today, skipping')
+        return false
+    }
+
+    const final = await syncItems()
+    if (final) {
+        console.log("Successful sync, starting ping...")
+
+        const embed = new EmbedBuilder().setTitle('Item Sync Completed').setColor(0xbc2bc4).setTimestamp().setAuthor({name: "BCP Item Sync", iconURL: 'https://bc.pichuhat.dev/src/images/brand/main.png'}).setDescription(`Successfully synced the BlossomPricer database with the item catalog.\n-# This action was **${isManual ? 'manually' : 'automatically'} run.**`)
+
+        try {
+            const url = `https://discord.com/api/v10/channels/${isProduction ? process.env.BOT_NOTIFICATION_CHANNEL_ID : process.env.TEST_NOTIFICATION_CHANNEL_ID}/messages`
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                'Authorization': `Bot ${process.env.DISCORD_BOT_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({embeds: [embed]})
+        })
+
+        if (response.ok) {
+            console.log('Successful ping')
+            return true
+        } else {
+            console.log(response)
+            return false
+        }
+        } catch(e) {
+            console.error(`Item Sync Notify Error: ${e}`)
+            return false
+        }
+    } else {
+        console.error("Item sync may have failed")
+        return false
+    }
+}
+
 async function syncItems() {
     try {
         console.log("Beginning new item update...")
@@ -219,9 +271,11 @@ async function syncItems() {
 
         await pgPool.query(sqlQuery, [JSON.stringify(final)])
 
-        console.log("SUCCESS: Database updated")
+        console.log("Sync SUCCESS: Database updated")
+        return true
     } catch(error) {
-        console.error("FAILED: " + error)
+        console.error("Sync FAILED: " + error)
+        return false
     } finally {
         console.log("Function complete")
     }
@@ -521,11 +575,15 @@ app.get('/api/allitems', async (req, res) => {
             if (req.session.user.role == "admin") {
                 console.log("Forced sync starting...")
                 try {
-                await syncItems()
+                const final = await itemSyncHandler(true)
+                if (final) {
                 res.status(200).json({success: true, message: "Updated"})
+                } else {
+                    res.status(500).json({success: false, message: "An error occurred. This function may only be used once daily."})
+                }
                 } catch(error) {
                     console.log(error)
-                    res.status(500).json({success: false, message: "Unknown not-auth error"})
+                    res.status(500).json({success: false, message: "Unknown not-auth error type A"})
                 }
             } else {
                 res.status(403).json({success: false, message: "Improper permission"})
