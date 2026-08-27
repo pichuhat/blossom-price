@@ -18,8 +18,7 @@ export class MyPurchasePlans extends LitElement {
         this.presets = []
         this.errorOccurred = false;
         this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'})
-        this.servers = ['cherry', 'lotus', 'spirit', 'tulip']
-        this.selectedPreset
+        this.servers = ['cherry', 'spirit', 'lotus', 'tulip']
     }
 
     connectedCallback() {
