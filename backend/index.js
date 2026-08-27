@@ -156,7 +156,7 @@ cron.schedule('0 13 * * *', async () => {
     }
 })
 
-cron.schedule('5 13 * * MON,THU', itemSyncHandler)
+cron.schedule('5 13 * * MON,THU', () => itemSyncHandler(false))
 
 async function itemSyncHandler(isManual) {
     const today = new Date().toISOString().slice(0,10)
