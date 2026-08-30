@@ -215,6 +215,7 @@ padding: 10px 0px;
       <li class="dropdown">
       <a href="#">Extras</a>
       <div class="dropdown-content right-dropdown">
+      <a href="/~/updates/faq" @click=${(e) => this._navigateTo('/~/updates/faq', e)}>FAQ</a>
       <a href="/~/spawners" @click=${(e) => this._navigateTo('/~/spawners', e)}>Spawners</a>
       ${this.user ? html`<a href="/~/purchaseplan/home" @click=${(e) => this._navigateTo('/~/purchaseplan/home', e)}>Purchase Plans</a>` : nothing}
       ${this.user && (this.user.role === 'staff' || this.user.role === 'admin') ? html`<a href="/~/grouppricing" @click=${(e) => this._navigateTo('/~/grouppricing', e)}>Group Pricing</a>` : nothing}
