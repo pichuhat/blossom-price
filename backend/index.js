@@ -329,7 +329,7 @@ async function getTags() {
         const fetchURL = "https://www.blossom.atn.gg/api/tags"
         const response = await fetch(fetchURL)
         const result = await response.json()
-        result.push('spawner', 'currency')
+        result.push('spawner', 'currency', 'Step Height')
         const index = result.indexOf('Repeat Appearance')
         if (index > -1) result.splice(index, 1)
         return result
