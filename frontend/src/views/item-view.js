@@ -1,7 +1,10 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
 import "../components/price-history.js"
 import "./new-price-view.js"
 import { sharedStyles } from '../styles.js';
+
+import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
 
 export class ItemView extends LitElement {
     static properties = {
@@ -26,6 +29,11 @@ export class ItemView extends LitElement {
         this.properPricing = true;
         this.hasPending = false;
         this.hasUserPending = false;
+
+        this.ALLOWED_STYLE_PROPS = {
+          color: /^#[0-9a-fA-F]{3,8}$/,
+          'font-weight': /^(bold|normal|[1-9]00)$/,
+        }
     }
 
     connectedCallback() {
@@ -34,7 +42,31 @@ export class ItemView extends LitElement {
         this.addEventListener('close-recom', (event) => {
             this.openPriceRecom = false;
             this.requestUpdate()
-  });
+        });
+
+        DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
+      if (data.attrName !== 'style') return;
+
+        const declarations = data.attrValue
+          .split(';')
+          .map(d => d.trim())
+          .filter(Boolean);
+
+        const safeDeclarations = declarations.filter(decl => {
+          const [prop, ...rest] = decl.split(':');
+          const value = rest.join(':').trim();
+          const propName = prop?.trim().toLowerCase();
+          const validator = this.ALLOWED_STYLE_PROPS[propName];
+          return validator && validator.test(value);
+        });
+
+        if (safeDeclarations.length === 0) {
+          data.keepAttr = false;
+        } else {
+          data.attrValue = safeDeclarations.join('; ');
+        }
+      });
+
         window.addEventListener('keydown', this._handleGlobalKeydown)
     }
 
@@ -109,6 +141,10 @@ export class ItemView extends LitElement {
         this.openPriceRecom = true;
     }
   }
+  
+    get lowDataMode() {
+      return localStorage.getItem('LDM') === 'true'
+    }
 
   static styles = [sharedStyles, css`
     .center {
@@ -301,6 +337,18 @@ export class ItemView extends LitElement {
         }
     }
 
+     _decodeEscapedUnicode(value) {
+    if (typeof value !== 'string') return value
+    return value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+  }
+
+    _sanitizeHTML(input) {
+      return this._decodeEscapedUnicode(DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: ['div', 'span', 'br'],
+        ALLOWED_ATTR: ['class', 'style'],
+      }));
+    }
+
   render() {
     const servers = ["Cherry", "Spirit", "Lotus", "Tulip"]
 
@@ -326,10 +374,20 @@ export class ItemView extends LitElement {
             return html`<span class="tag">${tag}</span>`
         }) : ""}
     </div>
-    <img
-    src=${this.itemData.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (this.itemData.tags.includes('currency') ? `/src/images/${this.itemData.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png`)}
-    alt=${this.itemData.item_name}
-    >
+    ${this.lowDataMode && !this.itemData.tags.includes('spawner') && !this.itemData.tags.includes('currency') ? html`
+    <div class="give-preview-text-outer">
+        <div class="give-preview-text w-100">
+        <div class="give-preview-text-inner text-start" style="text-align: left;">
+            ${unsafeHTML(this._sanitizeHTML(this.itemData.item_html))}
+        </div>
+        </div>
+        </div>  
+    ` : html`
+        <img
+        src=${this.itemData.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (this.itemData.tags.includes('currency') ? `/src/images/${this.itemData.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png`)}
+        alt="${this._decodeEscapedUnicode(this.itemData.item_name)}"
+        />
+    `}
     </div>
 </div>
 <div class="market-column">

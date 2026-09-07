@@ -1035,15 +1035,18 @@ app.get('/api/allitems', async (req, res) => {
 
     app.get('/api/search/advanced', async (req, res) => {
         const input = req.query.query
-        const server = req.query.selectedServer
-        const crate = req.query.crate
-        const tags = req.query.tags 
+        const server = req.query.selectedServer ? Number(req.query.selectedServer) : false
+        const crate = req.query.crate ? Number(req.query.crate) : false
+        const tags = req.query.tags
       ? (Array.isArray(req.query.tags) ? req.query.tags : [req.query.tags]) 
       : [];
-        if ((server && isNaN(Number(server))) || (crate && isNaN(Number(crate)))) return res.status(400).json({success: false, message: "Missing or invalid search param", result: null})
+      const minPrice = req.query.minPrice ? Number(req.query.minPrice) : false
+      const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : false
+      const pricedOnly = req.query.pricedOnly
+        if ((server !== false && ![0,1,2,3].includes(server)) || (crate && isNaN(crate)) || (minPrice && (isNaN(minPrice) || !Number.isInteger(minPrice))) || (maxPrice && (isNaN(maxPrice) || !Number.isInteger(maxPrice))) || tags.length > 50) return res.status(400).json({success: false, message: "Missing or invalid search param", result: null})
         // 1. Initialize the values array and the counter
 const values = input ? [input] : [];
-let paramIndex = input ? 2 : 1; 
+let paramIndex = input ? 2 : 1;
 
 // 2. Build the query pieces dynamically
 let serverCondition = "";
@@ -1055,67 +1058,80 @@ if (server) {
 
 let crateCondition = "";
 if (crate) {
-    crateCondition = ` AND i.crate_id = $${paramIndex}`;
+    crateCondition = `i.crate_id = $${paramIndex}`;
     values.push(Number(crate));
     paramIndex++;
 }
 
 let tagCondition = ""
 if (tags) {
-    tagCondition = ` AND tags @> $${paramIndex}::text[]`
+    tagCondition = `tags @> $${paramIndex}::text[]`
     values.push(tags)
     paramIndex++
 }
 
-// 3. Construct the final SQL string
-const sqlQuery = input ? `
-SELECT * FROM (
-    SELECT DISTINCT ON (i.id)
-        i.*,
+let minPriceCondition = ""
+if (serverCondition && minPrice) {
+    minPriceCondition = `(CASE WHEN p.is_range THEN p.max_price ELSE p.price END) >= $${paramIndex}::int`
+    values.push(minPrice)
+    paramIndex++
+}
+
+let maxPriceCondition = ""
+if (serverCondition && maxPrice) {
+    maxPriceCondition = `p.price <= $${paramIndex}::int`
+    values.push(maxPrice)
+    paramIndex++
+}
+
+let pricedOnlyCondition = ""
+if (serverCondition && pricedOnly) pricedOnlyCondition = "p.price IS NOT NULL"
+
+const priceColumns = serverCondition ? `, p.price AS price,
+        p.timestamp AS recom_timestamp,
+        p.submission_id AS recommendation_id,
+        p.submitted_by AS author_id,
+        p.server_id AS server,
+        p.is_range AS is_range,
+        p.max_price AS max_price,
+        u.username AS username` : ""
+
+const conditions = [
+    input ? `(to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
+        OR to_tsvector('english', item_human) @@ plainto_tsquery('english', $1))` : null,
+    crateCondition,
+    tagCondition,
+    minPriceCondition,
+    maxPriceCondition,
+    pricedOnlyCondition
+].filter(Boolean).join(' AND ')
+
+const filters = conditions ? `WHERE ${conditions}` : ''
+
+const inputFilter = input ? `,
         CASE 
             WHEN to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1) THEN 'exact'
             ELSE 'fuzzy'
-        END as match_type${serverCondition ? `, p.price AS price,
-        p.timestamp AS recom_timestamp,
-        p.submission_id AS recommendation_id,
-        p.submitted_by AS author_id,
-        p.server_id AS server,
-        p.is_range AS is_range,
-        p.max_price AS max_price,
-        u.username AS username` : ""}
+        END as match_type
+` : ''
+
+const ordering = input
+  ? `ORDER BY CASE WHEN match_type = 'exact' THEN 1 ELSE 2 END, id ASC`
+  : `ORDER BY id ASC`
+
+// 3. Construct the final SQL string
+const sqlQuery = `
+SELECT * FROM (
+    SELECT DISTINCT ON (i.id)
+        i.*${inputFilter}${priceColumns}
     FROM items i
     ${serverCondition}
-    WHERE 
-        (to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
-        OR 
-        to_tsvector('english', item_human) @@ plainto_tsquery('english', $1))
-        ${crateCondition}
-        ${tagCondition}
-    ORDER BY i.id${serverCondition ? `, p.timestamp DESC` : ""}
-) as search_results
-ORDER BY 
-    CASE 
-        WHEN match_type = 'exact' THEN 1 
-        ELSE 2 
-    END, 
-    id ASC
-LIMIT 151;
-` : `
-SELECT DISTINCT ON (i.id)
-        i.*${serverCondition ? `, p.price AS price,
-        p.timestamp AS recom_timestamp,
-        p.submission_id AS recommendation_id,
-        p.submitted_by AS author_id,
-        p.server_id AS server,
-        p.is_range AS is_range,
-        p.max_price AS max_price,
-        u.username AS username` : ""}
-FROM items i
-${serverCondition}
-WHERE i.id = i.id${crateCondition}${tagCondition}
-ORDER BY i.id${serverCondition ? `, p.timestamp DESC` : ""}
-LIMIT 151;
-`;
+    ${filters}
+    ORDER BY i.id${serverCondition ? ', p.timestamp DESC' : ''}
+) AS search_results
+ ${ordering}
+ LIMIT 151;
+`
 
         try {
             const result = await pgPool.query(sqlQuery, values);

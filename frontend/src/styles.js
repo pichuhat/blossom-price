@@ -3,7 +3,7 @@ const fontUrl = new URL('./fonts/Mozart NBP Regular.ttf', import.meta.url).href;
 
 export const sharedStyles = css`
 :host, *, *::before, *::after {
-  transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  transition: background-color 0.5s ease; border-color 0.5s ease; box-shadow: 0.5s ease;
 }
 
 .self-center {

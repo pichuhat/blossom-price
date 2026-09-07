@@ -29,6 +29,7 @@ import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/switch/switch.j
 import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/button-group/button-group.js'
 import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/callout/callout.js';
 import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/number-input/number-input.js';
+import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/details/details.js';
 
 //Polyfill for old Apple devices
 import { URLPattern } from 'https://esm.sh/urlpattern-polyfill@10';
