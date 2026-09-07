@@ -224,6 +224,13 @@ async function syncItems() {
     const result = await response.json()
     const final = result.data
 
+    console.log("Fetched, started filter...")
+
+    final.forEach(item => {
+        const cleaned = String(item.WinPercentage).replace('%', '');
+        item.WinPercentage = isNaN(Number(cleaned)) ? null : Number(cleaned);
+    })
+
     console.log("Fetched, sending payload...")
 
     const sqlQuery = `
