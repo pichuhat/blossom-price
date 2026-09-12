@@ -163,10 +163,10 @@ export class AppView extends LitElement {
 
   static styles = [sharedStyles, css`
     .content {
-     min-height: 100vh;
-  display: grid;
-  grid-template-rows: auto 1fr auto; /* header, content, footer */
-  margin: 0;
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: 1fr auto; /* header, content, footer */
+      margin: 0;
     }
   `]
 
@@ -255,8 +255,8 @@ export class AppView extends LitElement {
     }
 
     return html`
-    <div class="content">
       <top-navbar .user=${this.user} .rootSelectedServer=${this.selectedServer}></top-navbar>
+      <div class="content">
       ${this.router.outlet()}
       <site-footer></site-footer>
       </div>

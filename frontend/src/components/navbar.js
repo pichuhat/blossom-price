@@ -54,6 +54,7 @@ export class Navbar extends LitElement {
     }
   
   static styles = [sharedStyles, css`
+    
     .navbar {
       background-color: var(--color-navbar);
       color: white;
