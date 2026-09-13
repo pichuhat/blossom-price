@@ -1,5 +1,4 @@
-import { css, unsafeCSS } from 'https://esm.sh/lit@3';
-const fontUrl = new URL('./fonts/Mozart NBP Regular.ttf', import.meta.url).href;
+import { css } from 'https://esm.sh/lit@3';
 
 export const sharedStyles = css`
 :host, *, *::before, *::after {
@@ -190,13 +189,7 @@ vertical-align: middle;
   flex-wrap: nowrap;
   overflow: hidden;
 }
-  @font-face {
-    font-family: 'Mozart NBP';
-    src: url('${unsafeCSS(fontUrl)}') format('truetype');
-    font-weight: 400;
-    font-style: normal;
-    font-display: swap;
-}
+
 .give-preview-text-outer {
     overflow: auto;
     max-width: 100%;

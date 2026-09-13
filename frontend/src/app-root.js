@@ -162,11 +162,17 @@ export class AppView extends LitElement {
 
 
   static styles = [sharedStyles, css`
-    .content {
+    .main {
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .content {
+      flex: 1;
+      min-height: 0;
       display: grid;
-      grid-template-rows: 1fr auto; /* header, content, footer */
-      margin: 0;
+      grid-template-rows: 1fr auto;
     }
   `]
 
@@ -255,11 +261,12 @@ export class AppView extends LitElement {
     }
 
     return html`
+    <div class="main">
       <top-navbar .user=${this.user} .rootSelectedServer=${this.selectedServer}></top-navbar>
       <div class="content">
       ${this.router.outlet()}
       <site-footer></site-footer>
-      </div>
+      </div></div>
     `;
   }
 }
