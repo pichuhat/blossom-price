@@ -1356,25 +1356,48 @@ SELECT * FROM (
     app.post('/api/purchaseplan/new', async (req, res) => {
         const input = req.body
         if (!input) return res.status(400).json({success: false, message: "what on earth could you possibly have done to achieve this"})
-        if (!req.session) return res.status(401).json({success: false, message: "Unauthenticated"})
-        if (isNaN(Number(input.server)) || ![0,1,2,3].includes(input.server) || !Array.isArray(input.items) || input.items.length < 1 || !input.name || !/^[\w ]+$/.test(input.name) || input.name.length > 50 || typeof input.is_public !== 'boolean' || input.items.length > 25) return res.status(400).json({success: false, message: "Invalid input"})
+        if (!req.session || !req.session.user) return res.status(401).json({success: false, message: "Unauthenticated"})
+        if (isNaN(Number(input.server)) || ![0,1,2,3].includes(input.server) || !Array.isArray(input.items) || input.items.length < 1 || !input.name || typeof input.name !== 'string' || !/^[\w ]+$/.test(input.name) || input.name.length > 50 || typeof input.is_public !== 'boolean' || input.items.length > 25) return res.status(400).json({success: false, message: "Invalid input"})
         if (matcher.hasMatch(input.name)) return res.status(418).json({success: false, message: "You can't name your purchase plan that."})
 
         let uploadItems = []
-        input.items.forEach(item => {
-            if (typeof Number(item.id) !== 'number' || typeof item.count !== 'number' || item.count > 10 || item.count < 1 || Math.round(item.count) !== item.count) return res.status(400).json({success: false, message: "Invalid input (2)"})
-            uploadItems.push(JSON.stringify({id: item.id, count: item.count, obtained: 0}))
-        })
+        const ids = []
+        for (const item of input.items) {
+            if (typeof item !== 'object' || item === null) {
+                return res.status(400).json({success: false, message: "Invalid input (2)"})
+            }
+            const id = Number(item.id)
+            if (!Number.isInteger(id) || id < 0 || id > 2147483647) {
+                return res.status(400).json({success: false, message: "Invalid input (2)"})
+            }
+            if (typeof item.count !== 'number' || !Number.isInteger(item.count) || item.count < 1 || item.count > 10) {
+                return res.status(400).json({success: false, message: "Invalid input (2)"})
+            }
+            uploadItems.push(JSON.stringify({id, count: item.count, obtained: 0}))
+            ids.push(id)
+        }
 
         const sqlQuery = `
+        WITH requested AS (
+            SELECT DISTINCT unnest($6::int[]) AS id
+        ),
+        valid AS (
+            SELECT r.id FROM requested r
+            JOIN items i ON i.id = r.id
+        )
+        
         INSERT INTO purchase_plans (user_id, is_public, is_preset, name, items, server_id)
-        VALUES ($1, $2, FALSE, $3, $4::jsonb[], $5)
+        SELECT $1::text, $2::boolean, FALSE, $3::text, $4::jsonb[], $5::int
+        WHERE (SELECT count(*) FROM valid) = (SELECT count(*) FROM requested)
         RETURNING *
         `
-        const values = [req.session.user.id, input.is_public, input.name, uploadItems, input.server]
+        const values = [req.session.user.id, input.is_public, input.name, uploadItems, input.server, ids]
 
         try {
             const response = await pgPool.query(sqlQuery, values)
+            if (response.rows.length === 0) {
+                return res.status(400).json({success: false, message: "Invalid item id (3)"})
+            }
             res.status(200).json({success: true, redirect_id: response.rows[0].id, message: "Uploaded"})
         } catch(e) {
             console.error("/purchaseplan/new: " + e)
@@ -1386,6 +1409,7 @@ SELECT * FROM (
         let ids = req.query?.item
         if (!ids) return res.status(400).json({success: false, message: "You didn't request any items."})
         if (!Array.isArray(ids)) ids = [ids]
+        if (ids.length > 50) return res.status(400).json({success: false, message: "Too many items"})
 
         const finalItems = []
         for (const item of ids) {
