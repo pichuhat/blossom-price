@@ -17,7 +17,23 @@ class UpdatePosts extends LitElement {
 
     connectedCallback() {
         super.connectedCallback()
-        this._fetchContent()
+        this._init()
+
+        window.addEventListener('popstate', (event) => {
+            this._init()
+        });
+    }
+
+    async _init() {
+        this.loading = true
+        await this._fetchContent()
+        this.loading = false
+    }
+
+    willUpdate(changedProps) {
+        if (changedProps.has('post')) {
+            this._fetchContent();
+        }
     }
 
     _routeToPage(url, e) {
@@ -39,26 +55,6 @@ static styles = [sharedStyles, css`
      _formatDate(unformatted) {
         const date = new Date(unformatted)
         return this.formatter.format(date)
-    }
-
-    _search() {
-        const inputEl = this.shadowRoot.querySelector('#search').value
-        const selectedCrate = this.shadowRoot.querySelector('#crate').value
-        let selectedTags = this.shadowRoot.querySelector('#tags').value ? this.shadowRoot.querySelector('#tags').value.map(tag => tag.replaceAll("_", " ")) : []
-        console.log(selectedTags)
-        if (selectedTags) {
-        const e = selectedTags.map(tag => `&tags=${tag}`)
-        selectedTags = e.join("")
-        console.log(e, selectedTags)
-        }
-        const path = `/~/advancedsearch?query=${inputEl}${selectedCrate ? `&crate=${selectedCrate}` : ""}${selectedTags ? selectedTags : ""}`
-        this.dispatchEvent(new CustomEvent('nav-requested', {
-        detail: { path },
-        bubbles: true,
-        composed: true
-        }));
-        this.loading = true;
-        this._fetchItems().finally(() => this.loading = false)
     }
 
     async _fetchContent() {

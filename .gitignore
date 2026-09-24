@@ -2,3 +2,4 @@
 node_modules/
 dev-commands.js
 bot-commands.js
+frontend/src/updates/ai.html
