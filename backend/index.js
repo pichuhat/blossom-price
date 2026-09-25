@@ -1621,6 +1621,13 @@ SELECT * FROM (
     //   [ ALL ENDPOINTS ABOVE THIS LINE                                      ]
     //   ----------------------------------------------------------------------
 
+    process.on('uncaughtException', (err) => {
+        console.error('UNCAUGHT EXCEPTION:', err.stack)
+    })
+    process.on('unhandledRejection', (err) => {
+        console.error('UNHANDLED REJECTION:', err)
+    })
+
     app.get('/~/*any', (req, res) => {
         res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'))
     })
@@ -1634,6 +1641,12 @@ SELECT * FROM (
         return res.status(404).send("404 Unknown asset")
     }
         res.redirect(302, `/~${req.originalUrl}`)
+    })
+
+    app.use((err, req, res, next) => {
+        console.error(err.stack)
+        res.set('X-Error-Source', 'app-error-handler')
+        res.status(500).send('Internal server error')
     })
 
     let tags = []
