@@ -18,18 +18,20 @@ import "./views/new-purchase-plan.js"
 import "./views/view-purchase-plan.js"
 import "./views/my-purchase-plans.js"
 
-import "https://ka-f.webawesome.com/webawesome@3.11.0/webawesome.loader.js"
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/select/select.js';
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/option/option.js';
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/input/input.js'
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/button/button.js'
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/spinner/spinner.js'
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/icon/icon.js'
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/switch/switch.js'
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/button-group/button-group.js'
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/callout/callout.js';
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/number-input/number-input.js';
-import 'https://ka-f.webawesome.com/webawesome@3.11.0/components/details/details.js';
+import { createToast } from "./toast.js"
+
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/select/select.js';
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/option/option.js';
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/input/input.js'
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/button/button.js'
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/spinner/spinner.js'
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/icon/icon.js'
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/switch/switch.js'
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/button-group/button-group.js'
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/callout/callout.js';
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/number-input/number-input.js';
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/details/details.js';
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/toast/toast.js';
 
 //Polyfill for old Apple devices
 import { URLPattern } from 'https://esm.sh/urlpattern-polyfill@10';
@@ -77,7 +79,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/settings{/}?',
-        render: () => html`<settings-view></settings-view>`
+        render: () => html`<settings-view .user=${this.user}></settings-view>`
       },
       {
         path: '/~/server/:id/item/:itemid{/}?',
@@ -178,7 +180,8 @@ export class AppView extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    this.checkLoginStatus();
+    this._checkLinkPopups()
+    this.checkLoginStatus(false);
     this._getSelectedServer()
 
     this.addEventListener('nav-requested', (event) => {
@@ -195,11 +198,33 @@ export class AppView extends LitElement {
       });
     });
 
-  // 3. Keep the browser's native back and forward arrows working smoothly
+    this.addEventListener('check-login', () => this.checkLoginStatus(true))
+
   window.addEventListener('popstate', () => this._syncFromPathName());
   
-  // 4. Look at the URL right when the page boots up to show the right screen
   this._syncFromPathName();
+  }
+
+  _checkLinkPopups() {
+    const params = new URLSearchParams(window.location.search)
+    const popupMessages = {
+      "0": {content: "<strong>Success!</strong><br>You are now logged in.", variant: "success", icon: "circle-check", allowHtml: true},
+      "1": { content: "<strong>Login Failed</strong><br>You aren't in the BlossomCraft Discord server.", variant: "warning", icon: "circle-exclamation", duration: 10000, allowHtml: true},
+      "2": { content: "<strong>Login Failed</strong><br>You haven't linked your Minecraft account in the BlossomCraft Discord server.", variant: "warning", icon: "circle-exclamation", duration: 10000, allowHtml: true}
+    }
+    const popup = popupMessages[params.get('linkPopup')]
+    if (popup) {
+      createToast(popup.content, {
+        variant: popup.variant,
+        icon: popup.icon,
+        allowHtml: popup.allowHtml || false,
+        duration: popup.duration || 5000
+      })
+      
+      params.delete('linkPopup')
+      const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}${window.location.hash}`
+      window.history.replaceState({}, '', newUrl)
+    }
   }
 
   _syncFromPathName() {
@@ -225,7 +250,8 @@ export class AppView extends LitElement {
     }
 }
 
-  async checkLoginStatus() {
+  async checkLoginStatus(isExternalCheck) {
+    this.loading = true
     try {
         const response = await fetch("/api/auth/me", {
             method: 'GET',
@@ -233,10 +259,12 @@ export class AppView extends LitElement {
         })
 
         if (!response.ok) {
-            console.log("No valid login found.")
-            this.user = null;
-            this.loading = false;
-            return;
+          if (response.status !== 401) {console.log(response); throw new Error("Force catch")}
+
+          console.log("No valid login found.")
+          this.user = null;
+          if (isExternalCheck) createToast("Successfully logged out.", {variant: 'success', icon: "right-from-bracket"})
+          return;
         }
 
         const result = await response.json()
@@ -247,11 +275,11 @@ export class AppView extends LitElement {
             window.alert("Unknown authentication error")
             console.error("Server sent invalid user data.")
         }
-        this.loading = false
     } catch(error) {
         window.alert("Authentication check failed.")
         console.log(error)
-        this.loading = false
+    } finally {
+      this.loading = false
     }
   }
 

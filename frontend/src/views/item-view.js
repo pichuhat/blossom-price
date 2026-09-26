@@ -5,6 +5,7 @@ import "./new-price-view.js"
 import { sharedStyles } from '../styles.js';
 
 import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
+import { createToast } from '../toast.js';
 
 export class ItemView extends LitElement {
     static properties = {
@@ -329,9 +330,10 @@ export class ItemView extends LitElement {
 
             if (!response.ok) {console.error(response); return window.alert('An error occurred.')}
             this.itemData.has_price_request = true;
+            createToast("<strong>Success</strong><br>Your price change request was submitted.", {variant: 'success', icon: 'circle-check', allowHtml: true})
         } catch(e) {
             console.error(e)
-            window.alert("An error occurred.")
+            createToast("<strong>Uh Oh!</strong><br>Something went wrong while submitting your price request.", {variant: 'danger', icon: 'circle-xmark', allowHtml: true})
         } finally {
             this.loading = false;
         }

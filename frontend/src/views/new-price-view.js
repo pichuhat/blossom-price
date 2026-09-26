@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { sharedStyles } from '../styles.js';
+import { createToast } from '../toast.js'
 
 export class NewPrice extends LitElement {
     static properties = {
@@ -234,7 +235,7 @@ export class NewPrice extends LitElement {
     const result = await response.json()
 
     if (result.success) {
-      window.alert("Recommendation submitted! Awaiting approval.")
+      createToast("<strong>Success</strong><br>Your price recommendation was submitted and is awaiting approval.", {variant: 'success', icon: 'circle-check', allowHtml: true})
       this.dispatchEvent(new CustomEvent('close-recom', {
         bubbles: true,
         composed: true

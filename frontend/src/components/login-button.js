@@ -12,6 +12,7 @@ export class DiscordLoginButton extends LitElement {
       text-decoration: none;
       font-weight: bold;
       display: inline-block;
+      scale: 1;
     }
   `]
 

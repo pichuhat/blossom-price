@@ -472,7 +472,7 @@ app.get('/api/auth/callback', async (req, res) => {
         const avatar_hash = memberData.user.avatar;
         const roles = memberData.roles
 
-        if (!roles.includes("822640342335356980")) return res.redirect("/?linkPopup=1")
+        if (!roles.includes("822640342335356980")) return res.redirect("/~?linkPopup=1")
 
         const dbresult = await pgPool.query(
             `INSERT INTO users (discord_id, username, discord_avatar_hash) 
@@ -504,14 +504,26 @@ app.get('/api/auth/callback', async (req, res) => {
 
         console.log(`Verified user: ${minecraftUsername} (${discordId})`);
         
-        res.redirect("/")
+        res.redirect("/~?linkPopup=0")
 } catch(error) {
     if (checkA) {
-        res.redirect("/?linkPopup=2")
+        res.redirect("/~?linkPopup=2")
     } else {
     res.send("Uh Oh! " + error)
     }
 }
+})
+
+app.post('/api/auth/logout', async (req, res) => {
+    if (!req.session || !req.session.user) return res.status(200).json({success: true, message: "Logged out (status type 2)"})
+    
+    req.session.destroy((err) => {
+        if (err) next(err)
+        
+        res.clearCookie('connect.sid')
+
+        res.status(200).json({success: false, message: "Logged out (status type 1)"})
+    })
 })
 
 app.get('/api/ping', (req, res) => {
