@@ -402,4 +402,24 @@ td.dropdown .dropdown-content.flip-up {
   top: 10px;
   left: 10px;
 }
+
+wa-skeleton {
+max-width: 100%;
+}
+
+wa-skeleton.chars-20 {
+width: 20ch;
+}
+
+wa-skeleton.chars-15 {
+width: 15ch;
+}
+
+wa-skeleton.chars-10 {
+width: 10ch;
+}
+
+wa-skeleton.chars-5 {
+width: 5ch;
+}
 `

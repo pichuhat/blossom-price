@@ -1,10 +1,12 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { sharedStyles } from '../styles.js';
+import { createToast } from '../toast.js';
 
 export class StaffView extends LitElement {
     static properties = {
         loading: {type: Boolean},
         data: {type: Object},
+        disabledList: {type: Array},
         page: {type: Number}
     }
 
@@ -14,6 +16,7 @@ export class StaffView extends LitElement {
         this.toShow = "all";
         this.data = null;
         this.formatter = new Intl.DateTimeFormat("en-US", {dateStyle: 'long', timeStyle: 'medium'});
+        this.disabledList = []
         this.page = 1
         this.maxPages = 1
     }
@@ -31,9 +34,18 @@ export class StaffView extends LitElement {
 
     async _fetchAll() {
         this.loading = true;
-        await this._getPageCount(this.toShow === 'all' ? '' : this.toShow)
-        await this._getRecoms(this.toShow === 'all'? '' : this.toShow)
-        this.loading = false;
+        const toShow = this.toShow === 'all' ? '' : this.toShow
+        try {
+            await Promise.all([
+                this._getPageCount(toShow),
+                this._getRecoms(toShow)
+            ])
+        } catch(e) {
+            console.error(e)
+            createToast("<strong>An error occurred.</strong><br>Something went wrong while fetching this data.", {variant: 'danger', icon: 'triangle-exclamation', allowHtml: true, })
+        } finally {
+            this.loading = false;
+        }
     }
 
     async _getPageCount(type) {
@@ -43,13 +55,14 @@ export class StaffView extends LitElement {
                 method: "GET",
                 credentials: 'include'
             })
-            if (!response.ok) return console.log("ERROR", response)
+            if (!response.ok) throw new Error(`(_getPageCount) Bad HTTP Status: ${response.status}`)
 
             const result = await response.json()
             this.maxPages = result.count
         } catch(e) {
-            window.alert("An error occurred, reload to try again.")
             console.error(e)
+
+            throw e
         }
     }
 
@@ -62,13 +75,14 @@ export class StaffView extends LitElement {
             method: "GET",
             credentials: 'include'
             })
-            if (!response.ok) return console.log("ERROR", response)
+            if (!response.ok) throw new Error(`(_getRecoms) Bad HTTP Status: ${response.status}`)
 
             const result = await response.json()
             this.data = result.history
         } catch(err) {
-            window.alert("An error occurred, reload to try again.")
             console.error(err)
+
+            throw err
         }
     }
 
@@ -79,12 +93,6 @@ export class StaffView extends LitElement {
     }
 
   static styles = [sharedStyles, css`
-  .dashboard {
-  margin-top: 20px;
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  }
 
     table, th, td {
         border: 1px var(--color-text) solid;
@@ -161,38 +169,47 @@ export class StaffView extends LitElement {
 
   render() {
     const servers = ['Cherry', 'Spirit', 'Lotus', 'Tulip']
-    const previousDisabled = this.page == 1 ? true : false
-    const nextDisabled = this.page == this.maxPages ? true : false
+    const previousDisabled = this.page == 1
+    const nextDisabled = this.page == this.maxPages || this.maxPages == 0
+    const customDisabled = this.maxPages <= 1
 
     return html`
     <div class="dashboard">
-    <div class="fullcard">
-    <h1>My Recommendations</h1>
+    <div class="fullcard" style="position: relative;">
+    <h1>Manage Recommendations</h1>
     Show: <wa-button-group orientation="horizontal"><wa-button @click=${this._showAll} ?disabled=${this.loading || this.toShow == 'all'} variant="brand" size="xs">All</wa-button><wa-button @click=${this._showAccepted} ?disabled=${this.loading || this.toShow == 'accepted'} variant="brand" size="xs">Accepted</wa-button><wa-button @click=${this._showPending} ?disabled=${this.loading || this.toShow == 'pending'} variant="brand" size="xs">Pending</wa-button><wa-button @click=${this._showDenied} ?disabled=${this.loading || this.toShow == 'denied'} variant="brand" size="xs">Denied</wa-button></wa-button-group>
-    ${this.maxPages > 0 ? html`<br><span>Page ${this.loading ? html`<wa-spinner></wa-spinner>` : `${this.page}/${this.maxPages}`}</span>
-    ${this.maxPages > 1 ? html`<br><wa-button-group size="xxs" orientation="horizontal"><wa-button @click=${this._previousPage} ?disabled=${previousDisabled || this.loading} variant="brand"><<<</wa-button><wa-button @click=${this._customPage} ?disabled=${this.loading} variant="brand">...</wa-button><wa-button @click=${this._nextPage} ?disabled=${nextDisabled || this.loading} variant="brand">>>></wa-button></wa-button-group>` : ""}` : ''}
-    ${this.loading ? html`<br>Please wait...` : html`
-        ${this.data && (this.data.some(row => row.status == this.toShow) || this.toShow == 'all') ? html`
-    <table>
-        <thead>
-            <tr>
+    <br><span>${this.loading ? html`Page <wa-spinner></wa-spinner>` : this.maxPages > 0 ? `Page ${this.page}/${this.maxPages}` : html`No Pages :(`}</span>
+    <br><wa-button-group size="xxs" orientation="horizontal"><wa-button @click=${this._previousPage} ?disabled=${previousDisabled || this.loading} variant="brand"><<<</wa-button><wa-button @click=${this._customPage} ?disabled=${this.loading || customDisabled} variant="brand">...</wa-button><wa-button @click=${this._nextPage} ?disabled=${nextDisabled || this.loading} variant="brand">>>></wa-button></wa-button-group>
+    
+    ${this.loading || this.data && (this.toShow == 'all' || this.data.some(row => row.status == this.toShow)) ? html`
+<table>
+    <thead>
+        <tr>
             <th scope="col">Timestamp</th>
             <th scope="col">Server</th>
             <th scope="col">Item</th>
             <th scope="col">Price</th>
             <th scope="col">Status</th>
-            </tr>
-        </thead>
-        <tbody>
-        ${this.data.map(row => {
-            return html`
-            <tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${servers[row.server]}</td><td>${row.item_name}</td><td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}</td><td>${this._formatStr(row.status)}</td></tr>
-            `
-    })}
-        </tbody>
-    </table>
-        ` : html`<br><br>No recommendations to show :(`}
-`}
+        </tr>
+    </thead>
+    <tbody>
+    ${this.loading ? html`
+        <td><wa-skeleton class="chars-15"></wa-skeleton></td>
+        <td><wa-skeleton class="chars-5"></wa-skeleton></td>
+        <td><wa-skeleton class="chars-20"></wa-skeleton></td>
+        <td><wa-skeleton class="chars-10"></wa-skeleton></td>
+        <td><wa-skeleton class="chars-10"></wa-skeleton></td>
+        ` : 
+        this.data.map(row => {return html`<tr>
+            <td>${this._formatDate(row.recom_timestamp)}</td>
+            <td>${servers[row.server]}</td>
+            <td>${row.item_name}</td>
+            <td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}</td>
+            <td>${this._formatStr(row.status)}</td>
+            </tr>`})
+    }
+    </tbody>
+</table>` : html`<br><br>No recommendations here :(`}
     </div>
     </div>
     `
