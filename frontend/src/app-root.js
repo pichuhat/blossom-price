@@ -166,17 +166,17 @@ export class AppView extends LitElement {
 
   static styles = [sharedStyles, css`
     .main {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
 
-    .content {
-      flex: 1;
-      min-height: 0;
-      display: grid;
-      grid-template-rows: 1fr auto;
-    }
+  .content {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: 1fr auto;
+  }
   `]
 
   connectedCallback() {

@@ -55,6 +55,14 @@ export class Navbar extends LitElement {
   
   static styles = [sharedStyles, css`
     
+    :host {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 12px 24px var(--color-glow);
+  }
+
     .navbar {
       background-color: var(--color-navbar);
       color: white;
