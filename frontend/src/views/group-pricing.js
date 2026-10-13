@@ -523,7 +523,7 @@ _sanitizeHTML(input) {
                     </div>  
                   ` : html`
                     <img
-                      src=${item.tags?.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags?.includes('currency') ? `/src/images/${item.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
+                      src=${item.tags?.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags?.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
                       alt="${this._decodeEscapedUnicode(item.item_name)}"
                     />
                   `}

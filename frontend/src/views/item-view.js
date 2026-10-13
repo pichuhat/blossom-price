@@ -386,7 +386,7 @@ export class ItemView extends LitElement {
         </div>  
     ` : html`
         <img
-        src=${this.itemData.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (this.itemData.tags.includes('currency') ? `/src/images/${this.itemData.img_src}` : `https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png`)}
+        src=${this.itemData.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (this.itemData.tags.includes('currency') ? `/src/images/${this.itemData.img_src}` : `https://items.blossomcraft.org/static/images/BlossomCraft_Descriptions/${this.itemData.id}.png`)}
         alt="${this._decodeEscapedUnicode(this.itemData.item_name)}"
         />
     `}

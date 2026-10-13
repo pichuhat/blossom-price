@@ -76,7 +76,7 @@ app.post('/api/discord/interactions', verifyKeyMiddleware(process.env.IS_DEV ===
 
                     const embed = new EmbedBuilder()
                         .setColor(0xbc2bc4)
-                        .setImage(`https://www.blossom.atn.gg/static/images/BlossomCraft_Descriptions/${itemId}.png`)
+                        .setImage(`${process.env.API_URL}/static/images/BlossomCraft_Descriptions/${itemId}.png`)
                         .setFooter({ text: `Data from BlossomPricer by pichuhat.\nItem descriptions are from the Blossom Item Catalog.`})
 
                     if (itemData.price) {
@@ -212,7 +212,7 @@ async function syncItems() {
     try {
         console.log("Beginning new item update...")
 
-        const endpointURL = "https://www.blossom.atn.gg/api/items"
+        const endpointURL = `${process.env.API_URL}/api/items`
         console.log("Fetching latest item set from URL " + endpointURL)
 
         const response = await fetch(endpointURL, {
@@ -326,7 +326,7 @@ async function getItemData(id, server, user) {
 
 async function getTags() {
     try {
-        const fetchURL = "https://www.blossom.atn.gg/api/tags"
+        const fetchURL = `${process.env.API_URL}/api/tags`
         const response = await fetch(fetchURL)
         const result = await response.json()
         result.push('spawner', 'currency', 'Step Height')
