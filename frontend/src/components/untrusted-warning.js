@@ -1,7 +1,7 @@
 import { html, nothing } from 'https://esm.sh/lit@3';
 
-const warningText = 'The author of this price recommendation is no longer trusted. Use with caution.';
-const warningTextAlt = "The author of one or more of the prices below is no longer trusted. Use with caution."
+const warningText = 'Use with caution. You may want to verify this price elsewhere.';
+const warningTextAlt = "One or more of the prices below is unverified. Use with caution."
 let warningId = 0;
 
 export function isUntrustedAuthor(authorId) {
