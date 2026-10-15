@@ -227,7 +227,7 @@ export class GroupPriceView extends LitElement {
     const nextDisabled = this.page == this.maxPages ? true : false
 
     return html`
-    <div ?hidden=${!this.openModal} class="modal-overlay" @click=${(e) => {this.loading || this.modal_loading ? true : this.openModal = false}}>
+    <div ?hidden=${!this.openModal} class="modal-overlay scrollable" @click=${(e) => {this.loading || this.modal_loading ? true : this.openModal = false}}>
       <div class="modal-content center" @click=${(e) => e.stopPropagation()}>
       <div class="forceLeft noGap"><wa-button pill size="xs" class="leftbutton" @click=${(e) => this.openModal = false} ?disabled=${this.loading || this.modal_loading} variant="brand"><wa-icon name="times"></wa-icon></wa-button></div>
       ${this.loading || this.modal_loading ? html`<wa-spinner></wa-spinner>` : html`

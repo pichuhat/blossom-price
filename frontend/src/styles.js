@@ -311,13 +311,17 @@ table, th, td {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
+.modal-overlay.scrollable {
+  overflow-y: auto; 
+}
+
 .modal-overlay[hidden] {
   display: none;
 }
 
 .modal-content {
   background-color: var(--color-surface-raised);
-  margin: 15% auto;
+  margin: 5% auto;
   padding: 20px;
   border: 2px solid var(--color-border);
   width: 80%;
