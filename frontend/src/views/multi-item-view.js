@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
+import { untrustedWarning } from '../components/untrusted-warning.js';
 import { sharedStyles } from '../styles.js';
 
 import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
@@ -133,7 +134,7 @@ _formatPrice(unformatted) {
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
             ${this.selectedServer != undefined && this.selectedServer != null && item.price && item.recom_timestamp && item.username ? html`<div class="center">
-            <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br><span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span><br><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
+            <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br><span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span><br><sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}</sub>
             </div>` : html`<sub>No price available :(</sub>`}
             <div class="tags">
               ${item.tags ? item.tags.map(tag => html`
@@ -195,7 +196,7 @@ _formatPrice(unformatted) {
               `) : 'None :('}
           </div></td>
           ${this.selectedServer != undefined && this.selectedServer != null ? item.price && item.recom_timestamp && item.username ? html`
-          <td><span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span></td><td><sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub></td>
+          <td><span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span></td><td><sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}</sub></td>
             ` : html`<td>None :(</td><td>` : ``}
           
 

@@ -33,6 +33,7 @@ import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/number-input/nu
 import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/details/details.js';
 import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/toast/toast.js';
 import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/skeleton/skeleton.js';
+import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/tooltip/tooltip.js';
 
 //Polyfill for old Apple devices
 import { URLPattern } from 'https://esm.sh/urlpattern-polyfill@10';

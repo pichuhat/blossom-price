@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { sharedStyles } from '../styles.js';
+import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning } from '../components/untrusted-warning.js';
 import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
 import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
 
@@ -313,6 +314,7 @@ _navigateTo(path, event) {
     const minPrice = data[0]
     const maxPrice = data[1]
     const displayPrice = (minPrice+maxPrice)/2
+    const hasUntrustedPrice = this.selectedItems?.some(item => isUntrustedAuthor(item.author_id))
 
     return html`
 
@@ -321,7 +323,7 @@ _navigateTo(path, event) {
         ${this.selectedItems && this.selectedItems.length > 0 ? html`
           <div class="dashboard">
             <div class="fullcard lockWidth">
-            <span style="font-size: 125%"><strong>Total Price:</strong></span> <span class="price">$${this._formatPrice(displayPrice)}</span>
+            <span style="font-size: 125%"><strong>Total Price:</strong></span> <span class="price">$${this._formatPrice(displayPrice)}${hasUntrustedPrice ? untrustedPriceWarning(true) : ''}</span>
             ${minPrice === maxPrice ? `` : html`<br><sub>Actual: $${this._formatPrice(minPrice)} to $${this._formatPrice(maxPrice)}</sub>`}
             <br><br><wa-switch id="public-toggle" ?disabled=${this.loading}>Make This Plan Public</wa-switch>
             <wa-input id="plan-name" label="Name" placeholder="Name your plan..." style="max-width: 70%; margin-left: auto; margin-right: auto;" ?disabled=${this.loading} size="s"></wa-input>
@@ -340,7 +342,7 @@ _navigateTo(path, event) {
               ${this.selectedItems.map(item => html`
                 <tr>
                 <td><span class="fake-h3">${this._decodeEscapedUnicode(item.item_name)}</span></td>
-                <td><span class="priceAdd">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span></td>
+                <td><span class="priceAdd">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}${untrustedWarning(item.author_id)}</span></td>
                 <td><wa-button-group><wa-button variant="brand" square size="s" @click=${() => this._countDown(item.id)} ?disabled=${this.loading || item.count <= 1}>−</wa-button><wa-button size="s" style="pointer-events: none; opacity: 1; tabindex: -1;" variant="brand">${item.count || 1}</wa-button><wa-button size="s" variant="brand" square ?disabled=${this.loading || item.count >= 10} @click=${(e) => this._countUp(item.id)}>+</wa-button></wa-button-group></td>
                 <td>${item.is_range ? html `<span class="price">$${(this._formatPrice((Number(item.price) + Number(item.max_price))/2 * (item.count || 1))) || '-'}</span><br><sub>Actual: $${this._formatPrice(Number(item.price) * (item.count || 1))} to $${this._formatPrice(Number(item.max_price) * (item.count || 1))}</sub>`
                 : html`<span class="price">$${this._formatPrice(Number(item.price) * (item.count || 1))}</span>`}</td>
@@ -393,7 +395,7 @@ _navigateTo(path, event) {
                     <div class="center">
                       <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br>
                       <span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span><br>
-                      <sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
+                      <sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}</sub>
                     </div>
                   ` : html`<sub>No price available :(</sub>`}
                   

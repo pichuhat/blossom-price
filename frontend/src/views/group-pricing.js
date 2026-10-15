@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { untrustedWarning } from '../components/untrusted-warning.js';
 import { sharedStyles } from '../styles.js';
 import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
 import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
@@ -503,7 +504,7 @@ _sanitizeHTML(input) {
                     <div class="center">
                       <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br>
                       <span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span><br>
-                      <sub>-${item.username}<br>${this._formatDate(item.recom_timestamp)}</sub>
+                      <sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}</sub>
                     </div>
                   ` : html`<sub>No price available :(</sub>`}
                   

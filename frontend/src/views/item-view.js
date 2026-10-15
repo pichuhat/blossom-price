@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'https://esm.sh/lit@3';
 import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
 import "../components/price-history.js"
+import { untrustedWarning } from '../components/untrusted-warning.js';
 import "./new-price-view.js"
 import { sharedStyles } from '../styles.js';
 
@@ -228,6 +229,14 @@ export class ItemView extends LitElement {
     .priceinfo {
         
     }
+
+    .untrusted-warning {
+        color: var(--wa-color-warning-fill-loud, #b7791f);
+        cursor: help;
+        font-size: 1rem;
+        margin-inline-start: 0.2em;
+        vertical-align: -0.15em;
+    }
     
     table, th, td {
         border: 1px white solid;
@@ -356,11 +365,7 @@ export class ItemView extends LitElement {
 
     if (this.loading || !this.itemData) return html`<div class="center forceGap big-spinner"><wa-spinner></wa-spinner></div>`
 
-    if (!this.itemData?.recom_timestamp || !this.itemData?.username) {
-        this.properPricing = false;
-    } else {
-        this.properPricing = true;
-    }
+    this.properPricing = this.itemData?.recom_timestamp && this.itemData?.username
 
     return html`
     ${this.openPriceRecom ? html`
@@ -392,10 +397,12 @@ export class ItemView extends LitElement {
     `}
     </div>
 </div>
+
 <div class="market-column">
     <div class="box nogrow full">
     <span class="priceAdd">${servers[this.selectedServer]} Price${this.itemData?.is_range ? " Range" : ''}: </span><br><span class="price priceAdd">$${this.properPricing ? `${this._formatPrice(this.itemData.price)}${this.itemData.is_range ? ` to $${this._formatPrice(this.itemData.max_price)}` : ""}` : "-"}</span><br>
-    <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
+    <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}${untrustedWarning(this.itemData.author_id)}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
+
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ?
         html`<br><br>${this.hasPending ?
             html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>${this.hasUserPending ? `You already have a pending price submission!` : `Another pending price submission already exists!`}</strong><br>Only submit another if you need to submit a different price.</wa-callout><br>` 
@@ -405,18 +412,22 @@ export class ItemView extends LitElement {
         ` : ``}
 
 </div>
+
 <div class="box nogrow">
     <span class="boxheader priceAdd">Price Graph</span><br>
     Coming soon!
 </div>
+
 <div class="price-history box grow">
     <span class="priceAdd">Price History</span><br>
     <div class="table-scroll-container">
     <price-history .selectedServer=${this.selectedServer} .itemID=${this.item} .approvedOnly=true></price-history>
     </div>
 </div>
+
 </div>
     </div>
+
     `;
   }
 }

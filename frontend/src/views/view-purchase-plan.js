@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
 import { sharedStyles } from '../styles.js';
+import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning } from '../components/untrusted-warning.js';
 
 export class ViewPurchasePlan extends LitElement {
     static properties = {
@@ -285,7 +286,7 @@ async _uploadEdits() {
         ${this.visible ? html`
             ${this.editMode ? html`<p style="font-size: 105%;">This purchase plan is <a href="#" @click=${this._togglePublic} style="color: var(--color-text);"><strong>${this.planData?.is_public ? `Public` : `Private`} (<wa-icon style="font-size: 80%;" name="right-left"></wa-icon>)</strong></a> and uses <a href="#" @click=${() => this.openSelect = true} style="color: var(--color-text);"><strong>${this._formatStr(this.servers[this.planData.server_id])}</strong> (<wa-icon style="font-size: 80%" name="right-left"></wa-icon>)</a> prices.</p>`
                 : html`<p style="font-size: 105%;">This purchase plan is <strong>${this.planData?.is_public ? `Public` : `Private`}</strong> and uses <strong>${this._formatStr(this.servers[this.planData.server_id])}</strong> prices.</p>`}
-            <span style="font-size: 125%"><strong>Total Remaining Cost:</strong></span> <span class="price">$${this._formatPrice(displayPriceRem)} of $${this._formatPrice(displayPrice)}</span>
+            <span style="font-size: 125%"><strong>Total Remaining Cost:</strong></span> <span class="price">$${this._formatPrice(displayPriceRem)} of $${this._formatPrice(displayPrice)}${this.itemData.some(item => isUntrustedAuthor(item.author_id)) ? untrustedPriceWarning(true) : ''}</span>
             ${minPrice === maxPrice && minPriceRem === maxPriceRem ? `` : html`<br><sub>Actual: ${minPriceRem === maxPriceRem ? this._formatPrice(displayPriceRem) : html`$${this._formatPrice(minPriceRem)} to $${this._formatPrice(maxPriceRem)}`} of ${minPrice === maxPrice ? this._formatPrice(displayPrice) : html`$${this._formatPrice(minPrice)} to $${this._formatPrice(maxPrice)}`}</sub>`}
             <table>
             <thead>
@@ -310,7 +311,7 @@ async _uploadEdits() {
                 return html`
                 <tr>
                 <td><span class="fake-h3">${item.item_name}</span></td>
-                <td><span class="priceAdd">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span></td>
+                <td><span class="priceAdd">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}${untrustedWarning(item.author_id)}</span></td>
                 ${this.editMode ? html`<td><wa-button-group><wa-button variant="brand" square size="s" @click=${() => this._obtainedDown(item.id)} ?disabled=${otherItemData.obtained <= 0}>−</wa-button><wa-button size="s" style="pointer-events: none; opacity: 1; tabindex: -1;" variant="brand">${otherItemData.obtained}</wa-button><wa-button size="s" variant="brand" square ?disabled=${otherItemData.obtained >= otherItemData.count} @click=${(e) => this._obtainedUp(item.id)}>+</wa-button></wa-button-group></td>
                     <td><wa-button-group><wa-button variant="brand" square size="s" @click=${() => this._goalDown(item.id)} ?disabled=${otherItemData.count <= 1 || otherItemData.count <= otherItemData.obtained}>−</wa-button><wa-button size="s" style="pointer-events: none; opacity: 1; tabindex: -1;" variant="brand">${otherItemData.count}</wa-button><wa-button size="s" variant="brand" square ?disabled=${otherItemData.count >= 10} @click=${(e) => this._goalUp(item.id)}>+</wa-button></wa-button-group></td>`
                     : html`<td><span class="fake-h3" style="font-size: 105%;">${otherItemData.obtained} of ${otherItemData.count}</span></td>`}
@@ -329,4 +330,3 @@ async _uploadEdits() {
 }
 
 customElements.define('view-purchase-plan', ViewPurchasePlan)
-

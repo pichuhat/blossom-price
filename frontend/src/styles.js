@@ -422,4 +422,8 @@ width: 10ch;
 wa-skeleton.chars-5 {
 width: 5ch;
 }
+
+wa-tooltip {
+text-align: center;
+}
 `
