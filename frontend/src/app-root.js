@@ -5,13 +5,9 @@ import "./views/guest-view.js"
 import "./views/home-view.js"
 import "./views/allitem-view.js"
 import "./views/item-view.js"
-import "./views/staff-view.js"
-import "./views/admin-view.js"
 import "./views/spawner-view.js"
 import "./views/search-view.js"
 import "./views/advanced-search.js"
-import "./views/group-pricing.js"
-import "./views/gp-view.js"
 import "./views/updates.js"
 import "./views/settings-view.js"
 import "./views/new-purchase-plan.js"
@@ -20,31 +16,39 @@ import "./views/my-purchase-plans.js"
 
 import { createToast } from "./toast.js"
 
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/select/select.js';
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/option/option.js';
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/input/input.js'
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/button/button.js'
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/spinner/spinner.js'
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/icon/icon.js'
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/switch/switch.js'
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/button-group/button-group.js'
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/callout/callout.js';
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/number-input/number-input.js';
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/details/details.js';
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/toast/toast.js';
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/skeleton/skeleton.js';
-import 'https://ka-f.webawesome.com/webawesome@3.14.0/components/tooltip/tooltip.js';
+import '@awesome.me/webawesome/dist/components/select/select.js';
+import '@awesome.me/webawesome/dist/components/option/option.js';
+import '@awesome.me/webawesome/dist/components/input/input.js'
+import '@awesome.me/webawesome/dist/components/button/button.js'
+import '@awesome.me/webawesome/dist/components/spinner/spinner.js'
+import '@awesome.me/webawesome/dist/components/icon/icon.js'
+import '@awesome.me/webawesome/dist/components/switch/switch.js'
+import '@awesome.me/webawesome/dist/components/button-group/button-group.js'
+import '@awesome.me/webawesome/dist/components/callout/callout.js';
+import '@awesome.me/webawesome/dist/components/number-input/number-input.js';
+import '@awesome.me/webawesome/dist/components/details/details.js';
+import '@awesome.me/webawesome/dist/components/toast/toast.js';
+import '@awesome.me/webawesome/dist/components/skeleton/skeleton.js';
+import '@awesome.me/webawesome/dist/components/tooltip/tooltip.js';
+
+import { setBasePath } from '@awesome.me/webawesome/dist/webawesome.js';
+setBasePath('/dist/webawesome');
 
 //Polyfill for old Apple devices
-import { URLPattern } from 'https://esm.sh/urlpattern-polyfill@10';
+import { URLPattern } from 'urlpattern-polyfill';
 
 import { sharedStyles } from './styles.js';
-import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
-import { Router } from 'https://esm.sh/@lit-labs/router@0.1';
+import { LitElement, html, css, nothing } from 'lit';
+import { Router } from '@lit-labs/router';
 
 if (!globalThis.URLPattern) {
     globalThis.URLPattern = URLPattern
 }
+
+const lazy = (loader) => async () => {
+  await loader();
+  return true;
+};
 
 export class AppView extends LitElement {
     static properties = {
@@ -95,6 +99,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/myrecoms{/}?',
+        enter: lazy(() => import('./views/staff-view.js')),
         render: () => {
           if (this.user && (this.user.role == 'staff' || this.user.role == 'admin')) {
           return html`<my-recoms .user=${this.user}></my-recoms>`
@@ -105,6 +110,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/adminpanel{/}?',
+        enter: lazy(() => import('./views/admin-view.js')),
         render: () => {
           if (this.user &&this.user.role == 'admin') {
             return html`<admin-view .user=${this.user}></admin-view>`
@@ -125,6 +131,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/grouppricing{/}?',
+        enter: lazy(() => import('./views/group-pricing.js')),
         render: () => {
           if (this.user && (this.user.role == 'staff' || this.user.role == 'admin')) {
           return html`<group-price-view .selectedServer=${this.selectedServer}></group-price-view>`
@@ -135,6 +142,7 @@ export class AppView extends LitElement {
       },
       {
         path: '/~/viewgroups{/}?',
+        enter: lazy(() => import('./views/gp-view.js')),
         render: () => {
           if (this.user && (this.user.role == 'staff' || this.user.role == 'admin')) {
             return html`<manage-gp .user=${this.user}></manage-gp>`

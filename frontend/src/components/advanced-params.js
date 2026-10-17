@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
+import { LitElement, html, css, nothing } from 'lit';
 import { sharedStyles } from '../styles.js';
 
 export class AdvancedSearchParams extends LitElement {

@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
 import { communicator } from '../cross-communicator.js'
 import { createToast } from '../toast.js'

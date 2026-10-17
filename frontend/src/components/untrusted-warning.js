@@ -1,4 +1,4 @@
-import { html, nothing } from 'https://esm.sh/lit@3';
+import { html, nothing } from 'lit';
 
 const warningText = 'Use with caution. You may want to verify this price elsewhere.';
 const warningTextAlt = "One or more of the prices below is unverified. Use with caution."

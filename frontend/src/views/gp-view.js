@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
 
 export class GroupPriceView extends LitElement {
@@ -32,8 +32,6 @@ export class GroupPriceView extends LitElement {
 
     connectedCallback() {
         super.connectedCallback()
-        this._fetchAll()
-
         window.addEventListener('keydown', this._handleKeydown)
     }
 

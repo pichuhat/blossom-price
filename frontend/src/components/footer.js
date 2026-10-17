@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing } from 'https://esm.sh/lit@3';
+import { LitElement, html, css, nothing } from 'lit';
 import { sharedStyles } from '../styles.js';
 
 export class SiteFooter extends LitElement {
@@ -26,7 +26,7 @@ export class SiteFooter extends LitElement {
         render() {
             return html`
             <footer>
-            <sub>version 1.2.3c (October 15, 2026) &bull; created by pichuhat &bull; <a href="https://github.com/pichuhat/blossom-price" @click=${(e) => this._openInNewTab('https://github.com/pichuhat/blossom-price', e)}>source</a></sub>
+            <sub>version 1.2.4 (October 17, 2026) &bull; created by pichuhat &bull; <a href="https://github.com/pichuhat/blossom-price" @click=${(e) => this._openInNewTab('https://github.com/pichuhat/blossom-price', e)}>source</a></sub>
             </footer>
             `
         }

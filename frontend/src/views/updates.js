@@ -1,5 +1,5 @@
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
-import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
+import { LitElement, html, css } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { sharedStyles } from '../styles.js';
 
 class UpdatePosts extends LitElement {
@@ -17,7 +17,6 @@ class UpdatePosts extends LitElement {
 
     connectedCallback() {
         super.connectedCallback()
-        this._init()
 
         window.addEventListener('popstate', (event) => {
             this._init()

@@ -1,9 +1,9 @@
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
-import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
+import { LitElement, html, css } from 'lit';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { untrustedWarning } from '../components/untrusted-warning.js';
 import { sharedStyles } from '../styles.js';
 
-import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
+import DOMPurify from 'dompurify';
 
 export class BoxView extends LitElement {
     static properties = {

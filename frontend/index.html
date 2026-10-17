@@ -2,9 +2,22 @@
 <head>
     <title>BlossomPricer</title>
 
-    <link rel="stylesheet" href="https://ka-f.webawesome.com/webawesome@3.9.0/styles/webawesome.css">
+    <link rel="stylesheet" href="/dist/webawesome/styles/webawesome.css">
     <link rel="icon" type="image/png" href="/src/images/brand/transparent-cropped.png">
     <link rel="apple-touch-icon" href="/src/images/brand/main.png">
+
+<script type="importmap">
+{
+  "imports": {
+    "lit": "https://esm.sh/lit@3",
+    "lit/": "https://esm.sh/lit@3/",
+    "@lit-labs/router": "https://esm.sh/@lit-labs/router@0.1",
+    "urlpattern-polyfill": "https://esm.sh/urlpattern-polyfill@10",
+    "dompurify": "https://esm.sh/dompurify@3",
+    "@awesome.me/webawesome/dist/": "https://ka-f.webawesome.com/webawesome@3.14.0/"
+  }
+}
+</script>
 
 <script type="module">
     if (localStorage.getItem('theme') == 'dark') {
@@ -76,7 +89,6 @@
 <app-view></app-view>
 <wa-toast></wa-toast>
 
-<script type="module" src="/src/app-root.js"></script>
-<script type="module" src="https://ka-f.webawesome.com/webawesome@3.14.0/components/toast/toast.js"></script>
+<script type="module" src="/dist/app-root.js"></script>
 </body>
 </html>

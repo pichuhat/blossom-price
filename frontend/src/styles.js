@@ -1,4 +1,4 @@
-import { css } from 'https://esm.sh/lit@3';
+import { css } from 'lit';
 
 export const sharedStyles = css`
 :host, *, *::before, *::after {

@@ -1,8 +1,8 @@
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
 import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning } from '../components/untrusted-warning.js';
-import { unsafeHTML } from 'https://esm.sh/lit@3/directives/unsafe-html.js';
-import DOMPurify from 'https://cdn.jsdelivr.net/npm/dompurify@3.1.6/+esm';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import DOMPurify from 'dompurify';
 
 export class ASView extends LitElement {
   static properties = {

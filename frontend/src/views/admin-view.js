@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'https://esm.sh/lit@3';
+import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
 import { createToast } from '../toast.js';
 
@@ -21,13 +21,9 @@ export class AdminView extends LitElement {
         this.maxPages = 1
     }
 
-    connectedCallback() {
-        super.connectedCallback()
-        this._fetchAll()
-    }
-
     updated(changedProperties) {
         if (changedProperties.has('page') || changedProperties.has('toShow')) {
+            // should run on first load
             this._fetchAll()
         }
     }
