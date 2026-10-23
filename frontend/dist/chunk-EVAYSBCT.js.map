@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../src/toast.js"],
-  "sourcesContent": ["const toast = document.querySelector('wa-toast')\n\nconst DUPLICATE_WINDOW_MS = 5000\nlet lastMessage = null\nlet lastShownAt = null\n\nexport function createToast(message, options = {}) {\n    const now = Date.now()\n\n    if (String(message) === lastMessage && now - lastShownAt < DUPLICATE_WINDOW_MS) {\n        console.log(`Toast creation DENIED: an exact copy was created less than ${DUPLICATE_WINDOW_MS/1000} seconds ago.`)\n        return\n    }\n\n    lastMessage = message\n    lastShownAt = now\n\n    toast.placement = localStorage.getItem('toast-placement')\n    toast?.create(message, options)\n}"],
-  "mappings": "AAAA,IAAMA,EAAQ,SAAS,cAAc,UAAU,EAEzCC,EAAsB,IACxBC,EAAc,KACdC,EAAc,KAEX,SAASC,EAAYC,EAASC,EAAU,CAAC,EAAG,CAC/C,IAAMC,EAAM,KAAK,IAAI,EAErB,GAAI,OAAOF,CAAO,IAAMH,GAAeK,EAAMJ,EAAcF,EAAqB,CAC5E,QAAQ,IAAI,8DAA8DA,EAAoB,GAAI,eAAe,EACjH,MACJ,CAEAC,EAAcG,EACdF,EAAcI,EAEdP,EAAM,UAAY,aAAa,QAAQ,iBAAiB,EACxDA,GAAO,OAAOK,EAASC,CAAO,CAClC",
-  "names": ["toast", "DUPLICATE_WINDOW_MS", "lastMessage", "lastShownAt", "createToast", "message", "options", "now"]
-}
