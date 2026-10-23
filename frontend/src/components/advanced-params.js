@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { sharedStyles } from '../styles.js';
+import { createToast } from '../toast.js';
 
 export class AdvancedSearchParams extends LitElement {
     static styles = [sharedStyles, css`
@@ -82,11 +83,11 @@ export class AdvancedSearchParams extends LitElement {
         method: "GET",
         credentials: 'include'
       })
-      if (!response.ok) return window.alert("An error occurred.")
+      if (!response.ok) throw new Error(response)
       const result = await response.json()
       return result
     } catch(e) {
-      window.alert("A crate fetch error occurred.")
+      createToast("Something went wrong while fetching tags.", {variant: "warning", icon: "circle-exclamation"})
     }
   }
 
@@ -97,11 +98,11 @@ export class AdvancedSearchParams extends LitElement {
         method: "GET",
         credentials: 'include'
       })
-      if (!response.ok) return window.alert("An error occurred.")
+      if (!response.ok) throw new Error(response)
       const result = await response.json()
       return result.result
     } catch(e) {
-      window.alert("A crate fetch error occurred.")
+      createToast("Something went wrong while fetching crates.", {variant: "warning", icon: "circle-exclamation"})
     }
   }
 

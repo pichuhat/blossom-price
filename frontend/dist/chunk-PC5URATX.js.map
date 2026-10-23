@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../src/toast.js"],
-  "sourcesContent": ["const toast = document.querySelector('wa-toast')\n\nexport function createToast(message, options = {}) {\n    toast.placement = localStorage.getItem('toast-placement')\n    toast?.create(message, options)\n}"],
-  "mappings": "AAAA,IAAMA,EAAQ,SAAS,cAAc,UAAU,EAExC,SAASC,EAAYC,EAASC,EAAU,CAAC,EAAG,CAC/CH,EAAM,UAAY,aAAa,QAAQ,iBAAiB,EACxDA,GAAO,OAAOE,EAASC,CAAO,CAClC",
-  "names": ["toast", "createToast", "message", "options"]
-}

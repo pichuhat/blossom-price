@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
-
 import "./multi-item-view.js";
+import { createToast } from '../toast.js';
 
 export class SearchView extends LitElement {
   static properties = {
@@ -94,7 +94,7 @@ export class SearchView extends LitElement {
 
     _search() {
         const inputEl = this.shadowRoot.querySelector('#search').value
-        if (!inputEl) return window.alert("You're supposed to... type something in the search box...")
+        if (!inputEl) return createToast("You're supposed to... type something in the search box...", {variant: "brand", icon: "circle-question"})
         const path = `/~/search?query=${inputEl}`
         this.dispatchEvent(new CustomEvent('nav-requested', {
         detail: { path },

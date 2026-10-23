@@ -342,7 +342,7 @@ export class ItemView extends LitElement {
             createToast("<strong>Success</strong><br>Your price change request was submitted.", {variant: 'success', icon: 'circle-check', allowHtml: true})
         } catch(e) {
             console.error(e)
-            createToast("<strong>Uh Oh!</strong><br>Something went wrong while submitting your price request.", {variant: 'danger', icon: 'circle-xmark', allowHtml: true})
+            createToast("<strong>Uh Oh!</strong><br>Something went wrong while submitting your price change request.", {variant: 'danger', icon: 'circle-xmark', allowHtml: true})
         } finally {
             this.loading = false;
         }
@@ -407,9 +407,7 @@ export class ItemView extends LitElement {
         html`<br><br>${this.hasPending ?
             html`<wa-callout variant="warning"><wa-icon slot="icon" name="triangle-exclamation"></wa-icon><strong>${this.hasUserPending ? `You already have a pending price submission!` : `Another pending price submission already exists!`}</strong><br>Only submit another if you need to submit a different price.</wa-callout><br>` 
             : ``}<wa-button ?disabled=${this.loading} pill variant="brand" size="s" @click=${this._openPrice}>Recommend New Price (FOR STAFF)</wa-button>` : ""}
-    ${this.user ? html`
-        <br><br><wa-button ?disabled=${this.loading || this.itemData.has_price_request} pill size="xs" variant="brand" @click=${this._requestNewPrice}>${this.itemData.has_price_request ? html`<wa-icon slot="start" name="check"></wa-icon>Price Request Submitted` : html`<wa-icon slot="start" name="hand"></wa-icon>Request Price${this.properPricing ? ` Change`: ` Set`}`}</wa-button>
-        ` : ``}
+        <br><br><wa-button ?disabled=${this.loading || this.itemData.has_price_request || !this.user} pill size="xs" variant="brand" @click=${this._requestNewPrice}>${this.itemData.has_price_request ? html`<wa-icon slot="start" name="check"></wa-icon>Price Request Submitted` : this.user ? html`<wa-icon slot="start" name="hand"></wa-icon>Request Price${this.properPricing ? ` Change`: ` Set`}` : html`<wa-icon name="user-lock" slot="start"></wa-icon>Log in to Request Price`}</wa-button>
 
 </div>
 

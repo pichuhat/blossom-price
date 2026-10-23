@@ -282,11 +282,11 @@ export class AppView extends LitElement {
         if (result.loggedIn && result.role && result.user) {
             this.user = result
         } else {
-            window.alert("Unknown authentication error")
+            createToast("<strong>Uh Oh!</strong><br>An unknown error occurred while logging you in.", {variant: "danger", icon: "circle-exclamation", allowHtml: true})
             console.error("Server sent invalid user data.")
         }
     } catch(error) {
-        window.alert("Authentication check failed.")
+        createToast("<strong>Uh Oh!</strong><br>Something went wrong while logging you in.", {variant: "danger", icon: "circle-exclamation", allowHtml: true})
         console.log(error)
     } finally {
       this.loading = false

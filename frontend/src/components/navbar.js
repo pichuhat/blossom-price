@@ -3,6 +3,7 @@ import { sharedStyles } from '../styles.js';
 import { communicator } from '../cross-communicator.js'
 
 import "./login-button.js"
+import { createToast } from '../toast.js';
 
 export class Navbar extends LitElement {
     static properties = {
@@ -147,7 +148,7 @@ padding: 10px 0px;
 
   _search() {
         const inputEl = this.shadowRoot.querySelector('#search').value
-        if (!inputEl) return window.alert("You're supposed to... type something in the search box...")
+        if (!inputEl) return createToast("You're supposed to... type something in the search box...", {variant: "brand", icon: "circle-question"})
         const encoded = encodeURIComponent(inputEl)
         const path = `/~/search?query=${encoded}`
         // If we're already on the search page, update the URL and notify the view directly

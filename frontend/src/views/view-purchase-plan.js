@@ -1,6 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { sharedStyles } from '../styles.js';
 import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning } from '../components/untrusted-warning.js';
+import { createToast } from '../toast.js';
 
 export class ViewPurchasePlan extends LitElement {
     static properties = {
@@ -72,7 +73,8 @@ _formatStr(str) {
             if (!response.ok) {
                 if (response.status === 404) return this.notFound = true;
                 if (response.status === 403) return this.notPublic = true;
-                return window.alert("An error occurred.")
+                console.log(response)
+                createToast("<strong>Uh Oh!</strong><br>Something went wrong while loading this purchase plan.", {variant: "danger", icon: "circle-exclamation", allowHtml: true})
             }
 
             const result = await response.json()
@@ -82,7 +84,7 @@ _formatStr(str) {
             this.visible = true;
         } catch(e) {
             console.error(e)
-            window.alert("An error occurred.")
+            createToast("<strong>Uh Oh!</strong><br>Something went wrong while loading this purchase plan.", {variant: "danger", icon: "circle-exclamation", allowHtml: true})
         } finally {
             this.loading = false;
         }
