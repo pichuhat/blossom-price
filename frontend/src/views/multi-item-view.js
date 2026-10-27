@@ -129,18 +129,24 @@ _formatPrice(unformatted) {
         return html`
         <div class="center">
         <div class="forceGap"><wa-switch ?checked=${this.lowDataMode} id="LDMtoggle" @change=${this._handleLDM}>Low Data Mode</wa-switch></div>
+        
         ${this.viewType === 'standard' ? html`
         <div class="grid">${this.items.map(item => html`
+
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
+
             <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
+
             ${this.selectedServer != undefined && this.selectedServer != null && item.price && item.recom_timestamp && item.username ? html`<div class="center">
             <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br><span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span><br><sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}</sub>
             </div>` : html`<sub>No price available :(</sub>`}
+
             <div class="tags">
               ${item.tags ? item.tags.map(tag => html`
                 <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
               `) : ''}
             </div>
+            
             ${this.lowDataMode && !item.tags.includes('spawner') && !item.tags.includes('currency') ? html`
             <div class="give-preview-text-outer">
               <div class="give-preview-text w-100">
@@ -151,7 +157,7 @@ _formatPrice(unformatted) {
             </div>  
             ` : html`
             <img
-            src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
+            src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/Descriptions/${item.id}.png`)}
             alt="${this._decodeEscapedUnicode(item.item_name)}"
             />
             `}
@@ -184,7 +190,7 @@ _formatPrice(unformatted) {
             </div>  
             ` : html`
             <img
-            src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/BlossomCraft_Descriptions/${item.id}.png`)}
+            src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/Descriptions/${item.id}.png`)}
             alt="${this._decodeEscapedUnicode(item.item_name)}"
             />
             `}

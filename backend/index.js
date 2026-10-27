@@ -76,7 +76,7 @@ app.post('/api/discord/interactions', verifyKeyMiddleware(process.env.IS_DEV ===
 
                     const embed = new EmbedBuilder()
                         .setColor(0xbc2bc4)
-                        .setImage(`${process.env.API_URL}/static/images/BlossomCraft_Descriptions/${itemId}.png`)
+                        .setImage(`${process.env.API_URL}/static/images/Descriptions/${itemId}.png`)
                         .setFooter({ text: `Data from BlossomPricer by pichuhat.\nItem descriptions are from the Blossom Item Catalog.`})
 
                     if (itemData.price) {
