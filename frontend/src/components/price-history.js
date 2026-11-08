@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { untrustedWarning } from './untrusted-warning.js';
+import { untrustedWarning, historicalTimestampInfo } from './untrusted-warning.js';
 import { sharedStyles } from '../styles.js';
 
 export class PriceHistory extends LitElement {
@@ -85,7 +85,7 @@ export class PriceHistory extends LitElement {
         </thead>
         <tbody>
             ${this.history.map(row => {
-                return html`<tr><td>${this._formatDate(row.recom_timestamp)}</td><td>${row.username}${untrustedWarning(row.author_id)}</td><td>$${this._formatPrice(row.price)}${row.is_range ? html` to $${this._formatPrice(row.max_price)}` : ""}</td></tr>`
+                return html`<tr><td>${this._formatDate(row.recom_timestamp)}${historicalTimestampInfo(row.is_historical, row.real_timestamp)}</td><td>${row.username}${untrustedWarning(row.author_id)}</td><td>$${this._formatPrice(row.price)}${row.is_range ? html` to $${this._formatPrice(row.max_price)}` : ""}</td></tr>`
             })}
         </tbody>
     </table>

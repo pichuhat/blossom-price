@@ -27,6 +27,7 @@ export class ASView extends LitElement {
     this.pricedOnly = false;
     this.inputValue = new URLSearchParams(window.location.search).get('query')
     this.truncated = false
+    this.items = []
   }
 
   connectedCallback() {
@@ -42,10 +43,12 @@ export class ASView extends LitElement {
 
   async _fetchItems(e) {
     this.loading = true
-
-    const params = e?.detail?.params || new URLSearchParams(window.location.search)
-    if ([0,1,2,3].includes(Number(this.selectedServer))) params.append('selectedServer', this.selectedServer)
-    console.log(`${params}`)
+  const params = new URLSearchParams(e?.detail?.params ?? this._lastParams ?? window.location.search)
+  this._lastParams = new URLSearchParams(params)   // remember the search, without the server
+  if (this.selectedServer !== null && [0,1,2,3].includes(Number(this.selectedServer))) {
+    params.set('selectedServer', this.selectedServer)
+  }
+    console.log(params)
     const fetchURL = `/api/search/advanced?${params}`
     try {
       const response = await fetch(fetchURL, {
@@ -81,9 +84,8 @@ export class ASView extends LitElement {
         return this.formatter.format(date)
     }
 
-    updated(changedProperties) {
-      const params = new URLSearchParams(window.location.search)
-  if (changedProperties.has('selectedServer') && ['query', 'crate', 'tags', 'minPrice', 'maxPrice', 'pricedOnly'].some(key => params.has(key))) {
+    updated(changed) {
+  if (changed.has('selectedServer') && this._lastParams) {
     this._fetchItems()
   }
 }

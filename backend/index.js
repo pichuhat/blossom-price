@@ -31,6 +31,22 @@ const pgPool = new Pool({
 
 const isProduction = process.env.IS_DEV === 'production'
 
+const common_pg = require('./common-pg-requests.js')
+
+const MIN_EFFECTIVE_TIMESTAMP = Date.parse('2025-01-01T00:00:00.000Z')
+
+function parseEffectiveTimestamp(value) {
+    if (value === undefined || value === null) return { value: null }
+    if (typeof value !== 'string' || !value.trim()) return { error: 'Invalid effective timestamp' }
+
+    const timestamp = new Date(value)
+    if (Number.isNaN(timestamp.getTime())) return { error: 'Invalid effective timestamp' }
+    if (timestamp.getTime() < MIN_EFFECTIVE_TIMESTAMP) return { error: 'Effective timestamp cannot be before 2025-01-01' }
+    if (timestamp.getTime() > Date.now()) return { error: 'Effective timestamp cannot be in the future' }
+
+    return { value: timestamp }
+}
+
 app.post('/api/discord/interactions', verifyKeyMiddleware(process.env.IS_DEV === 'production' ? process.env.DISCORD_PUBLIC_KEY : process.env.TEST_PUBLIC_KEY), async (req, res) => {
         const interaction = req.body
 
@@ -298,23 +314,11 @@ async function getItemData(id, server, user) {
 
     const sqlQuery = `
             SELECT DISTINCT ON (i.id)
-            i.*,
-            p.price AS price,
-            p.timestamp AS recom_timestamp,
-            p.submission_id AS recommendation_id,
-            p.submitted_by AS author_id,
-            p.server_id AS server,
-            p.is_range AS is_range,
-            p.max_price AS max_price,
-            u.username AS username,
-            u.discord_avatar_hash AS avatar_hash${user ? `, EXISTS (SELECT 1 FROM price_change_requests r WHERE r.item_id = i.id AND r.server_id = $1 AND r.user_id = $3) AS has_price_request`: ``}
+            ${common_pg.ITEM_DATA_REQUESTS.SELECTED_COLUMNS.WITH_SERVER}${user ? `, EXISTS (SELECT 1 FROM price_change_requests r WHERE r.item_id = i.id AND r.server_id = $1 AND r.user_id = $3) AS has_price_request`: ``}
             FROM items i
-            LEFT JOIN price_submissions p ON i.id = p.item_id
-            AND p.status='accepted'
-            AND p.server_id = $1
-            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            ${common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_JOIN('$1')}
             WHERE i.id = $2
-            ORDER BY i.id, p.timestamp DESC;
+            ORDER BY ${common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER};
         `
 
         const values = [server, id]
@@ -560,21 +564,10 @@ app.get('/api/allitems', async (req, res) => {
 
     const sqlQuery = `${req.query.selectedServer ? `
     SELECT DISTINCT ON (i.id)
-    i.*,
-    p.price AS price,
-    p.timestamp AS recom_timestamp,
-    p.submission_id AS recommendation_id,
-    p.submitted_by AS author_id,
-    p.server_id AS server,
-    p.is_range AS is_range,
-    p.max_price AS max_price,
-    u.username AS username
+    ${common_pg.ITEM_DATA_REQUESTS.SELECTED_COLUMNS.WITH_SERVER}
     FROM items i
-    LEFT JOIN price_submissions p ON i.id = p.item_id
-    AND p.status='accepted'
-    AND p.server_id = $3
-    LEFT JOIN users u ON p.submitted_by = u.discord_id
-    ORDER BY i.id, p.timestamp DESC
+    ${common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_JOIN('$3')}
+    ORDER BY ${common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER}
     LIMIT $1 OFFSET $2
     `
     : `
@@ -652,22 +645,15 @@ app.get('/api/allitems', async (req, res) => {
         const sqlQuery = `
         SELECT
         i.*,
-        p.price AS price,
-        p.timestamp AS recom_timestamp,
-        p.submission_id AS recommendation_id,
-        p.submitted_by AS author_id,
-        p.server_id AS server,
-        p.status AS status,
-        p.is_range AS is_range,
-        p.max_price AS max_price,
-        u.username AS username
+        ${common_pg.ITEM_DATA_REQUESTS.PRICE_COLUMNS},
+        ${common_pg.ITEM_DATA_REQUESTS.USER_COLUMNS}
         FROM price_submissions p
         LEFT JOIN items i ON i.id = p.item_id
         AND p.status='accepted'
         AND p.server_id= $1
         LEFT JOIN users u ON p.submitted_by = u.discord_id
         WHERE i.id = $2
-        ORDER BY i.id, recom_timestamp DESC;
+        ORDER BY ${common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER};
         `
 
         try {
@@ -681,36 +667,40 @@ app.get('/api/allitems', async (req, res) => {
     app.post('/api/recommend', async (req, res) => {
         const input = req.body
         if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
-            if (!input.item_id || !req.session.user.id || (input.is_range && isNaN(Number(input.max_price))) || isNaN(Number(input.price)) || ![0,1,2,3].includes(input.server_id)) return res.status(400).json("Missing, mismatched, or invalid params")
-            input.price = Number(input.price)
-            input.max_price = Number(input.max_price)
-            const sqlQuery = input.is_range ? `
-            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
-            ` : `
-            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
-            `
-             if (input.is_range && input.price == input.max_price) return res.status(400).json({success: false, message: "min and max prices must be different"})
-            if (input.is_range && input.price > input.max_price) {
-                [input.price, input.max_price] = [input.max_price, input.price]
+            if (!input || typeof input !== 'object' || Array.isArray(input)) return res.status(400).json({success: false, message: "Missing, mismatched, or invalid params"})
+
+            const isRange = Boolean(input.is_range)
+            const price = Number(input.price)
+            let maxPrice = isRange ? Number(input.max_price) : null
+            if (!input.item_id || !req.session.user.id || !Number.isFinite(price) || (isRange && !Number.isFinite(maxPrice)) || ![0, 1, 2, 3].includes(input.server_id)) {
+                return res.status(400).json({success: false, message: "Missing, mismatched, or invalid params"})
             }
 
-            const values = [input.item_id, input.server_id, req.session.user.id, input.price, 'pending']
-            if (req.body.is_range) {
-                values.push(true, input.max_price)
-            } else {
-                values.push(false)
+            if (isRange && price === maxPrice) return res.status(400).json({success: false, message: "min and max prices must be different"})
+
+            let normalizedPrice = price
+            if (isRange && normalizedPrice > maxPrice) {
+                [normalizedPrice, maxPrice] = [maxPrice, normalizedPrice]
             }
+
+            const parsedEffectiveTimestamp = parseEffectiveTimestamp(input.effective_timestamp)
+            if (parsedEffectiveTimestamp.error) {
+                return res.status(400).json({success: false, message: parsedEffectiveTimestamp.error})
+            }
+
+            const sqlQuery = `
+            INSERT INTO price_submissions (
+                item_id, server_id, submitted_by, price, status, is_range, max_price, effective_timestamp
+            )
+            VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7::timestamptz)
+            `
+            const values = [input.item_id, input.server_id, req.session.user.id, normalizedPrice, isRange, maxPrice, parsedEffectiveTimestamp.value]
 
             try {
-
-            const result = await pgPool.query(sqlQuery, values)
-            res.status(200).json({success: true, message: "Uploaded"})
-
+                await pgPool.query(sqlQuery, values)
+                res.status(200).json({success: true, message: "Uploaded"})
             } catch(err) {
+                console.error("Price recommendation insert failed:", err)
                 res.status(500).json({success: false, message: "Upload error"})
             }
 
@@ -722,22 +712,43 @@ app.get('/api/allitems', async (req, res) => {
     app.post('/api/group-recommend', async (req, res) => {
         const input = req.body
         if (req.session?.user?.role == 'staff' || req.session?.user?.role == 'admin') {
-            if (typeof input.item_id !== 'object' || input.item_id.length < 1 || !req.session.user.id || (input.is_range && isNaN(Number(input.max_price))) || isNaN(Number(input.price)) || ![0,1,2,3].includes(input.server_id)) return res.status(400).json("Missing, mismatched, or invalid params")
-            input.price = Number(input.price)
-            input.max_price = Number(input.max_price)
-            input.item_id = input.item_id.map(String)
-            const sqlQuery = input.is_range ? `
-            INSERT INTO group_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING *
-            ` : `
-            INSERT INTO group_submissions (item_id, server_id, submitted_by, price, status, is_range)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            if (!input || typeof input !== 'object' || Array.isArray(input) || !Array.isArray(input.item_id) || input.item_id.length < 1 || !req.session.user.id || ![0, 1, 2, 3].includes(input.server_id)) {
+                return res.status(400).json({success: false, message: "Missing, mismatched, or invalid params"})
+            }
+
+            const itemIds = input.item_id.map(Number)
+            if (itemIds.some(id => !Number.isInteger(id) || id < 1) || new Set(itemIds).size !== itemIds.length) {
+                return res.status(400).json({success: false, message: "Invalid item IDs"})
+            }
+
+            const isRange = Boolean(input.is_range)
+            const price = Number(input.price)
+            let maxPrice = isRange ? Number(input.max_price) : null
+            if (!Number.isFinite(price) || (isRange && !Number.isFinite(maxPrice))) {
+                return res.status(400).json({success: false, message: "Missing, mismatched, or invalid params"})
+            }
+            if (isRange && price === maxPrice) {
+                return res.status(400).json({success: false, message: "min and max prices must be different"})
+            }
+
+            let normalizedPrice = price
+            if (isRange && normalizedPrice > maxPrice) {
+                [normalizedPrice, maxPrice] = [maxPrice, normalizedPrice]
+            }
+
+            const parsedEffectiveTimestamp = parseEffectiveTimestamp(input.effective_timestamp)
+            if (parsedEffectiveTimestamp.error) {
+                return res.status(400).json({success: false, message: parsedEffectiveTimestamp.error})
+            }
+
+            const sqlQuery = `
+            INSERT INTO group_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price, effective_timestamp)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz)
             RETURNING *
             `
 
             const secondQuery = `
-            INSERT INTO price_submissions (group_id, item_id, server_id, submitted_by, price, status, is_range${input.is_range ? `, max_price` : ""})
+            INSERT INTO price_submissions (group_id, item_id, server_id, submitted_by, price, status, is_range, max_price, effective_timestamp)
             SELECT
               gs.group_id,
               i.id,
@@ -745,45 +756,46 @@ app.get('/api/allitems', async (req, res) => {
               gs.submitted_by,
               gs.price,
               gs.status,
-              gs.is_range${input.is_range ? `, gs.max_price` : ''}
+              gs.is_range,
+              gs.max_price,
+              gs.effective_timestamp
             FROM group_submissions gs
-            CROSS JOIN LATERAL unnest(gs.item_id::INT[]) AS joined_item_id
-            JOIN items i ON i.id = joined_item_id
+            CROSS JOIN LATERAL unnest(gs.item_id::INT[]) AS group_items(item_id)
+            JOIN items i ON i.id = group_items.item_id
             WHERE gs.group_id = $1
             `
 
             const altQuery = `
-            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range${input.is_range ? `, max_price` : ""})
-            VALUES ($1, $2, $3, $4, $5, $6${input.is_range ? `, $7` : ''})
+            INSERT INTO price_submissions (item_id, server_id, submitted_by, price, status, is_range, max_price, effective_timestamp)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8::timestamptz)
             RETURNING *
             `
-             if (input.is_range && input.price == input.max_price) return res.status(400).json({success: false, message: "min and max prices must be different"})
-            if (input.is_range && input.price > input.max_price) {
-                [input.price, input.max_price] = [input.max_price, input.price]
-            }
 
-            const values = [input.item_id, input.server_id, req.session.user.id, input.price, 'pending']
-            if (req.body.is_range) {
-                values.push(true, input.max_price)
-            } else {
-                values.push(false)
-            }
-
+            const effectiveTimestamp = parsedEffectiveTimestamp.value
+            const values = [itemIds, input.server_id, req.session.user.id, normalizedPrice, 'pending', isRange, maxPrice, effectiveTimestamp]
+            let client
             try {
+                client = await pgPool.connect()
+                await client.query('BEGIN')
 
-            if (input.item_id.length > 1) {
-            const result = await pgPool.query(sqlQuery, values)
-            const secondResult = await pgPool.query(secondQuery, [result.rows[0].group_id])
-            } else {
-            console.log("Detected single item group, submitting individual price instead")
-            values[0] = values[0][0]
-            const result = await pgPool.query(altQuery, values)
-            }
-            res.status(200).json({success: true, message: "Uploaded"})
+                if (itemIds.length > 1) {
+                    const result = await client.query(sqlQuery, values)
+                    const childResult = await client.query(secondQuery, [result.rows[0].group_id])
+                    if (childResult.rowCount !== itemIds.length) {
+                        throw new Error('Not all items in the group could be submitted')
+                    }
+                } else {
+                    await client.query(altQuery, [itemIds[0], ...values.slice(1)])
+                }
 
+                await client.query('COMMIT')
+                res.status(200).json({success: true, message: "Uploaded"})
             } catch(err) {
-                console.log(err)
+                if (client) await client.query('ROLLBACK').catch(rollbackError => console.error('Group recommendation rollback failed:', rollbackError))
+                console.error('Group recommendation insert failed:', err)
                 res.status(500).json({success: false, message: "Upload error"})
+            } finally {
+                client?.release()
             }
 
         } else {
@@ -801,22 +813,15 @@ app.get('/api/allitems', async (req, res) => {
             const sqlQuery = `
             SELECT
             i.*,
-            p.price AS price,
-            p.timestamp AS recom_timestamp,
-            p.submission_id AS recommendation_id,
-            p.submitted_by AS author_id,
-            p.server_id AS server,
-            p.status AS status,
-            p.is_range AS is_range,
-            p.max_price AS max_price,
-            u.username AS username
+            ${common_pg.ITEM_DATA_REQUESTS.PRICE_COLUMNS},
+            ${common_pg.ITEM_DATA_REQUESTS.USER_COLUMNS}
             FROM items i
             LEFT JOIN price_submissions p ON i.id = p.item_id
             LEFT JOIN users u ON p.submitted_by = u.discord_id
             WHERE p.submitted_by = $1
             AND p.group_id IS NULL
             ${type ? `AND status = $4` : ''}
-            ORDER BY timestamp DESC
+            ORDER BY ${common_pg.PRICE_REQUESTS.SUBMISSION_TIMESTAMP_DESC}
             LIMIT $2 OFFSET $3;
             `
             const data = [req.session.user.id, limit, offset]
@@ -864,21 +869,14 @@ app.get('/api/allitems', async (req, res) => {
             const sqlQuery = `
             SELECT
             i.*,
-            p.price AS price,
-            p.timestamp AS recom_timestamp,
-            p.submission_id AS recommendation_id,
-            p.submitted_by AS author_id,
-            p.server_id AS server,
-            p.status AS status,
-            p.is_range AS is_range,
-            p.max_price AS max_price,
-            u.username AS username
+            ${common_pg.ITEM_DATA_REQUESTS.PRICE_COLUMNS},
+            ${common_pg.ITEM_DATA_REQUESTS.USER_COLUMNS}
             FROM price_submissions p
             LEFT JOIN items i ON i.id = p.item_id
             LEFT JOIN users u ON p.submitted_by = u.discord_id
             WHERE p.group_id IS NULL
             ${type ? `AND status = $3` : ''}
-            ORDER BY timestamp DESC
+            ORDER BY ${common_pg.PRICE_REQUESTS.SUBMISSION_TIMESTAMP_DESC}
             LIMIT $1 OFFSET $2;
             `
             const values = [limit, offset]
@@ -955,22 +953,11 @@ app.get('/api/allitems', async (req, res) => {
     app.get('/api/spawners', async (req, res) => {
             const sqlQuery = req.query.selectedServer != null
         ? `SELECT DISTINCT ON (i.id)
-           i.*,
-           p.price AS price,
-           p.timestamp AS recom_timestamp,
-           p.submission_id AS recommendation_id,
-           p.submitted_by AS author_id,
-           p.server_id AS server,
-           p.is_range AS is_range,
-           p.max_price AS max_price,
-           u.username AS username
+           ${common_pg.ITEM_DATA_REQUESTS.SELECTED_COLUMNS.WITH_SERVER}
            FROM items i
-           LEFT JOIN price_submissions p ON i.id = p.item_id
-               AND p.status='accepted'
-               AND p.server_id = $1
-           LEFT JOIN users u ON p.submitted_by = u.discord_id
+           ${common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_JOIN('$1')}
            WHERE 'spawner' = ANY(i.tags)
-           ORDER BY i.id, p.timestamp DESC`
+           ORDER BY ${common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER}`
         : `SELECT * FROM items i
            WHERE 'spawner' = ANY(i.tags)
            ORDER BY i.id ASC`;
@@ -997,27 +984,18 @@ app.get('/api/allitems', async (req, res) => {
                     WHEN to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1) THEN 'exact'
                     ELSE 'fuzzy'
                 END as match_type${server ? `,
-            p.price AS price,
-            p.timestamp AS recom_timestamp,
-            p.submission_id AS recommendation_id,
-            p.submitted_by AS author_id,
-            p.server_id AS server,
-            p.is_range AS is_range,
-            p.max_price AS max_price,
-            u.username AS username
+            ${common_pg.ITEM_DATA_REQUESTS.PRICE_COLUMNS},
+            ${common_pg.ITEM_DATA_REQUESTS.USER_COLUMNS}
             ` : ``}
             FROM items i
             ${server ? `
-            LEFT JOIN price_submissions p ON i.id = p.item_id
-            AND p.status='accepted'
-            AND p.server_id = $2
-            LEFT JOIN users u ON p.submitted_by = u.discord_id
+            ${common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_JOIN('$2')}
             ` : ``}
             WHERE 
                 to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
                 OR 
                 to_tsvector('english', item_human) @@ plainto_tsquery('english', $1)
-            ORDER BY i.id${server ? `, p.timestamp DESC` : ``}
+            ORDER BY ${server ? common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER : 'i.id'}
         ) as search_results
         ORDER BY 
             CASE 
@@ -1075,7 +1053,7 @@ let paramIndex = input ? 2 : 1;
 // 2. Build the query pieces dynamically
 let serverCondition = "";
 if (server) {
-    serverCondition = `LEFT JOIN price_submissions p ON  i.id = p.item_id AND p.status = 'accepted' AND p.server_id = $${paramIndex} LEFT JOIN users u ON p.submitted_by = u.discord_id`;
+    serverCondition = common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_JOIN(`$${paramIndex}`);
     values.push(Number(server));
     paramIndex++;
 }
@@ -1111,14 +1089,7 @@ if (serverCondition && maxPrice) {
 let pricedOnlyCondition = ""
 if (serverCondition && pricedOnly) pricedOnlyCondition = "p.price IS NOT NULL"
 
-const priceColumns = serverCondition ? `, p.price AS price,
-        p.timestamp AS recom_timestamp,
-        p.submission_id AS recommendation_id,
-        p.submitted_by AS author_id,
-        p.server_id AS server,
-        p.is_range AS is_range,
-        p.max_price AS max_price,
-        u.username AS username` : ""
+const selectedColumns = serverCondition ? common_pg.ITEM_DATA_REQUESTS.SELECTED_COLUMNS.WITH_SERVER : common_pg.ITEM_DATA_REQUESTS.SELECTED_COLUMNS.NO_SERVER
 
 const conditions = [
     input ? `(to_tsvector('simple', item_human) @@ plainto_tsquery('simple', $1)
@@ -1147,11 +1118,11 @@ const ordering = input
 const sqlQuery = `
 SELECT * FROM (
     SELECT DISTINCT ON (i.id)
-        i.*${inputFilter}${priceColumns}
+        ${selectedColumns}${inputFilter}
     FROM items i
     ${serverCondition}
     ${filters}
-    ORDER BY i.id${serverCondition ? ', p.timestamp DESC' : ''}
+    ORDER BY ${serverCondition ? common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER : 'i.id'}
 ) AS search_results
  ${ordering}
  LIMIT 151;
@@ -1189,21 +1160,11 @@ SELECT * FROM (
         FROM (
             SELECT DISTINCT ON (i.id)
                 i.*,
-                p.price AS price,
-                p.timestamp AS recom_timestamp,
-                p.submission_id AS recommendation_id,
-                p.submitted_by AS author_id,
-                p.server_id AS server,
-                p.status AS status,
-                p.is_range AS is_range,
-                p.max_price AS max_price,
-                u.username AS username
+                ${common_pg.ITEM_DATA_REQUESTS.PRICE_COLUMNS},
+                ${common_pg.ITEM_DATA_REQUESTS.USER_COLUMNS}
             FROM price_submissions p
-            INNER JOIN items i ON i.id = p.item_id
-            LEFT JOIN users u ON p.submitted_by = u.discord_id
-            WHERE p.status = 'accepted'
-            AND p.server_id = $1
-            ORDER BY i.id, p.timestamp DESC
+            ${common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_HISTORY_JOIN('$1')}
+            ORDER BY ${common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER}
         ) sub
         ORDER BY recom_timestamp DESC
         LIMIT 10;    
@@ -1258,7 +1219,7 @@ SELECT * FROM (
         FROM group_submissions gs
         LEFT JOIN users u ON gs.submitted_by = u.discord_id
         ${adminview ? '' : `WHERE gs.submitted_by = $3`}
-        ORDER BY gs.timestamp DESC
+        ORDER BY gs.timestamp DESC, gs.group_id DESC
         LIMIT $1 OFFSET $2
         `
         const values = [limit, offset]
@@ -1343,7 +1304,8 @@ SELECT * FROM (
                 const second = await pgPool.query(secondQuery, data)
                 res.status(200).json({success: true, message: "Updated"})
             } catch(error) {
-                res.status(500).json({success: false, message: `ERROR: ${error}`})
+                res.status(500).json({success: false, message: `An error occurred.`})
+                console.log(error)
             }
         } else {
             res.status(403).json({success: false, message: "Role required: admin"})
@@ -1441,20 +1403,11 @@ SELECT * FROM (
 
         const sqlQuery = `
         SELECT DISTINCT ON (i.id)
-        i.*,
-        p.price AS price,
-        p.timestamp AS recom_timestamp,
-        p.submission_id AS recommendation_id,
-        p.submitted_by AS author_id,
-        p.server_id AS server,
-        p.is_range AS is_range,
-        p.max_price AS max_price,
-        u.username AS username
+        ${common_pg.ITEM_DATA_REQUESTS.SELECTED_COLUMNS.WITH_SERVER}
         FROM items i
-        LEFT JOIN price_submissions p ON p.item_id = i.id AND p.server_id = $2 AND status = 'accepted'
-        LEFT JOIN users u ON u.discord_id = p.submitted_by
+        ${common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_JOIN('$2')}
         WHERE i.id = ANY($1::int[])
-        ORDER BY i.id, p.timestamp DESC;
+        ORDER BY ${common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER};
         `
 
         try {
@@ -1476,20 +1429,11 @@ SELECT * FROM (
         `
         const secondQuery = `
         SELECT DISTINCT ON (i.id)
-        i.*,
-        p.price AS price,
-        p.timestamp AS recom_timestamp,
-        p.submission_id AS recommendation_id,
-        p.submitted_by AS author_id,
-        p.server_id AS server,
-        p.is_range AS is_range,
-        p.max_price AS max_price,
-        u.username AS username
+        ${common_pg.ITEM_DATA_REQUESTS.SELECTED_COLUMNS.WITH_SERVER}
         FROM items i
-        LEFT JOIN price_submissions p ON p.item_id = i.id AND p.server_id = $2 AND p.status = 'accepted'
-        LEFT JOIN users u ON u.discord_id = p.submitted_by
+        ${common_pg.PRICE_REQUESTS.ACCEPTED_PRICE_JOIN('$2')}
         WHERE i.id = ANY($1::int[])
-        ORDER BY i.id, p.timestamp DESC;
+        ORDER BY ${common_pg.PRICE_REQUESTS.LATEST_PER_ITEM_ORDER};
         `
 
         try {

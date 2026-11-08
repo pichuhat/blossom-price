@@ -138,6 +138,8 @@ async _updatePrices() {
       const data = result.result.find(row => row.id === item.id)
       item.price = data.price
       item.recom_timestamp = data.recom_timestamp
+      item.real_timestamp = data.real_timestamp
+      item.is_historical = data.is_historical
       item.recommendation_id = data.recommendation_id
       item.author_id = data.author_id
       item.server = data.server

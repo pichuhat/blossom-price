@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
 import { createToast } from '../toast.js';
+import { historicalTimestampInfo } from '../components/untrusted-warning.js';
 
 export class StaffView extends LitElement {
     static properties = {
@@ -196,7 +197,7 @@ export class StaffView extends LitElement {
         <td><wa-skeleton class="chars-10"></wa-skeleton></td>
         ` : 
         this.data.map(row => {return html`<tr>
-            <td>${this._formatDate(row.recom_timestamp)}</td>
+            <td>${this._formatDate(row.recom_timestamp)}${historicalTimestampInfo(row.is_historical, row.real_timestamp)}</td>
             <td>${servers[row.server]}</td>
             <td>${row.item_name}</td>
             <td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}</td>

@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
-import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning } from '../components/untrusted-warning.js';
+import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning, historicalTimestampInfo } from '../components/untrusted-warning.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import DOMPurify from 'dompurify';
 
@@ -250,6 +250,8 @@ async _updatePrices() {
       const data = result.result.find(row => row.id === item.id)
       item.price = data.price
       item.recom_timestamp = data.recom_timestamp
+      item.real_timestamp = data.real_timestamp
+      item.is_historical = data.is_historical
       item.recommendation_id = data.recommendation_id
       item.author_id = data.author_id
       item.server = data.server
@@ -395,7 +397,7 @@ _navigateTo(path, event) {
                     <div class="center">
                       <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br>
                       <span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span><br>
-                      <sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}</sub>
+                      <sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}${historicalTimestampInfo(item.is_historical, item.real_timestamp)}</sub>
                     </div>
                   ` : html`<sub>No price available :(</sub>`}
                   

@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
 import { createToast } from '../toast.js';
+import { historicalTimestampInfo } from '../components/untrusted-warning.js';
 
 export class AdminView extends LitElement {
     static properties = {
@@ -235,11 +236,11 @@ export class AdminView extends LitElement {
         <td><wa-skeleton class="chars-15"></wa-skeleton></td>
         ` : 
         this.data.map(row => {return html`<tr>
-            <td>${this._formatDate(row.recom_timestamp)}</td>
+            <td>${this._formatDate(row.recom_timestamp)}${historicalTimestampInfo(row.is_historical, row.real_timestamp)}</td>
             <td>${servers[row.server]}</td>
             <td>${row.item_name}</td>
             <td>${row.username}</td>
-            <td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}</td>
+            <td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}${historicalTimestampInfo(row.is_historical, row.real_timestamp)}</td>
             <td>${this._formatStr(row.status)}</td>
             <td><wa-button-group orientation="horizontal"><wa-button @click=${() => this._updateStatus(row.recommendation_id, 'accepted')} ?disabled=${row.status == 'accepted' || this.disabledList.includes(row.submission_id)} size="xs" variant="brand">Approve</wa-button><wa-button @click=${() => this._updateStatus(row.recommendation_id, 'denied')} ?disabled=${row.status == 'denied' || this.disabledList.includes(row.submission_id)} size="xs" variant="brand">Deny</wa-button></wa-button-group></td>
         </tr>`})

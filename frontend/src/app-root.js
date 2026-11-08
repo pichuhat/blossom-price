@@ -30,6 +30,7 @@ import '@awesome.me/webawesome/dist/components/details/details.js';
 import '@awesome.me/webawesome/dist/components/toast/toast.js';
 import '@awesome.me/webawesome/dist/components/skeleton/skeleton.js';
 import '@awesome.me/webawesome/dist/components/tooltip/tooltip.js';
+import '@awesome.me/webawesome/dist/components/time-input/time-input.js'
 
 import { setBasePath } from '@awesome.me/webawesome/dist/webawesome.js';
 setBasePath('/dist/webawesome');

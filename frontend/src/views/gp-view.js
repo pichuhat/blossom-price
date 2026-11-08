@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
+import { historicalTimestampInfo } from '../components/untrusted-warning.js';
 
 export class GroupPriceView extends LitElement {
     static properties = {
@@ -277,7 +278,7 @@ export class GroupPriceView extends LitElement {
         ${this.data.map(row => {
              if (this.toShow !== 'all' && row.status !== this.toShow) return html``
             return html`
-            <tr><td>${this._formatDate(row.timestamp)}</td><td>${servers[row.server_id]}</td><td><wa-button pill size="xs" variant="brand" @click=${(e) => this._viewItems(e, row.group_id)}>View ${row.item_id.length} Items</wa-button></td>${this.showAdmin ? html`<td>${row.username}</td>` : ""}<td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}</td><td>${this._formatStr(row.status)}</td>${this.showAdmin ? html`<td><wa-button-group orientation="horizontal"><wa-button @click=${() => this._updateStatus(row.group_id, 'accepted')} ?disabled=${row.status == 'accepted' || this.disabledList.includes(row.group_id)} size="xs" variant="brand">Approve</wa-button><wa-button @click=${() => this._updateStatus(row.group_id, 'denied')} ?disabled=${row.status == 'denied' || this.disabledList.includes(row.group_id)} size="xs" variant="brand">Deny</wa-button></wa-button-group></td>` : ""}</tr>
+            <tr><td>${this._formatDate(row.effective_timestamp || row.timestamp)}${historicalTimestampInfo(!!row.effective_timestamp, row.timestamp)}</td><td>${servers[row.server_id]}</td><td><wa-button pill size="xs" variant="brand" @click=${(e) => this._viewItems(e, row.group_id)}>View ${row.item_id.length} Items</wa-button></td>${this.showAdmin ? html`<td>${row.username}</td>` : ""}<td>$${this._formatPrice(row.price)}${row.is_range ? html` <br>to<br>$${this._formatPrice(row.max_price)}` : ""}${historicalTimestampInfo(!!row.effective_timestamp, row.timestamp)}</td><td>${this._formatStr(row.status)}</td>${this.showAdmin ? html`<td><wa-button-group orientation="horizontal"><wa-button @click=${() => this._updateStatus(row.group_id, 'accepted')} ?disabled=${row.status == 'accepted' || this.disabledList.includes(row.group_id)} size="xs" variant="brand">Approve</wa-button><wa-button @click=${() => this._updateStatus(row.group_id, 'denied')} ?disabled=${row.status == 'denied' || this.disabledList.includes(row.group_id)} size="xs" variant="brand">Deny</wa-button></wa-button-group></td>` : ""}</tr>
             `
     })}
         </tbody>

@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import "../components/price-history.js"
-import { untrustedWarning } from '../components/untrusted-warning.js';
+import { untrustedWarning, historicalTimestampInfo } from '../components/untrusted-warning.js';
 import "./new-price-view.js"
 import { sharedStyles } from '../styles.js';
 
@@ -401,7 +401,7 @@ export class ItemView extends LitElement {
 <div class="market-column">
     <div class="box nogrow full">
     <span class="priceAdd">${servers[this.selectedServer]} Price${this.itemData?.is_range ? " Range" : ''}: </span><br><span class="price priceAdd">$${this.properPricing ? `${this._formatPrice(this.itemData.price)}${this.itemData.is_range ? ` to $${this._formatPrice(this.itemData.max_price)}` : ""}` : "-"}</span><br>
-    <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}${untrustedWarning(this.itemData.author_id)}<br>${this._formatDate(this.itemData.recom_timestamp)}` : "No price available :("}</sub>
+    <sub class="priceinfo">${this.properPricing ? html`- ${this.itemData.username}${untrustedWarning(this.itemData.author_id)}<br>${this._formatDate(this.itemData.recom_timestamp)}${historicalTimestampInfo(this.itemData.is_historical, this.itemData.real_timestamp)}` : "No price available :("}</sub>
 
     ${this.user && (this.user.role == "staff" || this.user.role == "admin") && !this.openPriceRecom ?
         html`<br><br>${this.hasPending ?
