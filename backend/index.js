@@ -32,6 +32,7 @@ const pgPool = new Pool({
 const isProduction = process.env.IS_DEV === 'production'
 
 const common_pg = require('./common-pg-requests.js')
+const {formatPrice, formatStringPriceRange} = require('./price-formatter.js')
 
 const MIN_EFFECTIVE_TIMESTAMP = Date.parse('2025-01-01T00:00:00.000Z')
 
@@ -1027,7 +1028,7 @@ app.get('/api/allitems', async (req, res) => {
             const result = await pgPool.query(sqlQuery)
             res.status(200).json({success: true, result: result.rows})
         } catch(err) {
-            res.status(500).json({success: false, message: `Server ERR: ${err}`, result: null})
+            res.status(500).json({success: false, message: `Server ERR`, result: null})
         }
     })
 
@@ -1575,6 +1576,82 @@ SELECT * FROM (
             console.error("An error occurred when notifying.")
             console.error(e)
             res.status(500).json({success: false, message: "Internal server error"})
+        }
+    })
+
+    app.get('/api/mod/itemset/:server', async (req, res) => {
+        const MAX_ITEMS = 100
+        const MAX_NAME_LENGTH = 100
+        try {
+            if (!/^[0-3]$/.test(req.params.server)) {
+                return res.status(400).json({ success: false, message: "Invalid server" });
+            }
+            const server = Number(req.params.server);
+
+            const raw = req.query.item;
+            const items = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
+
+            if (items.length < 1) {
+            return res.status(400).json({ success: false, message: "No items" });
+            }
+            if (items.length > MAX_ITEMS) {
+                return res.status(400).json({ success: false, message: "Too many items" });
+            }
+
+            for (const s of items) {
+                if (typeof s !== 'string' || s.length === 0 || s.length > MAX_NAME_LENGTH || s.includes('\u0000')) {
+                    return res.status(400).json({ success: false, message: "Invalid item name" });
+                }
+            }
+            const unique = [...new Set(items)];
+        
+            const sqlQuery = `
+            WITH req AS (
+                SELECT n.name AS requested,
+                    public.normalize_item_name(n.name) AS norm
+                FROM unnest($1::text[]) AS n(name)
+            )
+            SELECT r.requested, lp.price, lp.max_price, m.id IS NULL AS unmatched
+            FROM req r
+            LEFT JOIN LATERAL (
+                SELECT c.id
+                FROM (
+                    SELECT i.id,
+                        i.normalized_item_name = r.norm AS exact,
+                        count(*) OVER (PARTITION BY i.normalized_item_name = r.norm) AS n
+                    FROM items i
+                    WHERE r.norm <> ''
+                        AND (i.normalized_item_name = r.norm
+                        OR i.normalized_item_name ~ ('^' || r.norm || ' [0-9]+$'))
+                    ORDER BY exact DESC
+                    LIMIT 1
+                ) c
+                WHERE c.n = 1
+            ) m ON true
+            LEFT JOIN LATERAL (
+                SELECT p.price, p.max_price
+                FROM price_submissions p
+                WHERE p.item_id = m.id
+                AND p.server_id = $2::int
+                ORDER BY ${common_pg.PRICE_REQUESTS.EFFECTIVE_TIMESTAMP_DESC}
+                LIMIT 1
+            ) lp ON true;
+            `
+
+            const values = [unique, server]
+
+            const response = await pgPool.query(sqlQuery, values)
+
+            const toReturn = Object.create(null)
+
+            for (const row of response.rows) {
+                toReturn[row.requested] = row.unmatched ? 'UNMATCHED' : formatStringPriceRange(row)
+            }
+
+            res.status(200).json(toReturn)
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ success: false, message: "Server error" });
         }
     })
 
