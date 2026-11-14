@@ -39,7 +39,11 @@ const PRICE_REQUESTS = {
     ACCEPTED_PRICE_HISTORY_JOIN: (serverParameter) => `INNER JOIN items i ON i.id = p.item_id LEFT JOIN users u ON p.submitted_by = u.discord_id WHERE p.status = 'accepted' AND p.server_id = ${serverParameter}`
 }
 
+const ITEM_ID_BLACKLIST = [919]
+//919: Duplicate of lightsaber
+
 module.exports = {
     ITEM_DATA_REQUESTS,
-    PRICE_REQUESTS
+    PRICE_REQUESTS,
+    ITEM_ID_BLACKLIST
 }

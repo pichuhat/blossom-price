@@ -244,14 +244,16 @@ async function syncItems() {
         }
     })
     const result = await response.json()
-    const final = result.data
+    const itemData = result.data
 
     console.log("Fetched, started filter...")
 
-    final.forEach(item => {
+    itemData.forEach(item => {
         const cleaned = String(item.WinPercentage).replace('%', '');
         item.WinPercentage = isNaN(Number(cleaned)) ? null : Number(cleaned);
     })
+
+    const final = itemData.filter(item => !common_pg.ITEM_ID_BLACKLIST.includes(item.id))
 
     console.log("Fetched, sending payload...")
 
