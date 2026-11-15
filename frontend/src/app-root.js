@@ -1,3 +1,5 @@
+import "./rate-limit-notify.js"
+
 import "./components/login-button.js"
 import "./components/navbar.js"
 import "./components/footer.js"

@@ -16,6 +16,7 @@
       "dompurify": "3.4.17",
       "dotenv": "^17.4.2",
       "express": "^5.2.1",
+      "express-rate-limit": "^8.7.4",
       "express-session": "^1.19.0",
       "lit": "3.3.3",
       "node-cron": "^4.2.1",

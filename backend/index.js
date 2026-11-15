@@ -33,6 +33,7 @@ const isProduction = process.env.IS_DEV === 'production'
 
 const common_pg = require('./common-pg-requests.js')
 const {formatPrice, formatStringPriceRange} = require('./price-formatter.js')
+const { applyPublicLimits, applyUserLimits } = require('./rate-limit.js')
 
 const MIN_EFFECTIVE_TIMESTAMP = Date.parse('2025-01-01T00:00:00.000Z')
 
@@ -152,8 +153,8 @@ app.use(
 )
 
 app.use(express.json())
-
-app.set('trust proxy', true)
+app.set('trust proxy', 1)
+applyPublicLimits(app)
 
 cron.schedule('0 13 * * *', async () => {
     const today = new Date().toISOString().slice(0,10)
@@ -437,6 +438,7 @@ app.use(session({
         sameSite: 'lax'
     }
 }));
+applyUserLimits(app)
 
 app.use("/static", express.static(path.join(__dirname, "static")));
 
@@ -1582,8 +1584,8 @@ SELECT * FROM (
     })
 
     app.get('/api/mod/itemset/:server', async (req, res) => {
-        const MAX_ITEMS = 100
-        const MAX_NAME_LENGTH = 100
+        const MAX_ITEMS = 150
+        const MAX_NAME_LENGTH = 80
         try {
             if (!/^[0-3]$/.test(req.params.server)) {
                 return res.status(400).json({ success: false, message: "Invalid server" });
