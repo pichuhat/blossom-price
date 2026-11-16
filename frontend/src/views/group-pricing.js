@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { untrustedWarning, historicalTimestampInfo } from '../components/untrusted-warning.js';
 import { sharedStyles } from '../styles.js';
+import { itemDescriptionImage, itemIcon } from '../components/item-image.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import DOMPurify from 'dompurify';
 import { communicator } from '../cross-communicator.js'
@@ -562,7 +563,7 @@ _sanitizeHTML(input) {
             <div class="grid">
               ${this.selectedItems.map(item => html`
                 <div class="card" @click="${() => this._deselectItem(item.id)}">
-                  <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
+                  <h3>${itemIcon(item)}${this._decodeEscapedUnicode(item.item_name)}</h3>
                   <div class="tags">
                     ${item.tags ? item.tags.map(tag => html`
                       <span class="tag">${this._decodeEscapedUnicode(tag)}</span>
@@ -609,7 +610,7 @@ _sanitizeHTML(input) {
             <div class="grid">
               ${this.visibleItems.map(item => html`
                 <div class="card" @click="${() => this._selectItem(item.id)}">
-                  <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
+                  <h3>${itemIcon(item)}${this._decodeEscapedUnicode(item.item_name)}</h3>
                   ${this.selectedServer !== undefined && this.selectedServer !== null && item.price && item.recom_timestamp && item.username ? html`
                     <div class="center">
                       <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br>
@@ -633,10 +634,7 @@ _sanitizeHTML(input) {
                       </div>
                     </div>  
                   ` : html`
-                    <img
-                      src=${item.tags?.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags?.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/Descriptions/${item.id}.png`)}
-                      alt="${this._decodeEscapedUnicode(item.item_name)}"
-                    />
+                    ${itemDescriptionImage(item, this._decodeEscapedUnicode(item.item_name))}
                   `}
                 </div>
               `)}

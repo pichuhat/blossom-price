@@ -4,6 +4,7 @@ import "../components/price-history.js"
 import { untrustedWarning, historicalTimestampInfo } from '../components/untrusted-warning.js';
 import "./new-price-view.js"
 import { sharedStyles } from '../styles.js';
+import { itemDescriptionImage, itemIcon } from '../components/item-image.js';
 
 import DOMPurify from 'dompurify';
 import { createToast } from '../toast.js';
@@ -180,6 +181,11 @@ export class ItemView extends LitElement {
       min-height: 50%;
     }
     
+    .box h1 img.item-icon {
+      width: 48px;
+      height: 48px;
+    }
+
     .profile-column {
         display: block;
         flex-shrink: 0;
@@ -375,7 +381,7 @@ export class ItemView extends LitElement {
 <div class="profile-column">
     <div class="box">
     <wa-button-group orientation="horizontal"><wa-button size="s" variant="brand" ?disabled=${this.item === 1 || this.loading} @click=${this._back}><wa-icon name="angles-left"></wa-icon></wa-button><wa-button size="s" variant="brand" ?disabled=${this.item === 999065 || this.loading} @click=${this._next}><wa-icon name="angles-right"></wa-icon></wa-button></wa-button-group>
-    <h1 class="center">${this.itemData.item_name}</h1>
+    <h1 class="center">${itemIcon(this.itemData)}${this.itemData.item_name}</h1>
     <div class="tagbox">
         ${this.itemData.tags ? this.itemData.tags.map(tag => {
             return html`<span class="tag">${tag}</span>`
@@ -390,10 +396,7 @@ export class ItemView extends LitElement {
         </div>
         </div>  
     ` : html`
-        <img
-        src=${this.itemData.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (this.itemData.tags.includes('currency') ? `/src/images/${this.itemData.img_src}` : `https://items.blossomcraft.org/static/images/Descriptions/${this.itemData.id}.png`)}
-        alt="${this._decodeEscapedUnicode(this.itemData.item_name)}"
-        />
+        ${itemDescriptionImage(this.itemData, this._decodeEscapedUnicode(this.itemData.item_name))}
     `}
     </div>
 </div>
