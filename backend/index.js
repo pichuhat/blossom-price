@@ -1599,7 +1599,7 @@ SELECT * FROM (
             return res.status(400).json({ success: false, message: "No items" });
             }
             if (items.length > MAX_ITEMS) {
-                return res.status(400).json({ success: false, message: "Too many items" });
+                return res.status(413).json({ success: false, message: "Too many items" });
             }
 
             for (const s of items) {
