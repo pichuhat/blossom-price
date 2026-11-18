@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { sharedStyles } from '../styles.js';
+import { itemIcon } from '../components/item-image.js';
 import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning } from '../components/untrusted-warning.js';
 import { createToast } from '../toast.js';
 
@@ -314,7 +315,7 @@ async _uploadEdits() {
 
                 return html`
                 <tr>
-                <td><span class="fake-h3">${item.item_name}</span></td>
+                <td>${itemIcon(item)}<span class="fake-h3">${item.item_name}</span></td>
                 <td><span class="priceAdd">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}${untrustedWarning(item.author_id)}</span></td>
                 ${this.editMode ? html`<td><wa-button-group><wa-button variant="brand" square size="s" @click=${() => this._obtainedDown(item.id)} ?disabled=${otherItemData.obtained <= 0}>−</wa-button><wa-button size="s" style="pointer-events: none; opacity: 1; tabindex: -1;" variant="brand">${otherItemData.obtained}</wa-button><wa-button size="s" variant="brand" square ?disabled=${otherItemData.obtained >= otherItemData.count} @click=${(e) => this._obtainedUp(item.id)}>+</wa-button></wa-button-group></td>
                     <td><wa-button-group><wa-button variant="brand" square size="s" @click=${() => this._goalDown(item.id)} ?disabled=${otherItemData.count <= 1 || otherItemData.count <= otherItemData.obtained}>−</wa-button><wa-button size="s" style="pointer-events: none; opacity: 1; tabindex: -1;" variant="brand">${otherItemData.count}</wa-button><wa-button size="s" variant="brand" square ?disabled=${otherItemData.count >= 10} @click=${(e) => this._goalUp(item.id)}>+</wa-button></wa-button-group></td>`

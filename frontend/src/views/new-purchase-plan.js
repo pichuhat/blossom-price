@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { sharedStyles } from '../styles.js';
+import { itemDescriptionImage, itemIcon } from '../components/item-image.js';
 import { isUntrustedAuthor, untrustedWarning, untrustedPriceWarning, historicalTimestampInfo } from '../components/untrusted-warning.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import DOMPurify from 'dompurify';
@@ -392,7 +393,7 @@ _navigateTo(path, event) {
             <div class="grid">
               ${this.visibleItems.map(item => html`
                 <div class="card" @click="${() => this._selectItem(item.id)}">
-                  <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
+                  <h3>${itemIcon(item)}${this._decodeEscapedUnicode(item.item_name)}</h3>
                   ${this.selectedServer !== undefined && this.selectedServer !== null && item.price && item.recom_timestamp && item.username ? html`
                     <div class="center">
                       <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br>
@@ -416,10 +417,7 @@ _navigateTo(path, event) {
                       </div>
                     </div>  
                   ` : html`
-                    <img
-                      src=${item.tags?.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags?.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/Descriptions/${item.id}.png`)}
-                      alt="${this._decodeEscapedUnicode(item.item_name)}"
-                    />
+                    ${itemDescriptionImage(item, this._decodeEscapedUnicode(item.item_name))}
                   `}
                 </div>
               `)}

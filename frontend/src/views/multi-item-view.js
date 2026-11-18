@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { untrustedWarning, historicalTimestampInfo } from '../components/untrusted-warning.js';
 import { sharedStyles } from '../styles.js';
+import { itemDescriptionImage, itemIcon } from '../components/item-image.js';
 
 import DOMPurify from 'dompurify';
 
@@ -135,7 +136,7 @@ _formatPrice(unformatted) {
 
           <div class="card" @click="${() => this._routeToItemPage(item.id)}">
 
-            <h3>${this._decodeEscapedUnicode(item.item_name)}</h3>
+            <h3>${itemIcon(item)}${this._decodeEscapedUnicode(item.item_name)}</h3>
 
             ${this.selectedServer != undefined && this.selectedServer != null && item.price && item.recom_timestamp && item.username ? html`<div class="center">
             <span class="priceAdd">${this._formatStr(this.servers[this.selectedServer])} Price${item.is_range ? ' Range' : ""}: </span><br><span class="price">$${this._formatPrice(item.price)}${item.is_range ? ` to $${this._formatPrice(item.max_price)}` : ''}</span><br><sub>-${item.username}${untrustedWarning(item.author_id)}<br>${this._formatDate(item.recom_timestamp)}${historicalTimestampInfo(item.is_historical, item.real_timestamp)}</sub>
@@ -156,10 +157,7 @@ _formatPrice(unformatted) {
               </div>
             </div>  
             ` : html`
-            <img
-            src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/Descriptions/${item.id}.png`)}
-            alt="${this._decodeEscapedUnicode(item.item_name)}"
-            />
+            ${itemDescriptionImage(item, this._decodeEscapedUnicode(item.item_name))}
             `}
           </div>
         `)}</div>`
@@ -178,7 +176,7 @@ _formatPrice(unformatted) {
         ${this.items.map(item => html`
           <tr class="itemTable" @click=${() => this._routeToItemPage(item.id)}>
           <td class="dropdown" @mouseenter=${this._checkDropdownPosition}>
-          <span class="fake-h3">${this._decodeEscapedUnicode(item.item_name)}</span>
+          ${itemIcon(item)}<span class="fake-h3">${this._decodeEscapedUnicode(item.item_name)}</span>
           <div class="dropdown-content">
           ${this.lowDataMode && !item.tags.includes('spawner') && !item.tags.includes('currency') ? html`
             <div class="give-preview-text-outer">
@@ -189,10 +187,7 @@ _formatPrice(unformatted) {
               </div>
             </div>  
             ` : html`
-            <img
-            src=${item.tags.includes('spawner') ? "https://minecraft.wiki/images/Monster_Spawner_JE4.png" : (item.tags.includes('currency') ? `/src/images/${item.img_src}` : `https://items.blossomcraft.org/static/images/Descriptions/${item.id}.png`)}
-            alt="${this._decodeEscapedUnicode(item.item_name)}"
-            />
+            ${itemDescriptionImage(item, this._decodeEscapedUnicode(item.item_name), 'eager')}
             `}
           </div>
           </td>

@@ -104,6 +104,20 @@ vertical-align: middle;
     font-size: 1.17em;
     font-weight: bold;
     }
+    img.item-icon, .card img.item-icon, .box img.item-icon {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      min-width: 0;
+      min-height: 0;
+      margin: 0 8px 0 0;
+      border-radius: 4px;
+      object-fit: contain;
+      vertical-align: middle;
+    }
+    img.item-icon[hidden], .card img.item-icon[hidden], .box img.item-icon[hidden] {
+      display: none;
+    }
     .card {
       display: flex;
       flex-direction: column;
