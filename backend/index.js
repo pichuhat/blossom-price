@@ -36,6 +36,7 @@ const {formatPrice, formatStringPriceRange} = require('./price-formatter.js')
 const { applyPublicLimits, applyUserLimits } = require('./rate-limit.js')
 
 const MIN_EFFECTIVE_TIMESTAMP = Date.parse('2025-01-01T00:00:00.000Z')
+const MOD_DEBUG = process.env.MOD_DEBUG && process.env.MOD_DEBUG == 'enabled'
 
 function parseEffectiveTimestamp(value) {
     if (value === undefined || value === null) return { value: null }
@@ -1596,14 +1597,17 @@ SELECT * FROM (
             const items = Array.isArray(raw) ? raw : raw !== undefined ? [raw] : [];
 
             if (items.length < 1) {
+            if (MOD_DEBUG) console.log("[MOD DEBUG] Empty request")
             return res.status(400).json({ success: false, message: "No items" });
             }
             if (items.length > MAX_ITEMS) {
+                if (MOD_DEBUG) console.log(`[MOD DEBUG] Too many items (${items.length})`)
                 return res.status(413).json({ success: false, message: "Too many items" });
             }
 
             for (const s of items) {
                 if (typeof s !== 'string' || s.length === 0 || s.length > MAX_NAME_LENGTH || s.includes('\u0000')) {
+                    if (MOD_DEBUG) console.log(`[MOD DEBUG] Invalid item name (${s})`)
                     return res.status(400).json({ success: false, message: "Invalid item name" });
                 }
             }
