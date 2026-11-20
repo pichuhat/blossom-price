@@ -26,7 +26,7 @@ export class SiteFooter extends LitElement {
         render() {
             return html`
             <footer>
-            <sub>version 1.2.5 (November 8, 2026) &bull; created by pichuhat &bull; <a href="https://github.com/pichuhat/blossom-price" @click=${(e) => this._openInNewTab('https://github.com/pichuhat/blossom-price', e)}>source</a></sub>
+            <sub>version 1.2.6 (November 19, 2026) &bull; created by pichuhat &bull; <a href="https://github.com/pichuhat/blossom-price" @click=${(e) => this._openInNewTab('https://github.com/pichuhat/blossom-price', e)}>source</a> &bull; <a href="#" @click=${(e) => this._openInNewTab('https://www.youtube.com/watch?v=xvFZjo5PgG0', e)}>get the mod</a></sub>
             </footer>
             `
         }
